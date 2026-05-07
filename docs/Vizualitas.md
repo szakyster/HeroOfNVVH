@@ -47,7 +47,13 @@ A vizuális filozófia kulcsszavai:
 A játék 2.5D jellegű megjelenítést használ, de a játéktér egyetlen képernyőn látható, a kamera nem mozog.
 
 ### 3.1 Nézeti elv
-A látvány alapvetően felülről enyhén döntött, 2.5D hatású lehet, de a mozgáslogika síkbeli 2D marad. A hangsúly nem a perspektivikus pontosságon, hanem az olvasható térelrendezésen van.
+A látvány alapvetően felülről enyhén döntött, **oldalnézetszerű 2.5D** perspektívikus hatást ad. A pálya rácsa **trapéz alakúan torzított**: az alsó sora szélesebb, a felső sora szűkebb, ami mélységet sugall.
+
+Jellemzők:
+- perspektívikus rácstorzítás (trapéz forma),
+- karakterek mérete **fix marad** (nem változik a mélység függvényében),
+- az illúzió a rács torzításából és a relatív pozicionálásból adódik,
+- a mozgáslogika síkbeli 2D marad.
 
 ### 3.2 Fix kamera előnyei
 A fix kamera miatt:
@@ -81,6 +87,12 @@ A rácsméret meghatározza:
 - a loot és egyéb interaktív elemek méretarányát,
 - az akadályok helyigényét,
 - a pályán belüli vizuális ritmust.
+
+### 4.2a Egy rácskocka = egy blokk
+A rácselrendezésben fontos szabály:
+- **Akadályok** (autók, házak) **egy egész rácskockát foglalnak el** és azt teljesen blokkolják.
+- **Loot értékek** (pénz, arany, luxusautó) **egy konkrét rácskockában helyezkednek el**, és csak az a cella lesz foglalt.
+- Ennek az a célja, hogy a pályaé­szlelés és az ütközésdetekció egyértelmű legyen.
 
 ### 4.3 Nem grid-locked mozgás
 Fontos, hogy bár a pálya rácsos felosztású, a mozgás **nem kötődik a rácshoz**.
@@ -171,7 +183,7 @@ A koncept-artban ezért érdemes úgy elhelyezni őket, hogy a fő mozgási útv
 ## 7. A három különleges pont vizuális kezelése
 
 A három különleges pont:
-- **Hatvanpuszta**,
+- **Hatvanpuszta**, 
 - **Reptér**,
 - **NVVH székház**.
 
@@ -195,9 +207,8 @@ Vizuális szerepe:
 - ellenség spawn-zóna jelképe.
 
 Megjelenhet:
-- kapuként,
-- útkiindulásként,
-- táblával vagy jelöléssel.
+- egy kerítéssel elkerített kastélyként
+- Várostáblával
 
 ### Reptér
 Vizuális szerepe:
@@ -233,29 +244,30 @@ Mivel a három pont nem része a bejárható pályának, a koncept-artban úgy c
 
 ## 8.1 Általános karakterstílus
 A karakterek:
-- enyhén karikatúraszerűek,
-- nagy fejjel vagy túlzó arányokkal is működhetnek,
-- erős sziluettel rendelkezzenek,
-- könnyen felismerhetők legyenek távolról is.
+- **felismerhető arcokkal és testalkattal** rendelkezzenek,
+- a szocreálizmushoz közelebbi (nem túl karikatúrás) megjelenés,
+- erős sziluettel és jó olvashatósággal,
+- kis méretben is azonosíthatók legyenek.
 
-A cél nem a finom részlet, hanem az azonnali azonosíthatóság.
+A cél: **játékosság és humor az alapos, felismerhető emberek/karakterek megjelenítésével** – nem túl stylizált arcade, de nem is realisztikus.
 
 ## 8.2 Játékos karakter
 A főszereplő vizuális követelményei:
-- legyen markánsan elkülöníthető az ellenségektől,
-- legyen hősies, de kissé humoros hatású,
-- mozgás közben jól olvasható pózokat vegyen fel,
-- támadáskor legyen látványos, eltúlzott mozdulata.
+- **egyedi arc és testalkat** az azonosíthatóságért,
+- erős, markáns, de humoros hatású,
+- mozgás közben jól olvasható pózokkal,
+- támadáskor komikus, de nem gyerekes mozdulatok.
 
-A karakter külső megjelenése legyen alkalmas arra, hogy kis méretben is jól értelmezhető maradjon.
+Az arc és a testalkat legyen felismerhető, még kis méretben is, de ne realisztikus – inkább "jó rajzfilm emberek" szinten.
 
 ## 8.3 Ellenségek
 Az ellenségek:
-- kissé komikus, menekülő figurák legyenek,
-- mozgásuk lehet kapkodó, sietős, enyhén bohókás,
-- sziluettjük legyen egyszerű és ismételhető.
+- **felismerhető emberalakúak vagy humoros figurák** legyenek,
+- megkülönböztethető arcokkal és mozgási stílussal,
+- a mozgásuk lehet kapkodó, sietős, enyhén bohókás,
+- ha többféle válfaj van, mindnek egyértelműen más az arckifejezése.
 
-Nem szükséges sok variáció az első koncepthez, de legalább egy jól felismerhető ellenségtípus kell.
+Nem szükséges sok variáció az első koncepthez, de az ellenségnek emberszerűnek, karakteresnek és azonosíthatónak kell lennie.
 
 ## 8.4 Méretarány
 Mivel a rács mérete a karakterek alapméretét is meghatározza, a figurák legyenek:
@@ -336,16 +348,28 @@ A cél egy könnyed, szórakoztató, nem agresszív arcade-hatás.
 
 ---
 
-## 11. Színvilág
+## 11. Felhasználói felület (HUD)
 
-## 11.1 Általános színhasználat
+## 11.1 Kötelező HUD elemek
+A HUD-on **mindig láthatónak kell lennie**:
+
+- **Pont**: a jelenlegi pontszám (az eddigi sikeres leadások összege)
+- **Inventory**: hány érték van a nála (0/4, 1/4, stb.),
+- **Elszökött ellenségek**: hányan jutottak már a reptérre,
+- **Játékidő vagy nehézségi szint** (szükség szerint).
+
+A HUD-elemek legyenek röviden elnevezve, vizuálisan világosak, nem zavaróak.
+
+## 11.2 Szín és forma
+
+## 11.2a Általános színhasználat
 A színpaletta legyen:
 - telített, de nem harsányan kaotikus,
 - vidám,
 - tiszta,
 - jól elkülöníthető rétegekre bontott.
 
-## 11.2 Javasolt színlogika
+## 11.2b Javasolt színlogika
 - **Pálya / útburkolat:** semleges szürkés, bézses vagy aszfaltos tónusok
 - **Akadályok:** karakteresebb, de még mindig környezethez illő színek
 - **Játékos:** élénkebb, jól kiemelkedő főszín
@@ -405,6 +429,7 @@ A HUD legyen:
 - kontrasztos,
 - könnyen olvasható,
 - nem túlzóan díszes.
+- nagy méretű, színes betűtipus
 
 A koncept-art készítésekor is érdemes jelezni a HUD helyét, még ha nem is teljes részletességgel.
 
@@ -427,10 +452,12 @@ A kép mutassa meg egyszerre:
 ## 14.2 Javasolt kompozíció
 A legerősebb koncepció valószínűleg egy olyan nézet lesz, amelyben:
 - a teljes pálya egyszerre látható,
+- **a pálya rácsa trapéz alakúan torzított** (felülnézetes oldalnézetes hatás),
 - a három különleges pont a pálya körül vagy szélei mellett helyezkedik el,
-- a főszereplő és az ellenség akcióban van,
+- a főszereplő és az ellenség **felismerhető (nem túl karikatúrás) emberalakú** karakterként van megjelenítve,
 - egy vagy több akadály jól tagolja a teret,
-- legalább egy loot tárgy látszik,
+- **legalább egy-két loot tárgy látszik** az egy-egy rácskockában,
+- a HUD **pont és inventory** jelzéssel,
 - a hangulat játékos és könnyed.
 
 ## 14.3 Mit kell elkerülni a koncept-artban
@@ -447,7 +474,7 @@ A legerősebb koncepció valószínűleg egy olyan nézet lesz, amelyben:
 Az alábbi rövid összefoglaló közvetlenül használható art briefként is.
 
 ### Rövid brief
-Egy arcade jellegű, rajzfilmes, humoros hangulatú 2.5D böngészős játék vizuális terve szükséges. A pálya fix kamerás, teljes egészében látható, városias környezetben játszódik. A játéktér 7 × 6-os rács logikájára épül, de a mozgás szabad és folyamatos. A pályán autók és házak szolgálnak akadályként. A karakterek nagyok, jól láthatók, stilizáltak és rajzfilmszerűek. Az ellenfelek mozgása és az ütés animációja enyhén komikus, könnyed hangulatú. A három különleges pont – Hatvanpuszta, Reptér, NVVH székház – a pálya mellett helyezkedik el, vizuálisan kapcsolódnak a játéktérhez, de nem részei annak. A képen jól elkülönül a játékos, az ellenség, a loot és az akadályok rendszere.
+Egy arcade jellegű, humoros hangulatú 2.5D böngészős játék vizuális terve szükséges. A pálya fix kamerás, teljes egészében látható, városias környezetben játszódik, **perspektívikus (trapéz) rácselrendezéssel**, amely oldalnézetből felülnézetes hatást ad. A játéktér 7 × 6-os rács logikájára épül, de a mozgás szabad és folyamatos. Az akadályok (autók, házak) **egy egész rácskockát foglalnak el**. A karakterek **felismerhető arcokkal és testalkattakkal** rendelkezzenek – realisztikus emberalakúak, de nem realista stílusa, inkább jól rajzolt humoros figurák. Az ellenfelek mozgása és az ütés animációja enyhén komikus, könnyed hangulatú. A három különleges pont – Hatvanpuszta, Reptér, NVVH székház – a pálya mellett helyezkedik el, vizuálisan kapcsolódnak a játéktérhez, de nem részei annak. A HUD-on **pont és inventory** jelzése feltűnő. A képen jól elkülönül a játékos, az ellenség, a loot (egy-egy rácskockában) és az akadályok rendszere.
 
 ---
 

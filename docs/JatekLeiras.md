@@ -120,7 +120,8 @@ Az ellenségek Hatvanpusztáról indulnak és megpróbálnak eljutni a reptérre
 Tulajdonságaik:
 - induláskor kapnak egy útvonalat,
 - az útvonal a start és a cél között jön létre,
-- az útvonal figyelembe veszi az akadályokat,
+- az útvonal figyelembe veszi az akadályokat és a rácskockás elrendezést,
+- **az akadályok egy-egy rácskockát foglalnak el teljesen**, így az útkeresés ezeket blokkolva kerüli,
 - menet közben az útvonal nem változik,
 - két ütés után eltűnnek.
 
@@ -134,11 +135,14 @@ A loot reprezentálhat különféle vagyontárgyakat, például:
 - egyéb érték.
 
 A loot jellemzői:
-- ellenség megütésekor eshet,
+- ellenség megütésekor esik egy konkrét rácskockába,
+- **egy-egy loot-érték egy rácskockát foglal el**,
 - a pályán korlátozott ideig marad,
 - 5 másodperc után eltűnik,
 - eltűnés előtt villogással jelez,
 - a játékos érintéssel felveszi.
+
+Fontos: a loot és az akadályok rácskocka-alapú elhelyezése világos ütközésdetekciót és pályaolvashatóságot biztosít.
 
 ## 5.4 NVVH leadási pont
 Az NVVH a leadási zóna.
@@ -545,16 +549,16 @@ Az állapotok közötti átmenetek egyszerűek és jól elkülöníthetők, ami 
 
 A HUD minimális, de informatív legyen.
 
-Kötelező elemek:
-- pontszám,
-- inventory telítettség,
-- elszökött ellenségek száma / maximum,
-- játékidő vagy nehézségi szint.
+Kötelező, **prominens elemek**:
+- **Pont**: a jelenlegi pontszám (az eddigi sikeres leadások összege) – nagy, jól látható
+- **Inventory**: hány érték van nála (0/4, 1/4, ... 4/4) – vizuálisan világos, ikonnal vagy szöveggel
+- **Elszökött ellenségek**: hányan jutottak már a reptérre (pl. "3/10") – figyelmeztető hatáson
+- **Játékidő vagy nehézségi szint** – szükség szerint.
 
 Opcionális elemek:
-- rövid üzenet leadáskor,
-- rövid üzenet inventory megtelésekor,
-- rövid figyelmeztetés, ha közel a game over.
+- rövid üzenet leadáskor ("+ 100 pont!"),
+- rövid üzenet inventory megtelésekor ("Inventory megtelt!"),
+- rövid figyelmeztetés, ha közel a game over ("Még 2 ellenség!").
 
 ---
 
@@ -620,4 +624,6 @@ A legfontosabb tervezési előnyök:
 A játék erőssége a letisztult core loop:
 **üldözés → ütés → loot → leadás → pontszerzés**.
 
-Ez jó alapot ad egy gyorsan elkészíthető és később bővíthető HTML-alapú játékhoz.
+A HUD világos megjelenítése (pont, inventory, elszökött ellenségek) és az akadályok/loot rácskocka-alapú elrendezése támogatja az egyértelmű játékélményt.
+
+Ez megfelelő alapot ad egy gyorsan elkészíthető és később bővíthető HTML-alapú játékhoz.
