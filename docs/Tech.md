@@ -1,0 +1,607 @@
+# Heroes of NVVH – Technológiai specifikáció
+
+## 1. Projekt célja és alapvetések
+
+Ez a dokumentum rögzíti a Heroes of NVVH HTML5 játék megvalósításához szükséges technológiai stacket, külső library-kat, build toolsokat és fejlesztési workflow-t.
+
+**Célok:**
+- Gyors, stabil prototípus-fejlesztés,
+- böngészőben futó, könnyen tesztelhető kód,
+- moduláris, kiterjeszthető architektúra,
+- offline-capable (localStorage),
+- könnyű deployment.
+
+---
+
+## 2. Alapválasztások
+
+| Szempont | Választás | Indoklás |
+|---------|----------|----------|
+| **Nyelvv** | TypeScript | Típusbiztonság, jobb IDE támogatás, nagyobb projektek közül tanulható |
+| **Engine** | Phaser 3 | Teljes 2D framework, beépített input/physics/scene/audio, nagyközösség |
+| **Build tool** | Vite | Gyors dev server, optimális production build, natív ES modules |
+| **Test framework** | Vitest | Vite-nal integrálva, gyors, Jest-kompatibilis szintaxis |
+| **Pályatárolás** | JSON (custom) | Egyszerű, könnyen szerkeszthető, gyors loadás |
+| **Deploy** | GitHub Pages | Ingyen hosting direkt a repo-ból |
+| **Verziókezelés** | Git + GitHub | Standard, már beállítva |
+
+---
+
+## 3. Fő technológiák és library-k
+
+### 3.1 Runtime (böngésző)
+
+#### Phaser 3
+- **Verzió:** 3.55+ (legutóbbi stabil)
+- **Telepítés:** `npm install phaser`
+- **Szerepe:** 
+  - 2D sprite rendering,
+  - input management (keyboard, mouse, touch),
+  - physics engine (opcionális, kezdetben nem kell),
+  - scene management,
+  - animations,
+  - audio (opcionális),
+  - timer / tween system.
+- **Docs:** https://phaser.io/docs/3.55
+
+#### TypeScript
+- **Verzió:** 4.9+
+- **Telepítés:** `npm install --save-dev typescript`
+- **Szerepe:**
+  - Típusbiztonság,
+  - IntelliSense az IDE-ben,
+  - Build-time type checking.
+
+### 3.2 Build & Development
+
+#### Vite
+- **Verzió:** 4.x vagy 5.x
+- **Telepítés:** `npm install --save-dev vite`
+- **Config:** `vite.config.ts`
+- **Szerep:**
+  - Dev server (HMR-rel),
+  - TypeScript transpilation,
+  - Asset bundling,
+  - Production minification.
+- **Docs:** https://vitejs.dev
+
+#### Vitest
+- **Verzió:** 0.34+
+- **Telepítés:** `npm install --save-dev vitest happy-dom`
+- **Fájlok:** `*.test.ts` vagy `*.spec.ts`
+- **Szerep:**
+  - Unit test runner,
+  - Gyors feedback loop,
+  - Jest-kompatibilis API.
+- **Docs:** https://vitest.dev
+
+### 3.3 Linting & Code Quality
+
+#### ESLint + Prettier (opcionális, ajánlott)
+- **ESLint:** `npm install --save-dev eslint @typescript-eslint/parser @typescript-eslint/eslint-plugin`
+- **Prettier:** `npm install --save-dev prettier`
+- **Szerep:**
+  - Kódstílus egységesítés,
+  - szintaktikai hibák detektálása.
+
+---
+
+## 4. Projekt mappastruktúra
+
+```
+HeroesOfNVVH/
+├── .git/
+├── docs/
+│   ├── JatekLeiras.md
+│   ├── Vizualitas.md
+│   ├── conceptart01.svg
+│   ├── conceptart02.svg
+│   └── Tech.md (ez a fájl)
+├── src/
+│   ├── index.ts                  # Entry point
+│   ├── scenes/
+│   │   ├── BootScene.ts
+│   │   ├── GameScene.ts
+│   │   ├── UIScene.ts
+│   │   ├── MenuScene.ts
+│   │   ├── GameOverScene.ts
+│   │   └── HelpScene.ts
+│   ├── objects/
+│   │   ├── Player.ts
+│   │   ├── Enemy.ts
+│   │   ├── Loot.ts
+│   │   ├── Obstacle.ts
+│   │   └── Projectile.ts (ha szükséges)
+│   ├── systems/
+│   │   ├── GameState.ts
+│   │   ├── CollisionSystem.ts
+│   │   ├── AudioSystem.ts
+│   │   ├── DifficultyManager.ts
+│   │   └── ScoreManager.ts
+│   ├── utils/
+│   │   ├── Constants.ts
+│   │   ├── GridUtils.ts
+│   │   ├── PathFinding.ts (A* ha szükséges)
+│   │   └── Helpers.ts
+│   ├── types/
+│   │   ├── index.ts
+│   │   └── Game.ts
+│   ├── data/
+│   │   └── maps/
+│   │       ├── level01.json
+│   │       └── config.json
+│   └── assets/
+│       ├── sprites/
+│       │   ├── player.png (sprite sheet vagy SVG)
+│       │   ├── enemies.png
+│       │   ├── loot.png
+│       │   └── ui.png
+│       ├── audio/
+│       │   ├── hit.wav
+│       │   ├── pickup.wav
+│       │   ├── deposit.wav
+│       │   └── ambient.mp3
+│       └── fonts/
+│           └── game-font.ttf (opcionális)
+├── tests/
+│   ├── unit/
+│   │   ├── GridUtils.test.ts
+│   │   ├── GameState.test.ts
+│   │   └── PathFinding.test.ts
+│   └── integration/
+│       └── Game.test.ts
+├── public/
+│   ├── index.html
+│   ├── favicon.ico
+│   └── manifest.json (PWA, opcionális)
+├── vite.config.ts
+├── tsconfig.json
+├── vitest.config.ts (vagy vite.config.ts-ben)
+├── package.json
+├── package-lock.json
+├── .gitignore
+├── README.md
+├── CONTRIBUTING.md
+└── LICENSE (opcionális)
+```
+
+---
+
+## 5. Pályaformátum (JSON)
+
+A 7×6-os pálya egy custom JSON formátumban tárolódik.
+
+### 5.1 level01.json szerkezete
+
+```json
+{
+  "name": "Hatvanpuszta - Reptér",
+  "width": 7,
+  "height": 6,
+  "gridCellSize": 80,
+  "spawnPoint": { "gridX": 0, "gridY": 2 },
+  "goalPoint": { "gridX": 6, "gridY": 2 },
+  "depositPoint": { "gridX": 3, "gridY": 5 },
+  "obstacles": [
+    { "gridX": 2, "gridY": 1, "type": "car" },
+    { "gridX": 4, "gridY": 2, "type": "building" },
+    { "gridX": 1, "gridY": 4, "type": "car" }
+  ],
+  "difficulty": {
+    "initialEnemyCount": 2,
+    "maxEnemies": 8,
+    "spawnInterval": 3000,
+    "gameOverThreshold": 10
+  }
+}
+```
+
+### 5.2 Pályageometria
+
+- A rács **7 oszlop × 6 sor**.
+- Minden cella: `gridCellSize × gridCellSize` pixel.
+- **Trapéz perspektíva:** a felső sori cellák szűkebbek, az alsók szélesebbek (vizuálisan).
+- Az **akadályok egy cellát foglalnak el teljesen**.
+- A **loot-nak is egy cellája van**.
+
+### 5.3 Kódban való felhasználás
+
+```typescript
+// Pálya betöltése
+const levelData = await fetch('/maps/level01.json').then(r => r.json());
+const gridWidth = levelData.width;      // 7
+const gridHeight = levelData.height;    // 6
+const obstacles = levelData.obstacles;  // [...]
+```
+
+---
+
+## 6. Asset Pipeline – Lehetőségek
+
+Mivel az ábrázoláson nem egyforma a vélemény (SVG vs. sprite sheet), három lehetőség:
+
+### Opció A: Sprite Sheets (PNG/WebP) + TextureAtlas
+**Előnyei:**
+- Gyors render performance,
+- könnyű animálás,
+- offline használható.
+
+**Hátrányai:**
+- Asset szerkesztés komplexebb,
+- nagyobb asset fájlméretek,
+- design iteráció lassabb.
+
+**Pipeline:**
+1. Illusztrációk készítése (Aseprite, Krita, Photoshop).
+2. Sprite sheet exportálás.
+3. JSON atlas generálás (TexturePacker vagy saját script).
+4. Phaser-be: `textures.fromURL()` vagy asset preload.
+
+**Közelítő költ:** ~10-20 PNG sprite sheet az összes elementhez.
+
+### Opció B: SVG → Canvas Runtime Rendering
+**Előnyei:**
+- Vektoralapú, skálázható,
+- egyszerűbb szerkesztés iteráció,
+- design konzisztencia.
+
+**Hátrányai:**
+- Lassabb render (spec. sok animated objekt),
+- SVG parse overhead,
+- néhány böngésző compat. probléma.
+
+**Pipeline:**
+1. SVG-k in `/assets/svgs/`.
+2. Runtime: `fetch()` + `fetch().then(r => r.text())`.
+3. Canvas-ba rajzolás vagy Pixi/Phaser cache.
+
+**Közelítő költ:** ~8-12 SVG fájl.
+
+### Opció C: Hybrid – SVG Atlasra Renderelés (Build-time)
+**Előnyei:**
+- SVG rugalmasság + PNG performance,
+- batch rendering.
+
+**Hátrányai:**
+- Build pipeline komplexebb,
+- debug nehezebb.
+
+**Pipeline:**
+1. SVG-k szerkesztése.
+2. Build-time: SVG → PNG sprite sheet konverzió (`node-canvas` vagy `svg2img`).
+3. Phaser atlas-ként.
+
+---
+
+## 7. Audio (opcionális MVP-nél)
+
+### Phaser audio
+- **Telepítés:** már része a Phaser 3-nak.
+- **Formátum:** MP3, OGG, WAV.
+- **Fájlok:**
+  - `hit.wav` (15-30ms)
+  - `pickup.wav` (200-300ms)
+  - `deposit.wav` (300-400ms)
+  - `error.wav` (100ms)
+  - `ambient.mp3` (loop, opcionális).
+
+### Alternatíva: Howler.js
+- Ha Phaser audio probléma.
+- `npm install howler`.
+
+---
+
+## 8. Állapot és perzisztencia
+
+### LocalStorage
+- **High score mentése:** `localStorage.setItem('heroNVVH_highScore', JSON.stringify(scores))`
+- **Beállítások:** hang, nyelv, etc.
+- **Méret:** ~5-50 KB elegendő.
+
+### SessionStorage (opcionális)
+- Aktív game state (ha nincs mentés funkció).
+- Böngésző bezárásánál elvész.
+
+### Phaser GameState plugin
+- Custom event system a Phaser-ben.
+- Könnyű observer pattern implementáció.
+
+---
+
+## 9. Build és Deploy
+
+### 9.1 Vite Build
+
+```bash
+# Development
+npm run dev
+
+# Production build
+npm run build
+
+# Preview production build lokálisan
+npm run preview
+```
+
+### 9.2 GitHub Pages Deploy
+
+Az `vite.config.ts`-ben:
+```typescript
+export default defineConfig({
+  base: '/HeroOfNVVH/',  // Repository neve
+  build: {
+    outDir: 'dist',
+  }
+})
+```
+
+Workflow (GitHub Actions):
+```yaml
+name: Deploy
+on:
+  push:
+    branches: [main]
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - run: npm install
+      - run: npm run build
+      - uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+```
+
+Ez automatikus deploy-t csinál minden `main` branch push-ra.
+
+---
+
+## 10. NPM Scripts (ajánlott)
+
+```json
+{
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
+    "lint": "eslint src --ext ts",
+    "lint:fix": "eslint src --ext ts --fix",
+    "format": "prettier --write src",
+    "type-check": "tsc --noEmit"
+  }
+}
+```
+
+---
+
+## 11. Tesztelési stratégia
+
+### 11.1 Unit Teszt (Vitest)
+
+```typescript
+// tests/unit/GridUtils.test.ts
+import { describe, it, expect } from 'vitest';
+import { gridToPixel, pixelToGrid } from '@/utils/GridUtils';
+
+describe('GridUtils', () => {
+  it('converts grid (0,0) to pixel (40, 40)', () => {
+    const pixel = gridToPixel(0, 0, 80);
+    expect(pixel).toEqual({ x: 40, y: 40 });
+  });
+});
+```
+
+### 11.2 Integration Teszt
+
+```typescript
+// tests/integration/Game.test.ts
+describe('Game Scene', () => {
+  it('loads level01.json and spawns obstacles', async () => {
+    // Phaser game instance, scene test
+  });
+});
+```
+
+### 11.3 E2E (opcionális MVP után)
+
+- **Tool:** Playwright vagy Cypress.
+- **Cél:** Teljes játékmenetet szimulálni.
+
+---
+
+## 12. TypeScript Config
+
+### tsconfig.json
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "resolveJsonModule": true,
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  }
+}
+```
+
+---
+
+## 13. Fejlesztési workflow
+
+### 13.1 Egy-egy feature fejlesztése
+
+```bash
+# 1. Feature branch
+git checkout -b feature/player-movement
+
+# 2. Dev server indítása
+npm run dev
+
+# 3. Teszt írása
+npm test
+
+# 4. Kód: src/objects/Player.ts, stb.
+
+# 5. Build tesztelés
+npm run build
+npm run preview
+
+# 6. Commit
+git add .
+git commit -m "Add player movement with grid-based pathfinding"
+
+# 7. Push és PR
+git push origin feature/player-movement
+# GitHub PR
+
+# 8. Merge main-ba
+```
+
+### 13.2 Release / Deployment
+
+```bash
+# main branch-en
+npm run build
+# GitHub Actions automatikusan deployol GitHub Pages-re
+```
+
+---
+
+## 14. Dependenciák összefoglalása
+
+### Runtime
+- **phaser** (3.55+)
+
+### Dev
+- **typescript** (4.9+)
+- **vite** (4.x vagy 5.x)
+- **vitest** (0.34+)
+- **happy-dom** (vitest-hez)
+- **@typescript-eslint/parser**, **@typescript-eslint/eslint-plugin** (opcionális)
+- **prettier** (opcionális)
+
+### Optional (későbbi iteráció)
+- **howler** (audio fallback)
+- **gsap** (animation tween library)
+- **lodash** (utility functions)
+
+---
+
+## 15. Installer Scripts
+
+### 15.1 Projekt inicializálása
+
+```bash
+# 1. Node.js telepítve van-e?
+node --version
+
+# 2. Új projekt (vagy meglévőbe)
+git clone https://github.com/szakyster/HeroOfNVVH.git
+cd HeroOfNVVH
+
+# 3. Dependencies install
+npm install
+
+# 4. Dev server start
+npm run dev
+
+# Browser: http://localhost:5173
+```
+
+### 15.2 Új csapattag onboarding
+
+```bash
+git clone https://github.com/szakyster/HeroOfNVVH.git
+cd HeroOfNVVH
+npm install
+npm run dev
+# Vagy: npm test
+```
+
+---
+
+## 16. Environment Variables (opcionális)
+
+Ha szükséges:
+```bash
+# .env
+VITE_API_URL=https://api.example.com
+VITE_DEBUG=false
+VITE_VERSION=0.1.0
+```
+
+Vite-ban:
+```typescript
+const apiUrl = import.meta.env.VITE_API_URL;
+```
+
+---
+
+## 17. Közelítő projekt timeline
+
+| Fázis | Tartalom | Becsült idő |
+|-------|----------|-----------|
+| **Setup** | Vite, TS, Phaser init, dummy scene | 1-2 nap |
+| **MVP Core** | Pálya render, játékos, ellenség, loot, HUD | 3-4 nap |
+| **Gameplay** | Input, ütés, collision, pont | 2-3 nap |
+| **Polish** | Animáció, SFX, UI | 2-3 nap |
+| **Testing** | Unit + E2E | 1-2 nap |
+| **Deploy** | GitHub Pages, GitHub Actions | 1 nap |
+| **Dokumentáció** | Code comments, API docs | 1 nap |
+
+**Összes:** ~2-3 hét full-time egy fejlesztőnél.
+
+---
+
+## 18. Pontosításra szoruló kérdések és döntések
+
+A követkeőkről még döntés szükséges:
+
+- [ ] **Asset pipeline:** Sprite sheets (PNG) vagy SVG runtime vagy hybrid?
+- [ ] **Pathfinding library:** Saját implementáció vagy `easystar.js` / `pathfinding`?
+- [ ] **Physics:** Phaser arcade physics vagy saját collision detection?
+- [ ] **Audio:** Phaser audio vagy Howler.js fallback?
+- [ ] **Localization:** Többnyelvű UI vagy csak magyar?
+- [ ] **Analytics:** Telemetria a játékhasználatról?
+- [ ] **PWA:** Offline játék támogatás?
+
+---
+
+## 19. Hivatkozások
+
+- [Phaser 3 Documentation](https://phaser.io/docs/3.55)
+- [Vite Documentation](https://vitejs.dev)
+- [TypeScript Handbook](https://www.typescriptlang.org/docs/)
+- [Vitest Documentation](https://vitest.dev)
+- [GitHub Pages Docs](https://docs.github.com/en/pages)
+
+---
+
+## 20. Összefoglalás
+
+Ez a tech spec egy **gyors, modern, TypeScript-alapú Phaser 3 arcade játék** fejlesztésére készül, amely:
+
+- **Vite-tal** buildelhető és deployható,
+- **Vitest-tel** tesztelhető,
+- **GitHub Pages-en** hostelható,
+- **moduláris, skálázható** kódstruktúrával rendelkezik.
+
+A specifikáció rugalmas marad azáltal, hogy több asset pipeline lehetőséget enged meg, és később könnyű bővítésre alkalmas (további librarykat, toolokat lehet hozzáadni).
+
+**Ajánlott kezdő lépés:** Phaser 3 + Vite projekt template elkészítése, pálya betöltés és alapvető sprite rajzolás.
