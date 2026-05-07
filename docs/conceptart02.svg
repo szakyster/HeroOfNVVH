@@ -1,0 +1,272 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1100" viewBox="0 0 1500 1100" role="img" aria-labelledby="title desc">
+  <title id="title">Heroes of NVVH – Koncept-art v2 (Trapéz perspektíva, Realisztikus karakterek, HUD)</title>
+  <desc id="desc">Frissített koncept-art a Heroes of NVVH játékhoz: perspektívikus trapéz rács, realisztikus emberalakú karakterek, HUD (pont, inventory), rácskocka-alapú loot és akadályok.</desc>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#87ceeb"/>
+      <stop offset="100%" stop-color="#e0f6ff"/>
+    </linearGradient>
+    <linearGradient id="groundBase" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#7a8a96"/>
+      <stop offset="100%" stop-color="#5c6d7a"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="6" stdDeviation="6" flood-opacity="0.3"/>
+    </filter>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="3" stdDeviation="3" flood-opacity="0.2"/>
+    </filter>
+    <style>
+      .label { font: 700 28px 'Segoe UI', Arial, sans-serif; fill: #1a1a1a; }
+      .small { font: 600 16px 'Segoe UI', Arial, sans-serif; fill: #333333; }
+      .hud-label { font: 700 20px 'Segoe UI', Arial, sans-serif; fill: #ffffff; }
+      .hud-value { font: 900 24px 'Segoe UI', Arial, sans-serif; fill: #ffeb3b; stroke: #1a1a1a; stroke-width: 2; paint-order: stroke; }
+      .outline { stroke: #1a1a1a; stroke-width: 3; stroke-linejoin: round; }
+      .gridline { stroke: rgba(255,255,255,0.15); stroke-width: 1.5; }
+      .comic { font: 900 32px 'Segoe UI', Arial, sans-serif; fill: #ffffff; stroke: #1a1a1a; stroke-width: 3; paint-order: stroke; }
+    </style>
+  </defs>
+
+  <rect width="1500" height="1100" fill="url(#sky)"/>
+
+  <g opacity="0.6">
+    <rect x="0" y="700" width="1500" height="400" fill="#8ba893" opacity="0.8"/>
+    <ellipse cx="200" cy="850" rx="180" ry="80" fill="#6d9370" opacity="0.6"/>
+    <ellipse cx="1300" cy="880" rx="200" ry="100" fill="#6d9370" opacity="0.6"/>
+  </g>
+
+  <!-- Pálya: trapéz perspektívikus rács -->
+  <g transform="translate(150 140)" filter="url(#shadow)">
+    <!-- Pálya háttere (trapéz forma) -->
+    <polygon points="0,520 40,0 1200,0 1240,520" fill="#7a8fa3"/>
+    
+    <!-- Aszfaltozás textúra -->
+    <polygon points="0,520 40,0 1200,0 1240,520" fill="url(#groundBase)"/>
+    
+    <!-- Finom rácsvonalak (trapéz) -->
+    <g opacity="0.25">
+      <!-- Vertikális rácsvonalak (szűküléssel) -->
+      <line class="gridline" x1="40" y1="0" x2="40" y2="520" stroke-width="1"/>
+      <line class="gridline" x1="215.7" y1="0" x2="234.3" y2="520" stroke-width="1"/>
+      <line class="gridline" x1="391.4" y1="0" x2="428.6" y2="520" stroke-width="1"/>
+      <line class="gridline" x1="567.1" y1="0" x2="622.9" y2="520" stroke-width="1"/>
+      <line class="gridline" x1="742.8" y1="0" x2="817.2" y2="520" stroke-width="1"/>
+      <line class="gridline" x1="918.5" y1="0" x2="1011.5" y2="520" stroke-width="1"/>
+      <line class="gridline" x1="1094.2" y1="0" x2="1205.8" y2="520" stroke-width="1"/>
+      <line class="gridline" x1="1240" y1="520" x2="1240" y2="520"/>
+      
+      <!-- Horizontális rácsvonalak (trapéz) -->
+      <line class="gridline" x1="40" y1="0" x2="1200" y2="0"/>
+      <line class="gridline" x1="55" y1="86.67" x2="1185" y2="86.67"/>
+      <line class="gridline" x1="70" y1="173.33" x2="1170" y2="173.33"/>
+      <line class="gridline" x1="85" y1="260" x2="1155" y2="260"/>
+      <line class="gridline" x1="100" y1="346.67" x2="1140" y2="346.67"/>
+      <line class="gridline" x1="120" y1="433.33" x2="1120" y2="433.33"/>
+      <line class="gridline" x1="140" y1="520" x2="1100" y2="520"/>
+    </g>
+
+    <!-- Акадályok (egy egész rácskockát foglalnak el) -->
+    
+    <!-- Autó 1 (felülnézet, oldalnézes érzés) -->
+    <g transform="translate(320 140)">
+      <ellipse cx="60" cy="75" rx="50" ry="18" fill="#2c3e50" opacity="0.3"/>
+      <rect class="outline" x="10" y="25" width="100" height="70" rx="12" fill="#e74c3c"/>
+      <rect x="20" y="35" width="80" height="28" rx="8" fill="#ecf0f1" stroke="#1a1a1a" stroke-width="2"/>
+      <circle cx="30" cy="95" r="12" fill="#2c3e50"/>
+      <circle cx="90" cy="95" r="12" fill="#2c3e50"/>
+      <rect x="40" y="5" width="40" height="18" rx="6" fill="#e67e22" stroke="#1a1a1a" stroke-width="2"/>
+    </g>
+
+    <!-- Ház 1 (felülnézet) -->
+    <g transform="translate(650 180)">
+      <ellipse cx="65" cy="85" rx="60" ry="20" fill="#2c3e50" opacity="0.25"/>
+      <rect class="outline" x="0" y="30" width="130" height="85" rx="8" fill="#d4a76a"/>
+      <polygon points="0,30 65,0 130,30 130,115 0,115" fill="#b8860b" stroke="#1a1a1a" stroke-width="3" stroke-linejoin="round"/>
+      <rect x="15" y="50" width="25" height="22" rx="3" fill="#87ceeb" stroke="#1a1a1a" stroke-width="2"/>
+      <rect x="55" y="50" width="25" height="22" rx="3" fill="#87ceeb" stroke="#1a1a1a" stroke-width="2"/>
+      <rect x="95" y="50" width="25" height="22" rx="3" fill="#87ceeb" stroke="#1a1a1a" stroke-width="2"/>
+      <rect x="50" y="80" width="30" height="35" rx="3" fill="#8b4513" stroke="#1a1a1a" stroke-width="2"/>
+    </g>
+
+    <!-- Autó 2 (másik pozícióban) -->
+    <g transform="translate(880 300)">
+      <ellipse cx="55" cy="70" rx="48" ry="16" fill="#2c3e50" opacity="0.3"/>
+      <rect class="outline" x="5" y="20" width="100" height="68" rx="12" fill="#3498db"/>
+      <rect x="15" y="30" width="80" height="26" rx="8" fill="#ecf0f1" stroke="#1a1a1a" stroke-width="2"/>
+      <circle cx="25" cy="88" r="11" fill="#2c3e50"/>
+      <circle cx="85" cy="88" r="11" fill="#2c3e50"/>
+      <rect x="40" y="2" width="40" height="16" rx="6" fill="#e67e22" stroke="#1a1a1a" stroke-width="2"/>
+    </g>
+
+    <!-- LOOT elemek (egy-egy rácskockában) -->
+    
+    <!-- Arany érték -->
+    <g transform="translate(280 340)" filter="url(#softShadow)">
+      <ellipse cx="25" cy="50" rx="28" ry="9" fill="#2c3e50" opacity="0.25"/>
+      <rect x="8" y="18" width="34" height="30" rx="4" fill="#ffd700" stroke="#1a1a1a" stroke-width="3"/>
+      <rect x="14" y="6" width="22" height="14" rx="3" fill="#ffed4e" stroke="#1a1a1a" stroke-width="2"/>
+      <circle cx="25" cy="13" r="2" fill="#fff"/>
+    </g>
+
+    <!-- Pénz érték -->
+    <g transform="translate(520 250)" filter="url(#softShadow)">
+      <ellipse cx="20" cy="40" rx="24" ry="8" fill="#2c3e50" opacity="0.25"/>
+      <circle cx="20" cy="20" r="14" fill="#27ae60" stroke="#1a1a1a" stroke-width="3"/>
+      <text x="20" y="26" text-anchor="middle" font-size="18" font-weight="bold" fill="#ffffff">$</text>
+    </g>
+
+    <!-- Luxusautó ikonja -->
+    <g transform="translate(750 370)" filter="url(#softShadow)">
+      <ellipse cx="35" cy="55" rx="40" ry="12" fill="#2c3e50" opacity="0.2"/>
+      <rect class="outline" x="5" y="25" width="60" height="40" rx="8" fill="#e74c3c"/>
+      <rect x="12" y="32" width="46" height="16" rx="6" fill="#ecf0f1" stroke="#1a1a1a" stroke-width="2"/>
+      <circle cx="20" cy="65" r="8" fill="#2c3e50"/>
+      <circle cx="50" cy="65" r="8" fill="#2c3e50"/>
+    </g>
+
+    <!-- KARAKTEREK -->
+
+    <!-- Játékos (realisztikus emberalakú) -->
+    <g transform="translate(420 420)" filter="url(#softShadow)">
+      <ellipse cx="30" cy="70" rx="35" ry="12" fill="#2c3e50" opacity="0.3"/>
+      
+      <!-- Fej -->
+      <circle class="outline" cx="30" cy="12" r="16" fill="#d4a574"/>
+      <!-- Arc vonások -->
+      <circle cx="25" cy="10" r="2" fill="#1a1a1a"/>
+      <circle cx="35" cy="10" r="2" fill="#1a1a1a"/>
+      <line x1="27" y1="16" x2="33" y2="16" stroke="#1a1a1a" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M 30 17 Q 30 19 28 20" stroke="#1a1a1a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      
+      <!-- Törzs -->
+      <rect class="outline" x="12" y="28" width="36" height="32" rx="10" fill="#1e90ff"/>
+      
+      <!-- Karok -->
+      <rect x="6" y="35" width="8" height="28" rx="4" fill="#d4a574" stroke="#1a1a1a" stroke-width="2"/>
+      <rect x="46" y="35" width="8" height="28" rx="4" fill="#d4a574" stroke="#1a1a1a" stroke-width="2"/>
+      
+      <!-- Lábak -->
+      <rect x="18" y="60" width="8" height="20" rx="4" fill="#34495e" stroke="#1a1a1a" stroke-width="2"/>
+      <rect x="34" y="60" width="8" height="20" rx="4" fill="#34495e" stroke="#1a1a1a" stroke-width="2"/>
+      
+      <!-- Cipő -->
+      <rect x="16" y="80" width="12" height="6" rx="2" fill="#2c3e50" stroke="#1a1a1a" stroke-width="1.5"/>
+      <rect x="32" y="80" width="12" height="6" rx="2" fill="#2c3e50" stroke="#1a1a1a" stroke-width="1.5"/>
+      
+      <!-- Support/backpack -->
+      <rect x="10" y="32" width="4" height="24" fill="#16a085" opacity="0.8"/>
+    </g>
+
+    <!-- Ellenség 1 (realisztikus emberalakú, szomorú/pánikó arc) -->
+    <g transform="translate(180 380)" filter="url(#softShadow)">
+      <ellipse cx="28" cy="68" rx="32" ry="11" fill="#2c3e50" opacity="0.3"/>
+      
+      <!-- Fej -->
+      <circle class="outline" cx="28" cy="14" r="14" fill="#c9a876"/>
+      <!-- Arc vonások - pánik -->
+      <circle cx="23" cy="12" r="2" fill="#1a1a1a"/>
+      <circle cx="33" cy="12" r="2" fill="#1a1a1a"/>
+      <path d="M 25 17 Q 28 19 31 17" stroke="#1a1a1a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <path d="M 26 10 Q 28 9 30 10" stroke="#e74c3c" stroke-width="1" fill="none" stroke-linecap="round"/>
+      
+      <!-- Törzs -->
+      <rect class="outline" x="10" y="28" width="36" height="30" rx="10" fill="#e74c3c"/>
+      
+      <!-- Karok (mozgás hatása) -->
+      <rect x="4" y="32" width="7" height="26" rx="3" fill="#c9a876" stroke="#1a1a1a" stroke-width="2" transform="rotate(-25 7.5 45)"/>
+      <rect x="49" y="32" width="7" height="26" rx="3" fill="#c9a876" stroke="#1a1a1a" stroke-width="2" transform="rotate(25 52.5 45)"/>
+      
+      <!-- Lábak -->
+      <rect x="16" y="58" width="7" height="18" rx="3" fill="#3c3c3c" stroke="#1a1a1a" stroke-width="1.5"/>
+      <rect x="35" y="58" width="7" height="18" rx="3" fill="#3c3c3c" stroke="#1a1a1a" stroke-width="1.5"/>
+      
+      <!-- Cipő -->
+      <rect x="15" y="76" width="10" height="5" rx="2" fill="#1a1a1a"/>
+      <rect x="34" y="76" width="10" height="5" rx="2" fill="#1a1a1a"/>
+    </g>
+
+    <!-- Ellenség 2 (futó figura) -->
+    <g transform="translate(590 310)" filter="url(#softShadow)">
+      <ellipse cx="26" cy="62" rx="30" ry="10" fill="#2c3e50" opacity="0.3"/>
+      
+      <!-- Fej -->
+      <circle class="outline" cx="26" cy="12" r="13" fill="#d4a876"/>
+      <!-- Arc vonások - félelem/sietség -->
+      <circle cx="21" cy="11" r="1.5" fill="#1a1a1a"/>
+      <circle cx="31" cy="11" r="1.5" fill="#1a1a1a"/>
+      <path d="M 23 15 Q 26 17 29 15" stroke="#1a1a1a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <path d="M 22 9 L 30 8" stroke="#ff6b6b" stroke-width="1" stroke-linecap="round"/>
+      
+      <!-- Törzs -->
+      <rect class="outline" x="8" y="25" width="36" height="28" rx="9" fill="#9b59b6"/>
+      
+      <!-- Karok (futó mozgás) -->
+      <rect x="2" y="28" width="6" height="24" rx="3" fill="#d4a876" stroke="#1a1a1a" stroke-width="1.5" transform="rotate(-35 5 40)"/>
+      <rect x="48" y="28" width="6" height="24" rx="3" fill="#d4a876" stroke="#1a1a1a" stroke-width="1.5" transform="rotate(35 51 40)"/>
+      
+      <!-- Lábak (futó pozíció) -->
+      <rect x="14" y="53" width="6" height="16" rx="3" fill="#3c3c3c" stroke="#1a1a1a" stroke-width="1.5" transform="rotate(-25 17 60)"/>
+      <rect x="32" y="53" width="6" height="16" rx="3" fill="#3c3c3c" stroke="#1a1a1a" stroke-width="1.5" transform="rotate(25 35 60)"/>
+    </g>
+
+    <!-- Üzenet/effekt -->
+    <text x="550" y="620" class="comic" text-anchor="middle" opacity="0.8">! !</text>
+  </g>
+
+  <!-- HUD Panel (felül) -->
+  <rect x="20" y="20" width="1460" height="90" rx="16" fill="#2c3e50" stroke="#1a1a1a" stroke-width="3" opacity="0.92"/>
+  
+  <!-- Pontszám -->
+  <g transform="translate(50 50)">
+    <text class="hud-label">Pont:</text>
+    <text class="hud-value" x="0" y="35">2850</text>
+  </g>
+  
+  <!-- Inventory -->
+  <g transform="translate(400 50)">
+    <text class="hud-label">Inventory:</text>
+    <g transform="translate(0 25)">
+      <!-- Inventory slot background -->
+      <rect x="0" y="0" width="40" height="35" rx="6" fill="#34495e" stroke="#1a1a1a" stroke-width="2"/>
+      <text x="20" y="23" font-size="16" font-weight="bold" fill="#ffeb3b" text-anchor="middle">🪙</text>
+      <text x="20" y="50" font-size="14" font-weight="bold" fill="#ffffff" text-anchor="middle">2/4</text>
+    </g>
+  </g>
+  
+  <!-- Elszökött ellenségek -->
+  <g transform="translate(750 50)">
+    <text class="hud-label">Reptérre érkeztek:</text>
+    <text class="hud-value" x="0" y="35">3/6</text>
+  </g>
+  
+  <!-- Wave/Level indikátor -->
+  <g transform="translate(1150 50)">
+    <text class="hud-label">Hullám:</text>
+    <text class="hud-value" x="0" y="35">2</text>
+  </g>
+
+  <!-- Legendae/Info (lent) -->
+  <g transform="translate(50 1000)">
+    <text class="small" style="font-weight: bold;">7×6 trapéz rács • Realisztikus karakterek • HUD rendszer • Rácskocka-alapú elhelyezés</text>
+    <text class="small" style="fill: #666; margin-top: 5px;" y="25">Perspektívikus oldalnézet, fix karakterméret • Egy rácskocka = egy blokk (akadály/loot)</text>
+  </g>
+
+  <!-- Feliratok a pálya mellett -->
+  <g transform="translate(1320 200)">
+    <rect x="0" y="0" width="140" height="80" rx="10" fill="#f39c12" stroke="#1a1a1a" stroke-width="2" opacity="0.9"/>
+    <text x="70" y="28" text-anchor="middle" class="small" style="font-weight: bold;">REPTÉR</text>
+    <text x="70" y="52" text-anchor="middle" class="small" style="font-size: 14px;">Cél: Ellenség</text>
+  </g>
+
+  <g transform="translate(1320 750)">
+    <rect x="0" y="0" width="140" height="80" rx="10" fill="#27ae60" stroke="#1a1a1a" stroke-width="2" opacity="0.9"/>
+    <text x="70" y="28" text-anchor="middle" class="small" style="font-weight: bold;">NVVH</text>
+    <text x="70" y="52" text-anchor="middle" class="small" style="font-size: 14px;">Leadási pont</text>
+  </g>
+
+  <g transform="translate(-130 350)">
+    <rect x="0" y="0" width="140" height="80" rx="10" fill="#e74c3c" stroke="#1a1a1a" stroke-width="2" opacity="0.9"/>
+    <text x="70" y="28" text-anchor="middle" class="small" style="font-weight: bold;">Hatvanpuszta</text>
+    <text x="70" y="52" text-anchor="middle" class="small" style="font-size: 14px;">Spawn pont</text>
+  </g>
+</svg>
