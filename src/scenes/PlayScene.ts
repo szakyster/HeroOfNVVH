@@ -64,9 +64,13 @@ export class PlayScene extends Phaser.Scene {
 
   private activeEnemies: ActiveEnemy[] = [];
 
+  private waveNumber = 1;
+
   private spawnedEnemies = 0;
 
-  private readonly targetEnemyCount = 4;
+  private get targetEnemyCount(): number {
+    return Math.min(this.waveNumber + 1, 8);
+  }
 
   constructor() {
     super(SCENE_KEYS.PLAY);
@@ -148,7 +152,7 @@ export class PlayScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     this.enemyInfoText = this.add
-      .text(width / 2, 122, 'Enemy wave: inicializalas...', {
+      .text(width / 2, height - 88, 'Enemy wave: inicializalas...', {
         fontFamily: 'Verdana',
         fontSize: '18px',
         color: '#ffb703',
@@ -260,19 +264,27 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private startEnemyWave(level: LevelData): void {
-    this.spawnedEnemies = 0;
-    this.enemyInfoText?.setText(`Enemy wave: 0/${this.targetEnemyCount}`);
+    const waveWindow = 10_000;
+    const count = this.targetEnemyCount;
 
-    this.time.addEvent({
-      delay: 1300,
-      repeat: this.targetEnemyCount - 1,
-      callback: () => {
+    this.spawnedEnemies = 0;
+    this.enemyInfoText?.setText(`${this.waveNumber}. hullam: 0/${count} ellenfel`);
+
+    for (let i = 0; i < count; i++) {
+      const baseDelay = (i / count) * waveWindow;
+      const randomExtra = Math.random() * 2000;
+      this.time.delayedCall(baseDelay + randomExtra, () => {
         const spawned = this.spawnEnemy(level);
         if (spawned) {
           this.spawnedEnemies += 1;
-          this.enemyInfoText?.setText(`Enemy wave: ${this.spawnedEnemies}/${this.targetEnemyCount}`);
+          this.enemyInfoText?.setText(`${this.waveNumber}. hullam: ${this.spawnedEnemies}/${count} ellenfel`);
         }
-      },
+      });
+    }
+
+    this.time.delayedCall(waveWindow, () => {
+      this.waveNumber += 1;
+      this.startEnemyWave(level);
     });
   }
 
