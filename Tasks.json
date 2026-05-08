@@ -4,7 +4,7 @@
       "id": 1,
       "name": "Project Bootstrap",
       "description": "Set up Phaser 3 + TypeScript + Vite + Vitest project structure with proper tooling and configurations. Reference: D-001 (Phaser 3), D-002 (TypeScript), D-003 (Vite), D-004 (Vitest)",
-      "status": "ready"
+      "status": "in-progress"
     },
     {
       "id": 2,
