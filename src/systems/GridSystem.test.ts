@@ -43,6 +43,18 @@ describe('GridSystem', () => {
     expect(center.y).toBeLessThan(polygon[2].y);
   });
 
+  it('returns a bounding box for a cell', () => {
+    const bounds = grid.cellBounds({ x: 2, y: 2 }, 4);
+
+    expect(bounds.width).toBeGreaterThan(0);
+    expect(bounds.height).toBeGreaterThan(0);
+  });
+
+  it('knows whether a point is inside the global play area', () => {
+    expect(grid.containsPoint({ x: 512, y: 384 })).toBe(true);
+    expect(grid.containsPoint({ x: 20, y: 20 })).toBe(false);
+  });
+
   it('throws when cell is outside bounds', () => {
     expect(() => grid.toScreen({ x: 99, y: 0 })).toThrow(/out of bounds/i);
   });

@@ -28,7 +28,7 @@
       "id": 5,
       "name": "Player Movement & Collision",
       "description": "Implement player character with keyboard input controls and collision detection against obstacles. Use custom collision provider interface. Reference: D-014 (Collision Architecture), JatekLeiras.md section 6.1",
-      "status": "ready"
+      "status": "in-progress"
     },
     {
       "id": 6,

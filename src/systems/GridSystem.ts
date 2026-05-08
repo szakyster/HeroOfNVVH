@@ -8,6 +8,13 @@ export type ScreenPoint = {
   y: number;
 };
 
+export type ScreenRect = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
 export type GridConfig = {
   columns: number;
   rows: number;
@@ -91,6 +98,58 @@ export class GridSystem {
       x: (polygon[0].x + polygon[1].x + polygon[2].x + polygon[3].x) / 4,
       y: (polygon[0].y + polygon[1].y + polygon[2].y + polygon[3].y) / 4,
     };
+  }
+
+  cellBounds(cell: GridCell, inset = 0): ScreenRect {
+    const polygon = this.cellPolygon(cell);
+    const xValues = polygon.map((point) => point.x);
+    const yValues = polygon.map((point) => point.y);
+    const minX = Math.min(...xValues) + inset;
+    const maxX = Math.max(...xValues) - inset;
+    const minY = Math.min(...yValues) + inset;
+    const maxY = Math.max(...yValues) - inset;
+
+    return {
+      x: minX,
+      y: minY,
+      width: Math.max(0, maxX - minX),
+      height: Math.max(0, maxY - minY),
+    };
+  }
+
+  playAreaPolygon(): [ScreenPoint, ScreenPoint, ScreenPoint, ScreenPoint] {
+    const topEdge = this.interpolateEdge(0);
+    const bottomEdge = this.interpolateEdge(1);
+
+    return [
+      { x: topEdge.leftX, y: topEdge.y },
+      { x: topEdge.rightX, y: topEdge.y },
+      { x: bottomEdge.rightX, y: bottomEdge.y },
+      { x: bottomEdge.leftX, y: bottomEdge.y },
+    ];
+  }
+
+  containsPoint(point: ScreenPoint): boolean {
+    const polygon = this.playAreaPolygon();
+    let isInside = false;
+
+    for (let current = 0, previous = polygon.length - 1; current < polygon.length; previous = current++) {
+      const currentPoint = polygon[current];
+      const previousPoint = polygon[previous];
+
+      const intersects =
+        currentPoint.y > point.y !== previousPoint.y > point.y &&
+        point.x <
+          ((previousPoint.x - currentPoint.x) * (point.y - currentPoint.y)) /
+            (previousPoint.y - currentPoint.y) +
+            currentPoint.x;
+
+      if (intersects) {
+        isInside = !isInside;
+      }
+    }
+
+    return isInside;
   }
 
   allCells(): GridCell[] {
