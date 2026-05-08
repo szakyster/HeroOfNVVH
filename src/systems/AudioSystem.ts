@@ -6,6 +6,7 @@ export { AUDIO_KEYS } from './AudioProfiles';
 export interface IAudioService {
   playSfx(key: string): void;
   playMusic(key: string, loop?: boolean): void;
+  fadeOutMusic(durationMs?: number, onComplete?: () => void): void;
   stopMusic(): void;
   setMasterVolume(value: number): void;
   setMuted(muted: boolean): void;
@@ -25,6 +26,8 @@ export class PhaserAudioService implements IAudioService {
   private currentMusicSound?: Phaser.Sound.BaseSound;
 
   private synthMusicNodes?: SynthMusicNodes;
+
+  private musicFadeInterval?: ReturnType<typeof setInterval>;
 
   private masterVolume = 0.35;
 
@@ -64,7 +67,35 @@ export class PhaserAudioService implements IAudioService {
     this.playSynthMusic(key, loop);
   }
 
+  fadeOutMusic(durationMs = 800, onComplete?: () => void): void {
+    this.clearMusicFade();
+
+    if (!this.currentMusicSound && !this.synthMusicNodes) {
+      onComplete?.();
+      return;
+    }
+
+    const steps = 10;
+    const stepDurationMs = Math.max(16, Math.floor(durationMs / steps));
+    let currentStep = 0;
+
+    this.musicFadeInterval = globalThis.setInterval(() => {
+      currentStep += 1;
+      const progress = Math.max(0, 1 - currentStep / steps);
+      this.setCurrentMusicVolume(progress);
+
+      if (currentStep < steps) {
+        return;
+      }
+
+      this.clearMusicFade();
+      this.stopMusic();
+      onComplete?.();
+    }, stepDurationMs);
+  }
+
   stopMusic(): void {
+    this.clearMusicFade();
     this.currentMusicSound?.stop();
     this.currentMusicSound?.destroy();
     this.currentMusicSound = undefined;
@@ -197,6 +228,38 @@ export class PhaserAudioService implements IAudioService {
       0.04,
     );
   }
+
+  private setCurrentMusicVolume(multiplier: number): void {
+    const normalizedMultiplier = Phaser.Math.Clamp(multiplier, 0, 1);
+
+    if (this.currentMusicSound) {
+      this.currentMusicSound.setVolume(this.getEffectiveVolume(0.35 * normalizedMultiplier));
+    }
+
+    if (!this.synthMusicNodes) {
+      return;
+    }
+
+    const context = this.getContext();
+    if (!context) {
+      return;
+    }
+
+    this.synthMusicNodes.gainNode.gain.setTargetAtTime(
+      this.getEffectiveVolume(this.synthMusicNodes.baseGain * normalizedMultiplier),
+      context.currentTime,
+      0.04,
+    );
+  }
+
+  private clearMusicFade(): void {
+    if (!this.musicFadeInterval) {
+      return;
+    }
+
+    globalThis.clearInterval(this.musicFadeInterval);
+    this.musicFadeInterval = undefined;
+  }
 }
 
 export class AudioSystem {
@@ -208,6 +271,10 @@ export class AudioSystem {
 
   playMusic(key: string, loop = true): void {
     this.service.playMusic(key, loop);
+  }
+
+  fadeOutMusic(durationMs = 800, onComplete?: () => void): void {
+    this.service.fadeOutMusic(durationMs, onComplete);
   }
 
   stopMusic(): void {

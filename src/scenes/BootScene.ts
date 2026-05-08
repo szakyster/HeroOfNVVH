@@ -1,10 +1,14 @@
 import Phaser from 'phaser';
-import { getAudioSystem } from '../systems/AudioSystem';
+import { AUDIO_KEYS, getAudioSystem } from '../systems/AudioSystem';
 import { SCENE_KEYS } from './sceneKeys';
 
 export class BootScene extends Phaser.Scene {
   constructor() {
     super(SCENE_KEYS.BOOT);
+  }
+
+  preload(): void {
+    this.load.audio(AUDIO_KEYS.AMBIENT, ['assets/audio/The Hero.mp3']);
   }
 
   create(): void {

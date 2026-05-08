@@ -262,8 +262,7 @@ export class PlayScene extends Phaser.Scene {
       });
 
     this.input.keyboard?.on('keydown-G', () => {
-      const currentScore = this.registry.get('score') ?? 0;
-      this.scene.start(SCENE_KEYS.GAME_OVER, { score: currentScore });
+      this.triggerGameOver();
     });
   }
 
@@ -929,9 +928,10 @@ export class PlayScene extends Phaser.Scene {
     }
 
     this.isGameOver = true;
-    this.audioSystem?.stopMusic();
     this.audioSystem?.playSfx(AUDIO_KEYS.ERROR);
     const currentScore = this.registry.get('score') ?? 0;
-    this.scene.start(SCENE_KEYS.GAME_OVER, { score: currentScore });
+    this.audioSystem?.fadeOutMusic(900, () => {
+      this.scene.start(SCENE_KEYS.GAME_OVER, { score: currentScore });
+    });
   }
 }
