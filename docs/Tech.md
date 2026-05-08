@@ -22,6 +22,7 @@ Ez a dokumentum rögzíti a Heroes of NVVH HTML5 játék megvalósításához sz
 | **Build tool** | Vite | Gyors dev server, optimális production build, natív ES modules |
 | **Test framework** | Vitest | Vite-nal integrálva, gyors, Jest-kompatibilis szintaxis |
 | **Pályatárolás** | JSON (custom) | Egyszerű, könnyen szerkeszthető, gyors loadás |
+| **Collision detection** | Saját, cserélhető abstraction mögött | MVP-re egyszerű rectangle alapú logika, később lecserélhető |
 | **Deploy** | GitHub Pages | Ingyen hosting direkt a repo-ból |
 | **Verziókezelés** | Git + GitHub | Standard, már beállítva |
 
@@ -115,6 +116,8 @@ HeroesOfNVVH/
 │   ├── systems/
 │   │   ├── GameState.ts
 │   │   ├── CollisionSystem.ts
+│   │   ├── ICollisionProvider.ts
+│   │   ├── SimpleCollisionProvider.ts
 │   │   ├── AudioSystem.ts
 │   │   ├── DifficultyManager.ts
 │   │   └── ScoreManager.ts
@@ -152,8 +155,7 @@ HeroesOfNVVH/
 │       └── Game.test.ts
 ├── public/
 │   ├── index.html
-│   ├── favicon.ico
-│   └── manifest.json (PWA, opcionális)
+│   └── favicon.ico
 ├── vite.config.ts
 ├── tsconfig.json
 ├── vitest.config.ts (vagy vite.config.ts-ben)
@@ -216,11 +218,9 @@ const obstacles = levelData.obstacles;  // [...]
 
 ---
 
-## 6. Asset Pipeline – Lehetőségek
+## 6. Asset Pipeline
 
-Mivel az ábrázoláson nem egyforma a vélemény (SVG vs. sprite sheet), három lehetőség:
-
-### Opció A: Sprite Sheets (PNG/WebP) + TextureAtlas
+### 6.1 Választott megoldás: Sprite Sheets (PNG/WebP) + TextureAtlas
 **Előnyei:**
 - Gyors render performance,
 - könnyű animálás,
@@ -239,7 +239,14 @@ Mivel az ábrázoláson nem egyforma a vélemény (SVG vs. sprite sheet), három
 
 **Közelítő költ:** ~10-20 PNG sprite sheet az összes elementhez.
 
-### Opció B: SVG → Canvas Runtime Rendering
+**Miért ez a döntés:**
+- Az akciójáték-jelleg miatt gyors, késleltetés nélküli mozgásra és animációra van szükség.
+- A játék aktív backend és folyamatos letöltés nélkül is működjön.
+- Az előre csomagolt sprite atlas kisebb runtime költséget jelent, mint az SVG runtime feldolgozás.
+
+### 6.2 Nem választott alternatívák
+
+#### Opció B: SVG → Canvas Runtime Rendering
 **Előnyei:**
 - Vektoralapú, skálázható,
 - egyszerűbb szerkesztés iteráció,
@@ -273,9 +280,9 @@ Mivel az ábrázoláson nem egyforma a vélemény (SVG vs. sprite sheet), három
 
 ---
 
-## 7. Audio (opcionális MVP-nél)
+## 7. Audio
 
-### Phaser audio
+### 7.1 Választott megoldás: Phaser audio wrapper mögött
 - **Telepítés:** már része a Phaser 3-nak.
 - **Formátum:** MP3, OGG, WAV.
 - **Fájlok:**
@@ -285,8 +292,35 @@ Mivel az ábrázoláson nem egyforma a vélemény (SVG vs. sprite sheet), három
   - `error.wav` (100ms)
   - `ambient.mp3` (loop, opcionális).
 
-### Alternatíva: Howler.js
-- Ha Phaser audio probléma.
+**Miért ez a döntés:**
+- az MVP hangigénye egyszerű,
+- nincs szükség külön audio dependency-re induláskor,
+- jól illeszkedik a Phaser scene-alapú architektúrához.
+
+### 7.2 Audio architektúra
+
+Az audio kezelést nem közvetlenül a Phaser scene-ekbe kell írni, hanem egy cserélhető szolgáltatás mögé.
+
+```typescript
+export interface IAudioService {
+  playSfx(key: string): void;
+  playMusic(key: string, loop?: boolean): void;
+  stopMusic(): void;
+  setMasterVolume(value: number): void;
+  setMuted(muted: boolean): void;
+}
+```
+
+Első implementáció:
+- `PhaserAudioService`
+
+Lehetséges későbbi csere:
+- `HowlerAudioService`
+
+Így a játékmeneti logika és a UI nem kötődik közvetlenül a Phaser audio API-hoz.
+
+### 7.3 Alternatíva: Howler.js
+- Csak akkor szükséges, ha később bonyolultabb hangkezelés vagy kompatibilitási probléma merül fel.
 - `npm install howler`.
 
 ---
@@ -305,6 +339,39 @@ Mivel az ábrázoláson nem egyforma a vélemény (SVG vs. sprite sheet), három
 ### Phaser GameState plugin
 - Custom event system a Phaser-ben.
 - Könnyű observer pattern implementáció.
+
+---
+
+## 8.5 Collision architektúra
+
+A választott megoldás egy **saját rectangle-alapú collision detection**, de nem közvetlenül a scene-ekbe drótozva, hanem cserélhető szolgáltatásként.
+
+### Cél
+- MVP-ben egyszerű és átlátható implementáció,
+- később lecserélhető legyen más megoldásra,
+- a játékmeneti logika ne függjön közvetlenül Phaser physics API-tól.
+
+### Javasolt szerkezet
+
+```typescript
+export interface ICollisionProvider {
+  overlaps(a: Rect, b: Rect): boolean;
+  collidesWithObstacles(rect: Rect, obstacles: Rect[]): boolean;
+  queryLootPickup(playerRect: Rect, lootRects: Rect[]): number[];
+  queryZoneOverlap(rect: Rect, zones: Rect[]): string[];
+}
+```
+
+Első implementáció:
+- `SimpleCollisionProvider`
+- axis-aligned rectangle overlap ellenőrzések
+- külön kezelés player / enemy / loot / zóna típusokra
+
+Későbbi lehetséges csere:
+- `PhaserArcadeCollisionProvider`
+- azonos interfészt megvalósítva
+
+Így a `GameScene`, `Player`, `EnemyManager` és más rendszerek nem a konkrét collision motorhoz kötődnek, hanem csak az interfészhez.
 
 ---
 
@@ -569,17 +636,11 @@ const apiUrl = import.meta.env.VITE_API_URL;
 
 ---
 
-## 18. Pontosításra szoruló kérdések és döntések
+## 18. További technikai megjegyzések
 
-A követkeőkről még döntés szükséges:
-
-- [ ] **Asset pipeline:** Sprite sheets (PNG) vagy SVG runtime vagy hybrid?
-- [ ] **Pathfinding library:** Saját implementáció vagy `easystar.js` / `pathfinding`?
-- [ ] **Physics:** Phaser arcade physics vagy saját collision detection?
-- [ ] **Audio:** Phaser audio vagy Howler.js fallback?
-- [ ] **Localization:** Többnyelvű UI vagy csak magyar?
-- [ ] **Analytics:** Telemetria a játékhasználatról?
-- [ ] **PWA:** Offline játék támogatás?
+- A játék statikus fájlkiszolgálással futtatható.
+- Nincs szükség aktív backend folyamatra.
+- Nem készül service worker vagy PWA offline réteg az első verzióhoz.
 
 ---
 
