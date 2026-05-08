@@ -296,13 +296,7 @@ export class PlayScene extends Phaser.Scene {
       return false;
     }
 
-    const path = this.pathfinder.findPath(
-      level.grid.width,
-      level.grid.height,
-      spawnCell,
-      goalCell,
-      level.obstacles,
-    );
+    const path = this.buildEnemyPath(level, spawnCell, goalCell);
 
     if (!path || path.length === 0) {
       return false;
@@ -325,6 +319,77 @@ export class PlayScene extends Phaser.Scene {
     });
 
     return true;
+  }
+
+  private buildEnemyPath(level: LevelData, spawnCell: GridCell, goalCell: GridCell): GridCell[] | null {
+    const waypoint = this.pickEnemyWaypoint(level, spawnCell, goalCell);
+
+    if (waypoint) {
+      const waypointPath = this.pathfinder.findPathViaWaypoint(
+        level.grid.width,
+        level.grid.height,
+        spawnCell,
+        waypoint,
+        goalCell,
+        level.obstacles,
+      );
+
+      if (waypointPath && waypointPath.length > 0) {
+        return waypointPath;
+      }
+    }
+
+    return this.pathfinder.findPath(level.grid.width, level.grid.height, spawnCell, goalCell, level.obstacles);
+  }
+
+  private pickEnemyWaypoint(level: LevelData, spawnCell: GridCell, goalCell: GridCell): GridCell | null {
+    const blockedKeys = new Set(level.obstacles.map((cell) => this.cellKey(cell)));
+    const candidates = this.gridSystem
+      ?.allCells()
+      .filter((cell) => {
+        const candidateKey = this.cellKey(cell);
+
+        if (blockedKeys.has(candidateKey)) {
+          return false;
+        }
+
+        if (candidateKey === this.cellKey(spawnCell) || candidateKey === this.cellKey(goalCell)) {
+          return false;
+        }
+
+        return this.manhattanDistance(cell, spawnCell) >= 2 && this.manhattanDistance(cell, goalCell) >= 2;
+      });
+
+    if (!candidates || candidates.length === 0) {
+      return null;
+    }
+
+    const shuffledCandidates = Phaser.Utils.Array.Shuffle([...candidates]);
+
+    for (const candidate of shuffledCandidates) {
+      const waypointPath = this.pathfinder.findPathViaWaypoint(
+        level.grid.width,
+        level.grid.height,
+        spawnCell,
+        candidate,
+        goalCell,
+        level.obstacles,
+      );
+
+      if (waypointPath && waypointPath.length > 0) {
+        return candidate;
+      }
+    }
+
+    return null;
+  }
+
+  private manhattanDistance(a: GridCell, b: GridCell): number {
+    return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+  }
+
+  private cellKey(cell: GridCell): string {
+    return `${cell.x},${cell.y}`;
   }
 
   private tryMovePlayerAlongGrid(deltaX: number, deltaY: number): void {

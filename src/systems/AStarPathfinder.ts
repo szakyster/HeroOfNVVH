@@ -77,6 +77,27 @@ export class AStarPathfinder {
     return null;
   }
 
+  findPathViaWaypoint(
+    columns: number,
+    rows: number,
+    start: GridCell,
+    waypoint: GridCell,
+    goal: GridCell,
+    blockedCells: GridCell[],
+  ): GridCell[] | null {
+    const firstLeg = this.findPath(columns, rows, start, waypoint, blockedCells);
+    if (!firstLeg || firstLeg.length === 0) {
+      return null;
+    }
+
+    const secondLeg = this.findPath(columns, rows, waypoint, goal, blockedCells);
+    if (!secondLeg || secondLeg.length === 0) {
+      return null;
+    }
+
+    return [...firstLeg, ...secondLeg.slice(1)];
+  }
+
   private reconstructPath(goalKey: string, cameFrom: Map<string, string>): GridCell[] {
     const path: GridCell[] = [];
     let currentKey: string | undefined = goalKey;
