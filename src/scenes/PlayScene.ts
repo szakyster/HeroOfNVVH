@@ -4,6 +4,12 @@ import type { GridCell } from '../types/level';
 import { GridSystem } from '../systems/GridSystem';
 import type { CollisionRect } from '../systems/ICollisionProvider';
 import { AStarPathfinder } from '../systems/AStarPathfinder';
+import {
+  createAttackRect,
+  DEFAULT_ATTACK_CONFIG,
+  getKnockbackDelta,
+  type FacingDirection,
+} from '../systems/AttackSystem';
 import { LevelLoader } from '../systems/LevelLoader';
 import { SimpleCollisionProvider } from '../systems/SimpleCollisionProvider';
 import { SCENE_KEYS } from './sceneKeys';
@@ -14,7 +20,9 @@ type ActiveEnemy = {
   path: GridCell[];
   pathIndex: number;
   speed: number;
+  hitsTaken: number;
   escaped: boolean;
+  defeated: boolean;
 };
 
 export class PlayScene extends Phaser.Scene {
@@ -36,6 +44,12 @@ export class PlayScene extends Phaser.Scene {
 
   private readonly enemyHitboxOffsetY = 20;
 
+  private readonly attackCooldownMs = 420;
+
+  private readonly attackDurationMs = 120;
+
+  private readonly maxEscapedEnemies = 10;
+
   private gridSystem?: GridSystem;
 
   private obstacleRects: CollisionRect[] = [];
@@ -47,6 +61,8 @@ export class PlayScene extends Phaser.Scene {
   private playerHitboxDebug?: Phaser.GameObjects.Graphics;
 
   private enemyHitboxDebug?: Phaser.GameObjects.Graphics;
+
+  private attackDebug?: Phaser.GameObjects.Graphics;
 
   private levelInfoText?: Phaser.GameObjects.Text;
 
@@ -62,7 +78,19 @@ export class PlayScene extends Phaser.Scene {
 
   private keyD?: Phaser.Input.Keyboard.Key;
 
+  private keySpace?: Phaser.Input.Keyboard.Key;
+
   private activeEnemies: ActiveEnemy[] = [];
+
+  private facingDirection: FacingDirection = 'down';
+
+  private attackRect: CollisionRect | null = null;
+
+  private attackVisualUntil = 0;
+
+  private lastAttackAt = Number.NEGATIVE_INFINITY;
+
+  private isGameOver = false;
 
   private waveNumber = 1;
 
@@ -93,6 +121,9 @@ export class PlayScene extends Phaser.Scene {
     this.keyA = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.A);
     this.keyS = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.S);
     this.keyD = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.D);
+    this.keySpace = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+    this.registry.set('score', 0);
+    this.registry.set('escapedEnemies', 0);
 
     this.add.rectangle(width / 2, height / 2, width, height, 0x1f2d3d, 1);
 
@@ -136,7 +167,7 @@ export class PlayScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     this.add
-      .text(width / 2, height - 34, 'Mozgas: WASD vagy nyilak | G: Game Over teszt', {
+      .text(width / 2, height - 34, 'Mozgas: WASD vagy nyilak | SPACE: Tamadas | G: Game Over teszt', {
         fontFamily: 'Verdana',
         fontSize: '18px',
         color: '#81b29a',
@@ -168,6 +199,7 @@ export class PlayScene extends Phaser.Scene {
     this.playerHitboxDebug = this.add.graphics().setDepth(4);
     // DEBUG: Keep hitboxes visible during development. Remove before release build.
     this.enemyHitboxDebug = this.add.graphics().setDepth(4);
+    this.attackDebug = this.add.graphics().setDepth(4.5);
     this.playerShadow.setVisible(false);
     this.playerBody.setVisible(false);
 
@@ -195,6 +227,10 @@ export class PlayScene extends Phaser.Scene {
   }
 
   update(_time: number, delta: number): void {
+    if (this.isGameOver) {
+      return;
+    }
+
     if (!this.playerBody || !this.playerShadow || !this.gridSystem || !this.playerHitboxDebug) {
       return;
     }
@@ -206,21 +242,30 @@ export class PlayScene extends Phaser.Scene {
     this.renderPlayerHitbox();
     this.updateEnemies(delta);
     this.renderEnemyHitboxes();
+    this.renderAttackEffect();
+
+    if (this.keySpace && Phaser.Input.Keyboard.JustDown(this.keySpace)) {
+      this.performAttack();
+    }
 
     let horizontal = 0;
     let vertical = 0;
 
     if (this.cursors?.left.isDown || this.keyA?.isDown) {
       horizontal -= 1;
+      this.facingDirection = 'left';
     }
     if (this.cursors?.right.isDown || this.keyD?.isDown) {
       horizontal += 1;
+      this.facingDirection = 'right';
     }
     if (this.cursors?.up.isDown || this.keyW?.isDown) {
       vertical -= 1;
+      this.facingDirection = 'up';
     }
     if (this.cursors?.down.isDown || this.keyS?.isDown) {
       vertical += 1;
+      this.facingDirection = 'down';
     }
 
     if (horizontal !== 0 || vertical !== 0) {
@@ -268,7 +313,7 @@ export class PlayScene extends Phaser.Scene {
     const count = this.targetEnemyCount;
 
     this.spawnedEnemies = 0;
-    this.enemyInfoText?.setText(`${this.waveNumber}. hullam: 0/${count} ellenfel`);
+    this.refreshEnemyInfo(count);
 
     for (let i = 0; i < count; i++) {
       const baseDelay = (i / count) * (waveWindow-1500);
@@ -277,12 +322,16 @@ export class PlayScene extends Phaser.Scene {
         const spawned = this.spawnEnemy(level);
         if (spawned) {
           this.spawnedEnemies += 1;
-          this.enemyInfoText?.setText(`${this.waveNumber}. hullam: ${this.spawnedEnemies}/${count} ellenfel`);
+          this.refreshEnemyInfo(count);
         }
       });
     }
 
     this.time.delayedCall(waveWindow, () => {
+      if (this.isGameOver) {
+        return;
+      }
+
       this.waveNumber += 1;
       this.startEnemyWave(level);
     });
@@ -315,7 +364,9 @@ export class PlayScene extends Phaser.Scene {
       path,
       pathIndex: 0,
       speed: this.enemySpeed * Phaser.Math.FloatBetween(0.75, 1.25),
+      hitsTaken: 0,
       escaped: false,
+      defeated: false,
     });
 
     return true;
@@ -422,6 +473,84 @@ export class PlayScene extends Phaser.Scene {
     this.renderPlayerHitbox();
   }
 
+  private performAttack(): void {
+    if (!this.playerBody || !this.playerShadow) {
+      return;
+    }
+
+    const now = this.time.now;
+    if (now - this.lastAttackAt < this.attackCooldownMs) {
+      return;
+    }
+
+    this.lastAttackAt = now;
+    this.attackVisualUntil = now + this.attackDurationMs;
+    this.attackRect = createAttackRect(this.getPlayerHitbox(this.playerBody.x, this.playerBody.y), this.facingDirection);
+
+    this.playerBody.setFillStyle(0xffe08a, 1);
+    this.time.delayedCall(this.attackDurationMs, () => {
+      this.attackRect = null;
+      this.playerBody?.setFillStyle(0xf4d35e, 1);
+    });
+
+    this.checkAttackHits();
+  }
+
+  private checkAttackHits(): void {
+    if (!this.attackRect) {
+      return;
+    }
+
+    for (const enemy of this.activeEnemies) {
+      if (enemy.escaped || enemy.defeated) {
+        continue;
+      }
+
+      const enemyHitbox = this.getEnemyHitbox(enemy.body.x, enemy.body.y);
+      if (!this.collisionProvider.intersects(this.attackRect, enemyHitbox)) {
+        continue;
+      }
+
+      enemy.hitsTaken += 1;
+      this.applyEnemyKnockback(enemy);
+
+      if (enemy.hitsTaken >= 2) {
+        this.defeatEnemy(enemy);
+        continue;
+      }
+
+      enemy.speed *= 0.6;
+
+      enemy.body.setFillStyle(0xf77f00, 1);
+      enemy.body.setStrokeStyle(2, 0x6a040f, 1);
+    }
+  }
+
+  private applyEnemyKnockback(enemy: ActiveEnemy): void {
+    const knockback = getKnockbackDelta(this.facingDirection, DEFAULT_ATTACK_CONFIG.knockbackDistance);
+    const nextX = enemy.body.x + knockback.x;
+    const nextY = enemy.body.y + knockback.y;
+    const nextHitbox = this.getEnemyHitbox(nextX, nextY);
+
+    if (!this.isInsidePlayArea(nextHitbox)) {
+      return;
+    }
+
+    if (this.collisionProvider.collidesWithAny(nextHitbox, this.obstacleRects)) {
+      return;
+    }
+
+    enemy.body.setPosition(nextX, nextY);
+    enemy.shadow.setPosition(nextX, nextY + 18);
+  }
+
+  private defeatEnemy(enemy: ActiveEnemy): void {
+    enemy.defeated = true;
+    enemy.body.destroy();
+    enemy.shadow.destroy();
+    this.registry.set('score', (this.registry.get('score') ?? 0) + 1);
+  }
+
   private getPlayerHitbox(centerX: number, centerY: number): CollisionRect {
     return {
       x: centerX - this.playerHitboxSize.width / 2,
@@ -466,12 +595,12 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private updateEnemies(delta: number): void {
-    if (!this.gridSystem || this.activeEnemies.length === 0) {
+    if (!this.gridSystem || this.activeEnemies.length === 0 || this.isGameOver) {
       return;
     }
 
     for (const enemy of this.activeEnemies) {
-      if (enemy.escaped) {
+      if (enemy.escaped || enemy.defeated) {
         continue;
       }
 
@@ -482,7 +611,7 @@ export class PlayScene extends Phaser.Scene {
         enemy.escaped = true;
         enemy.body.destroy();
         enemy.shadow.destroy();
-        this.registry.set('escapedEnemies', (this.registry.get('escapedEnemies') ?? 0) + 1);
+        this.handleEnemyEscaped();
         continue;
       }
 
@@ -502,7 +631,7 @@ export class PlayScene extends Phaser.Scene {
       }
     }
 
-    this.activeEnemies = this.activeEnemies.filter((enemy) => !enemy.escaped);
+    this.activeEnemies = this.activeEnemies.filter((enemy) => !enemy.escaped && !enemy.defeated);
   }
 
   private renderEnemyHitboxes(): void {
@@ -518,5 +647,49 @@ export class PlayScene extends Phaser.Scene {
       const hitbox = this.getEnemyHitbox(enemy.body.x, enemy.body.y);
       this.enemyHitboxDebug.strokeRect(hitbox.x, hitbox.y, hitbox.width, hitbox.height);
     }
+  }
+
+  private renderAttackEffect(): void {
+    if (!this.attackDebug) {
+      return;
+    }
+
+    this.attackDebug.clear();
+
+    if (!this.attackRect || this.time.now > this.attackVisualUntil) {
+      return;
+    }
+
+    this.attackDebug.fillStyle(0xffbe0b, 0.2);
+    this.attackDebug.lineStyle(2, 0xffbe0b, 0.85);
+    this.attackDebug.fillRect(this.attackRect.x, this.attackRect.y, this.attackRect.width, this.attackRect.height);
+    this.attackDebug.strokeRect(this.attackRect.x, this.attackRect.y, this.attackRect.width, this.attackRect.height);
+  }
+
+  private handleEnemyEscaped(): void {
+    const escapedEnemies = (this.registry.get('escapedEnemies') ?? 0) + 1;
+    this.registry.set('escapedEnemies', escapedEnemies);
+    this.refreshEnemyInfo();
+
+    if (escapedEnemies >= this.maxEscapedEnemies) {
+      this.triggerGameOver();
+    }
+  }
+
+  private refreshEnemyInfo(count: number = this.targetEnemyCount): void {
+    const escapedEnemies = this.registry.get('escapedEnemies') ?? 0;
+    this.enemyInfoText?.setText(
+      `${this.waveNumber}. hullam: ${this.spawnedEnemies}/${count} ellenfel | Elmenekult: ${escapedEnemies}/${this.maxEscapedEnemies}`,
+    );
+  }
+
+  private triggerGameOver(): void {
+    if (this.isGameOver) {
+      return;
+    }
+
+    this.isGameOver = true;
+    const currentScore = this.registry.get('score') ?? 0;
+    this.scene.start(SCENE_KEYS.GAME_OVER, { score: currentScore });
   }
 }
