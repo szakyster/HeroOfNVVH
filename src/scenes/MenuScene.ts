@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { AUDIO_KEYS, getAudioSystem } from '../systems/AudioSystem';
 import { SCENE_KEYS } from './sceneKeys';
 
 export class MenuScene extends Phaser.Scene {
@@ -8,6 +9,7 @@ export class MenuScene extends Phaser.Scene {
 
   create(): void {
     const { width, height } = this.scale;
+    const audioSystem = getAudioSystem(this);
 
     this.add.rectangle(width / 2, height / 2, width, height, 0x112233, 1);
 
@@ -35,12 +37,21 @@ export class MenuScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    this.input.once('pointerdown', () => {
+    if (!this.sound.locked) {
+      audioSystem.playMusic(AUDIO_KEYS.AMBIENT, true);
+    }
+
+    const startGame = () => {
+      audioSystem.playMusic(AUDIO_KEYS.AMBIENT, true);
       this.scene.start(SCENE_KEYS.PLAY);
+    };
+
+    this.input.once('pointerdown', () => {
+      startGame();
     });
 
     this.input.keyboard?.once('keydown-SPACE', () => {
-      this.scene.start(SCENE_KEYS.PLAY);
+      startGame();
     });
   }
 }

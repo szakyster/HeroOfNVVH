@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { AUDIO_KEYS, getAudioSystem } from '../systems/AudioSystem';
 import { SCENE_KEYS } from './sceneKeys';
 
 type GameOverData = {
@@ -13,6 +14,7 @@ export class GameOverScene extends Phaser.Scene {
   create(data: GameOverData): void {
     const { width, height } = this.scale;
     const score = data.score ?? 0;
+    const audioSystem = getAudioSystem(this);
 
     this.add.rectangle(width / 2, height / 2, width, height, 0x3d1120, 1);
 
@@ -41,6 +43,7 @@ export class GameOverScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     this.input.keyboard?.once('keydown-R', () => {
+      audioSystem.playMusic(AUDIO_KEYS.AMBIENT, true);
       this.scene.start(SCENE_KEYS.MENU);
     });
   }

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { getAudioSystem } from '../systems/AudioSystem';
 import { SCENE_KEYS } from './sceneKeys';
 
 export class BootScene extends Phaser.Scene {
@@ -11,6 +12,8 @@ export class BootScene extends Phaser.Scene {
     this.registry.set('score', 0);
     this.registry.set('escapedEnemies', 0);
     this.registry.set('currentWave', 1);
+    getAudioSystem(this).setMasterVolume(0.35);
+    getAudioSystem(this).setMuted(false);
 
     this.scene.start(SCENE_KEYS.MENU);
   }

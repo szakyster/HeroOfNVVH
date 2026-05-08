@@ -10,6 +10,7 @@ import {
   getKnockbackDelta,
   type FacingDirection,
 } from '../systems/AttackSystem';
+import { AUDIO_KEYS, AudioSystem, getAudioSystem } from '../systems/AudioSystem';
 import { LevelLoader } from '../systems/LevelLoader';
 import {
   DEFAULT_LOOT_CONFIG,
@@ -114,6 +115,12 @@ export class PlayScene extends Phaser.Scene {
 
   private nextLootDepositAt: number | null = null;
 
+  private lastInventoryErrorAt = Number.NEGATIVE_INFINITY;
+
+  private readonly inventoryErrorCooldownMs = 250;
+
+  private audioSystem?: AudioSystem;
+
   private facingDirection: FacingDirection = 'down';
 
   private attackRect: CollisionRect | null = null;
@@ -138,6 +145,8 @@ export class PlayScene extends Phaser.Scene {
 
   create(): void {
     const { width, height } = this.scale;
+    this.audioSystem = getAudioSystem(this);
+    this.audioSystem.playMusic(AUDIO_KEYS.AMBIENT, true);
     this.gridSystem = new GridSystem({
       columns: 7,
       rows: 6,
@@ -536,6 +545,7 @@ export class PlayScene extends Phaser.Scene {
       return;
     }
 
+    this.audioSystem?.playSfx(AUDIO_KEYS.ATTACK);
     this.lastAttackAt = now;
     this.attackVisualUntil = now + this.attackDurationMs;
     this.attackRect = createAttackRect(this.getPlayerHitbox(this.playerBody.x, this.playerBody.y), this.facingDirection);
@@ -554,6 +564,8 @@ export class PlayScene extends Phaser.Scene {
       return;
     }
 
+    let hitAny = false;
+
     for (const enemy of this.activeEnemies) {
       if (enemy.escaped || enemy.defeated) {
         continue;
@@ -562,6 +574,11 @@ export class PlayScene extends Phaser.Scene {
       const enemyHitbox = this.getEnemyHitbox(enemy.body.x, enemy.body.y);
       if (!this.collisionProvider.intersects(this.attackRect, enemyHitbox)) {
         continue;
+      }
+
+      if (!hitAny) {
+        this.audioSystem?.playSfx(AUDIO_KEYS.HIT);
+        hitAny = true;
       }
 
       enemy.hitsTaken += 1;
@@ -702,6 +719,11 @@ export class PlayScene extends Phaser.Scene {
         if (this.collisionProvider.intersects(playerHitbox, lootHitbox)) {
           this.pickUpLoot(loot);
         }
+      } else {
+        const lootHitbox = this.getLootHitbox(loot.body.x, loot.body.y);
+        if (this.collisionProvider.intersects(playerHitbox, lootHitbox)) {
+          this.playInventoryError(now);
+        }
       }
     }
 
@@ -716,6 +738,7 @@ export class PlayScene extends Phaser.Scene {
 
   private pickUpLoot(loot: ActiveLoot): void {
     this.inventory.push({ type: loot.type, value: loot.value });
+    this.audioSystem?.playSfx(AUDIO_KEYS.PICKUP);
     this.destroyLoot(loot, false);
     this.refreshLevelInfo();
   }
@@ -736,6 +759,7 @@ export class PlayScene extends Phaser.Scene {
 
     const depositedLoot = this.inventory.shift();
     this.registry.set('score', (this.registry.get('score') ?? 0) + (depositedLoot?.value ?? 0));
+    this.audioSystem?.playSfx(AUDIO_KEYS.DEPOSIT);
     this.nextLootDepositAt += this.lootDepositIntervalMs;
 
     if (this.inventory.length === 0) {
@@ -890,12 +914,23 @@ export class PlayScene extends Phaser.Scene {
     return 0xe9c46a;
   }
 
+  private playInventoryError(now: number): void {
+    if (now - this.lastInventoryErrorAt < this.inventoryErrorCooldownMs) {
+      return;
+    }
+
+    this.lastInventoryErrorAt = now;
+    this.audioSystem?.playSfx(AUDIO_KEYS.ERROR);
+  }
+
   private triggerGameOver(): void {
     if (this.isGameOver) {
       return;
     }
 
     this.isGameOver = true;
+    this.audioSystem?.stopMusic();
+    this.audioSystem?.playSfx(AUDIO_KEYS.ERROR);
     const currentScore = this.registry.get('score') ?? 0;
     this.scene.start(SCENE_KEYS.GAME_OVER, { score: currentScore });
   }
