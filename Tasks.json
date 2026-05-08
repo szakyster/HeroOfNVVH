@@ -10,7 +10,7 @@
       "id": 2,
       "name": "Scene Framework",
       "description": "Create scene system with BootScene, MenuScene, PlayScene, and GameOverScene. Implement scene transitions and state management. Reference: Architecture.md section 5 (Scene State Model)",
-      "status": "ready"
+      "status": "closed"
     },
     {
       "id": 3,

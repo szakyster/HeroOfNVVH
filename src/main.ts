@@ -1,4 +1,8 @@
 import Phaser from 'phaser';
+import { BootScene } from './scenes/BootScene';
+import { GameOverScene } from './scenes/GameOverScene';
+import { MenuScene } from './scenes/MenuScene';
+import { PlayScene } from './scenes/PlayScene';
 
 // Game configuration - Reference: D-001 (Phaser 3), D-002 (TypeScript), D-003 (Vite)
 const config: Phaser.Types.Core.GameConfig = {
@@ -21,9 +25,7 @@ const config: Phaser.Types.Core.GameConfig = {
     pixelArt: false,
     antialias: true,
   },
-  scenes: [
-    // Scenes will be registered here (Task #2)
-  ],
+  scene: [BootScene, MenuScene, PlayScene, GameOverScene],
 };
 
 // Initialize the Phaser game
