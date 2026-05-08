@@ -57,13 +57,13 @@
       "id": 10,
       "name": "UI/HUD Implementation",
       "description": "Create in-game HUD showing score (Pont), inventory display (0-4), escaped enemies count (Reptérre érkeztek), and current level/wave. Reference: JatekLeiras.md section 12 (HUD Specs), Vizualitas.md section 8",
-      "status": "in-progress"
+      "status": "closed"
     },
     {
       "id": 11,
       "name": "Leaderboard & LocalStorage",
       "description": "Implement score persistence via LocalStorage. Create leaderboard display for top scores. Reference: D-017 (No Telemetry), JatekLeiras.md section 13",
-      "status": "ready"
+      "status": "in-progress"
     },
     {
       "id": 12,
