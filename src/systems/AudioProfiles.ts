@@ -4,6 +4,7 @@ export const AUDIO_KEYS = {
   PICKUP: 'sfx-pickup',
   DEPOSIT: 'sfx-deposit',
   ERROR: 'sfx-error',
+  MENU: 'music-menu',
   AMBIENT: 'music-ambient',
 } as const;
 
@@ -13,6 +14,7 @@ export type SfxProfile = {
   gain: number;
   type: OscillatorType;
   slideToFrequency?: number;
+  loadedAudioSeekMs?: number;
 };
 
 export type MusicProfile = {
@@ -24,7 +26,14 @@ export type MusicProfile = {
 export function getSfxProfile(key: string): SfxProfile {
   switch (key) {
     case AUDIO_KEYS.ATTACK:
-      return { frequency: 240, durationMs: 70, gain: 0.09, type: 'square', slideToFrequency: 180 };
+      return {
+        frequency: 240,
+        durationMs: 70,
+        gain: 0.09,
+        type: 'square',
+        slideToFrequency: 180,
+        loadedAudioSeekMs: 400,
+      };
     case AUDIO_KEYS.HIT:
       return { frequency: 130, durationMs: 90, gain: 0.11, type: 'sawtooth', slideToFrequency: 90 };
     case AUDIO_KEYS.PICKUP:
@@ -39,6 +48,10 @@ export function getSfxProfile(key: string): SfxProfile {
 }
 
 export function getMusicProfile(key: string): MusicProfile | null {
+  if (key === AUDIO_KEYS.MENU) {
+    return { frequency: 146.83, gain: 0.03, type: 'triangle' };
+  }
+
   if (key === AUDIO_KEYS.AMBIENT) {
     return { frequency: 110, gain: 0.035, type: 'triangle' };
   }

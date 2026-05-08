@@ -43,7 +43,7 @@ export class GameOverScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     this.input.keyboard?.once('keydown-R', () => {
-      audioSystem.playMusic(AUDIO_KEYS.AMBIENT, true);
+      audioSystem.playMusic(AUDIO_KEYS.MENU, true);
       this.scene.start(SCENE_KEYS.MENU);
     });
   }

@@ -8,6 +8,8 @@ export class BootScene extends Phaser.Scene {
   }
 
   preload(): void {
+    this.load.audio(AUDIO_KEYS.ATTACK, ['assets/sprites/Punch01.mp3']);
+    this.load.audio(AUDIO_KEYS.MENU, ['assets/audio/Preparation of hunting.mp3']);
     this.load.audio(AUDIO_KEYS.AMBIENT, ['assets/audio/The Hero.mp3']);
   }
 

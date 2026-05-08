@@ -37,7 +37,11 @@ export class PhaserAudioService implements IAudioService {
 
   playSfx(key: string): void {
     if (this.hasLoadedAudio(key)) {
-      this.soundManager.play(key, { volume: this.getEffectiveVolume(0.4) });
+      const profile = getSfxProfile(key);
+      this.soundManager.play(key, {
+        volume: this.getEffectiveVolume(0.4),
+        seek: (profile.loadedAudioSeekMs ?? 0) / 1000,
+      });
       return;
     }
 

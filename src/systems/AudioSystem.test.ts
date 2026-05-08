@@ -4,6 +4,7 @@ import { AUDIO_KEYS, getMusicProfile, getSfxProfile } from './AudioProfiles';
 describe('AudioSystem', () => {
   it('defines fallback profiles for all MVP sound effects', () => {
     expect(getSfxProfile(AUDIO_KEYS.ATTACK).durationMs).toBeGreaterThan(0);
+    expect(getSfxProfile(AUDIO_KEYS.ATTACK).loadedAudioSeekMs).toBeGreaterThan(0);
     expect(getSfxProfile(AUDIO_KEYS.HIT).frequency).toBeGreaterThan(0);
     expect(getSfxProfile(AUDIO_KEYS.PICKUP).slideToFrequency).toBeGreaterThan(
       getSfxProfile(AUDIO_KEYS.PICKUP).frequency,

@@ -38,11 +38,10 @@ export class MenuScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     if (!this.sound.locked) {
-      audioSystem.playMusic(AUDIO_KEYS.AMBIENT, true);
+      audioSystem.playMusic(AUDIO_KEYS.MENU, true);
     }
 
     const startGame = () => {
-      audioSystem.playMusic(AUDIO_KEYS.AMBIENT, true);
       this.scene.start(SCENE_KEYS.PLAY);
     };
 
