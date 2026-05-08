@@ -10,7 +10,14 @@ import {
   getKnockbackDelta,
   type FacingDirection,
 } from '../systems/AttackSystem';
-import { AUDIO_KEYS, AudioSystem, getAudioSystem } from '../systems/AudioSystem';
+import {
+  AUDIO_KEYS,
+  AUDIO_SETTINGS_KEYS,
+  applyAudioSettingsFromRegistry,
+  AudioSystem,
+  DEATH_AUDIO_KEYS,
+  getAudioSystem,
+} from '../systems/AudioSystem';
 import { LevelLoader } from '../systems/LevelLoader';
 import {
   DEFAULT_LOOT_CONFIG,
@@ -93,6 +100,10 @@ export class PlayScene extends Phaser.Scene {
 
   private enemyInfoText?: Phaser.GameObjects.Text;
 
+  private musicToggleText?: Phaser.GameObjects.Text;
+
+  private sfxToggleText?: Phaser.GameObjects.Text;
+
   private cursors?: Phaser.Types.Input.Keyboard.CursorKeys;
 
   private keyW?: Phaser.Input.Keyboard.Key;
@@ -146,6 +157,7 @@ export class PlayScene extends Phaser.Scene {
   create(): void {
     const { width, height } = this.scale;
     this.audioSystem = getAudioSystem(this);
+    applyAudioSettingsFromRegistry(this);
     this.audioSystem.playMusic(AUDIO_KEYS.AMBIENT, true);
     this.gridSystem = new GridSystem({
       columns: 7,
@@ -231,6 +243,8 @@ export class PlayScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
+    this.createAudioToggleButtons(width);
+
     this.playerShadow = this.add.ellipse(0, 0, 72, 30, 0x111111, 0.35).setDepth(2);
     this.playerBody = this.add
       .ellipse(0, 0, 72, 90, 0xf4d35e, 1)
@@ -264,6 +278,68 @@ export class PlayScene extends Phaser.Scene {
     this.input.keyboard?.on('keydown-G', () => {
       this.triggerGameOver();
     });
+  }
+
+  private createAudioToggleButtons(width: number): void {
+    this.musicToggleText = this.add
+      .text(width - 18, 18, '', {
+        fontFamily: 'Verdana',
+        fontSize: '15px',
+        color: '#f4f1de',
+        backgroundColor: '#223247',
+        padding: { x: 10, y: 6 },
+      })
+      .setOrigin(1, 0)
+      .setDepth(6)
+      .setInteractive({ useHandCursor: true });
+
+    this.musicToggleText.setData('ui-button', true);
+    this.musicToggleText.on('pointerdown', () => {
+      const nextValue = !Boolean(this.registry.get(AUDIO_SETTINGS_KEYS.MUSIC_MUTED));
+      this.registry.set(AUDIO_SETTINGS_KEYS.MUSIC_MUTED, nextValue);
+      this.audioSystem?.setMusicMuted(nextValue);
+      this.refreshAudioToggleTexts();
+    });
+
+    this.sfxToggleText = this.add
+      .text(width - 18, 58, '', {
+        fontFamily: 'Verdana',
+        fontSize: '15px',
+        color: '#f4f1de',
+        backgroundColor: '#223247',
+        padding: { x: 10, y: 6 },
+      })
+      .setOrigin(1, 0)
+      .setDepth(6)
+      .setInteractive({ useHandCursor: true });
+
+    this.sfxToggleText.setData('ui-button', true);
+    this.sfxToggleText.on('pointerdown', () => {
+      const nextValue = !Boolean(this.registry.get(AUDIO_SETTINGS_KEYS.SFX_MUTED));
+      this.registry.set(AUDIO_SETTINGS_KEYS.SFX_MUTED, nextValue);
+      this.audioSystem?.setSfxMuted(nextValue);
+      this.refreshAudioToggleTexts();
+    });
+
+    for (const button of [this.musicToggleText, this.sfxToggleText]) {
+      button.on('pointerover', () => {
+        button.setStyle({ backgroundColor: '#314863' });
+      });
+      button.on('pointerout', () => {
+        button.setStyle({ backgroundColor: '#223247' });
+      });
+    }
+
+    this.refreshAudioToggleTexts();
+  }
+
+  private refreshAudioToggleTexts(): void {
+    this.musicToggleText?.setText(
+      `Zene némít: ${this.registry.get(AUDIO_SETTINGS_KEYS.MUSIC_MUTED) ? 'Be' : 'Ki'}`,
+    );
+    this.sfxToggleText?.setText(
+      `Hangeffekt némít: ${this.registry.get(AUDIO_SETTINGS_KEYS.SFX_MUTED) ? 'Be' : 'Ki'}`,
+    );
   }
 
   update(_time: number, delta: number): void {
@@ -620,6 +696,7 @@ export class PlayScene extends Phaser.Scene {
 
   private defeatEnemy(enemy: ActiveEnemy): void {
     enemy.defeated = true;
+    this.audioSystem?.playSfx(Phaser.Utils.Array.GetRandom([...DEATH_AUDIO_KEYS]));
     enemy.body.destroy();
     enemy.shadow.destroy();
     this.refreshLevelInfo();

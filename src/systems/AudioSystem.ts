@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
-import { AUDIO_KEYS, getMusicProfile, getSfxProfile } from './AudioProfiles';
+import { getMusicProfile, getSfxProfile } from './AudioProfiles';
 
-export { AUDIO_KEYS } from './AudioProfiles';
+export { AUDIO_KEYS, DEATH_AUDIO_KEYS } from './AudioProfiles';
 
 export interface IAudioService {
   playSfx(key: string): void;
@@ -10,7 +10,14 @@ export interface IAudioService {
   stopMusic(): void;
   setMasterVolume(value: number): void;
   setMuted(muted: boolean): void;
+  setMusicMuted(muted: boolean): void;
+  setSfxMuted(muted: boolean): void;
 }
+
+export const AUDIO_SETTINGS_KEYS = {
+  MUSIC_MUTED: 'musicMuted',
+  SFX_MUTED: 'sfxMuted',
+} as const;
 
 type SynthMusicNodes = {
   oscillator: OscillatorNode;
@@ -33,13 +40,21 @@ export class PhaserAudioService implements IAudioService {
 
   private muted = false;
 
+  private musicMuted = false;
+
+  private sfxMuted = false;
+
   constructor(private readonly soundManager: Phaser.Sound.BaseSoundManager) {}
 
   playSfx(key: string): void {
+    if (this.sfxMuted || this.muted) {
+      return;
+    }
+
     if (this.hasLoadedAudio(key)) {
       const profile = getSfxProfile(key);
       this.soundManager.play(key, {
-        volume: this.getEffectiveVolume(0.4),
+        volume: this.getEffectiveSfxVolume(0.4),
         seek: (profile.loadedAudioSeekMs ?? 0) / 1000,
       });
       return;
@@ -62,7 +77,7 @@ export class PhaserAudioService implements IAudioService {
     if (this.hasLoadedAudio(key)) {
       this.currentMusicSound = this.soundManager.add(key, {
         loop,
-        volume: this.getEffectiveVolume(0.35),
+        volume: this.getEffectiveMusicVolume(0.35),
       });
       this.currentMusicSound.play();
       return;
@@ -118,14 +133,29 @@ export class PhaserAudioService implements IAudioService {
 
   setMasterVolume(value: number): void {
     this.masterVolume = Phaser.Math.Clamp(value, 0, 1);
-    this.soundManager.setVolume(this.masterVolume);
+    this.soundManager.volume = this.masterVolume;
     this.updateSynthMusicVolume();
   }
 
   setMuted(muted: boolean): void {
     this.muted = muted;
-    this.soundManager.setMute(muted);
+    this.soundManager.mute = muted;
     this.updateSynthMusicVolume();
+  }
+
+  setMusicMuted(muted: boolean): void {
+    this.musicMuted = muted;
+
+    const adjustableMusicSound = this.getAdjustableMusicSound();
+    if (adjustableMusicSound) {
+      adjustableMusicSound.volume = this.getEffectiveMusicVolume(0.35);
+    }
+
+    this.updateSynthMusicVolume();
+  }
+
+  setSfxMuted(muted: boolean): void {
+    this.sfxMuted = muted;
   }
 
   private hasLoadedAudio(key: string): boolean {
@@ -140,6 +170,22 @@ export class PhaserAudioService implements IAudioService {
 
   private getEffectiveVolume(baseGain: number): number {
     return this.muted ? 0 : baseGain * this.masterVolume;
+  }
+
+  private getEffectiveMusicVolume(baseGain: number): number {
+    if (this.musicMuted) {
+      return 0;
+    }
+
+    return this.getEffectiveVolume(baseGain);
+  }
+
+  private getEffectiveSfxVolume(baseGain: number): number {
+    if (this.sfxMuted) {
+      return 0;
+    }
+
+    return this.getEffectiveVolume(baseGain);
   }
 
   private playSynthSfx(key: string): void {
@@ -161,7 +207,7 @@ export class PhaserAudioService implements IAudioService {
     }
 
     gainNode.gain.setValueAtTime(0.0001, now);
-    gainNode.gain.linearRampToValueAtTime(this.getEffectiveVolume(profile.gain), now + 0.01);
+    gainNode.gain.linearRampToValueAtTime(this.getEffectiveSfxVolume(profile.gain), now + 0.01);
     gainNode.gain.exponentialRampToValueAtTime(0.0001, now + durationSeconds);
 
     oscillator.connect(gainNode);
@@ -199,7 +245,7 @@ export class PhaserAudioService implements IAudioService {
     lfo.connect(lfoGain);
     lfoGain.connect(oscillator.frequency);
 
-    gainNode.gain.setValueAtTime(this.getEffectiveVolume(profile.gain), now);
+    gainNode.gain.setValueAtTime(this.getEffectiveMusicVolume(profile.gain), now);
 
     oscillator.connect(gainNode);
     gainNode.connect(context.destination);
@@ -227,7 +273,7 @@ export class PhaserAudioService implements IAudioService {
     }
 
     this.synthMusicNodes.gainNode.gain.setTargetAtTime(
-      this.getEffectiveVolume(this.synthMusicNodes.baseGain),
+      this.getEffectiveMusicVolume(this.synthMusicNodes.baseGain),
       context.currentTime,
       0.04,
     );
@@ -236,8 +282,9 @@ export class PhaserAudioService implements IAudioService {
   private setCurrentMusicVolume(multiplier: number): void {
     const normalizedMultiplier = Phaser.Math.Clamp(multiplier, 0, 1);
 
-    if (this.currentMusicSound) {
-      this.currentMusicSound.setVolume(this.getEffectiveVolume(0.35 * normalizedMultiplier));
+    const adjustableMusicSound = this.getAdjustableMusicSound();
+    if (adjustableMusicSound) {
+      adjustableMusicSound.volume = this.getEffectiveMusicVolume(0.35 * normalizedMultiplier);
     }
 
     if (!this.synthMusicNodes) {
@@ -250,7 +297,7 @@ export class PhaserAudioService implements IAudioService {
     }
 
     this.synthMusicNodes.gainNode.gain.setTargetAtTime(
-      this.getEffectiveVolume(this.synthMusicNodes.baseGain * normalizedMultiplier),
+      this.getEffectiveMusicVolume(this.synthMusicNodes.baseGain * normalizedMultiplier),
       context.currentTime,
       0.04,
     );
@@ -263,6 +310,10 @@ export class PhaserAudioService implements IAudioService {
 
     globalThis.clearInterval(this.musicFadeInterval);
     this.musicFadeInterval = undefined;
+  }
+
+  private getAdjustableMusicSound(): (Phaser.Sound.BaseSound & { volume: number }) | undefined {
+    return this.currentMusicSound as (Phaser.Sound.BaseSound & { volume: number }) | undefined;
   }
 }
 
@@ -292,6 +343,14 @@ export class AudioSystem {
   setMuted(muted: boolean): void {
     this.service.setMuted(muted);
   }
+
+  setMusicMuted(muted: boolean): void {
+    this.service.setMusicMuted(muted);
+  }
+
+  setSfxMuted(muted: boolean): void {
+    this.service.setSfxMuted(muted);
+  }
 }
 
 let sharedAudioSystem: AudioSystem | null = null;
@@ -302,4 +361,11 @@ export function getAudioSystem(scene: Phaser.Scene): AudioSystem {
   }
 
   return sharedAudioSystem;
+}
+
+export function applyAudioSettingsFromRegistry(scene: Phaser.Scene): void {
+  const audioSystem = getAudioSystem(scene);
+
+  audioSystem.setMusicMuted(Boolean(scene.registry.get(AUDIO_SETTINGS_KEYS.MUSIC_MUTED)));
+  audioSystem.setSfxMuted(Boolean(scene.registry.get(AUDIO_SETTINGS_KEYS.SFX_MUTED)));
 }
