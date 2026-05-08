@@ -25,7 +25,7 @@ export class GameOverScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     this.add
-      .text(width / 2, height / 2 - 12, `Pontszam: ${score}`, {
+      .text(width / 2, height / 2 - 12, `Visszaszereztél ${score} millió forintot!`, {
         fontFamily: 'Verdana',
         fontSize: '28px',
         color: '#f2cc8f',

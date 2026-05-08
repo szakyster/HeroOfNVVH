@@ -16,6 +16,7 @@ export type GoalZone = {
 export type LootSpawn = {
   id: string;
   type: string;
+  value: 10 | 20 | 50;
   cell: GridCell;
 };
 

@@ -30,7 +30,7 @@ export class LevelLoader {
   parse(rawData: unknown): LevelData {
     assert(!!rawData && typeof rawData === 'object', 'Root value must be an object');
 
-    const data = rawData as Record<string, unknown>;
+    const data: Record<string, unknown> = rawData as Record<string, unknown>;
 
     assert(typeof data.id === 'string' && data.id.length > 0, 'id is required');
     assert(typeof data.name === 'string' && data.name.length > 0, 'name is required');
@@ -49,70 +49,80 @@ export class LevelLoader {
     const width = grid.width as number;
     const height = grid.height as number;
 
-    const validateCellInBounds = (cell: unknown, context: string): asserts cell is { x: number; y: number } => {
+    const validateCellInBounds = (cell: unknown, context: string): { x: number; y: number } => {
       assert(isValidCell(cell), `${context} must contain valid x/y integers`);
-      assert(cell.x >= 0 && cell.x < width, `${context} x must be in range [0..${width - 1}]`);
-      assert(cell.y >= 0 && cell.y < height, `${context} y must be in range [0..${height - 1}]`);
+      const validCell = cell as { x: number; y: number };
+      assert(validCell.x >= 0 && validCell.x < width, `${context} x must be in range [0..${width - 1}]`);
+      assert(validCell.y >= 0 && validCell.y < height, `${context} y must be in range [0..${height - 1}]`);
+      return validCell;
     };
 
-    const obstacles = data.obstacles.map((cell, index) => {
-      validateCellInBounds(cell, `obstacles[${index}]`);
-      return { x: cell.x, y: cell.y };
+    const obstacleData = data.obstacles as unknown[];
+    const sanctuaryData = data.sanctuaryZone as unknown[];
+    const spawnZoneData = data.spawnZones as unknown[];
+    const goalZoneData = data.goalZones as unknown[];
+    const lootSpawnData = data.lootSpawns as unknown[];
+
+    const obstacles = obstacleData.map((cell: unknown, index: number) => {
+      const validCell = validateCellInBounds(cell, `obstacles[${index}]`);
+      return { x: validCell.x, y: validCell.y };
     });
 
-    const sanctuaryZone = data.sanctuaryZone.map((cell, index) => {
-      validateCellInBounds(cell, `sanctuaryZone[${index}]`);
-      return { x: cell.x, y: cell.y };
+    const sanctuaryZone = sanctuaryData.map((cell: unknown, index: number) => {
+      const validCell = validateCellInBounds(cell, `sanctuaryZone[${index}]`);
+      return { x: validCell.x, y: validCell.y };
     });
 
-    const spawnZones = data.spawnZones.map((zone, zoneIndex) => {
+    const spawnZones = spawnZoneData.map((zone: unknown, zoneIndex: number) => {
       assert(!!zone && typeof zone === 'object', `spawnZones[${zoneIndex}] must be object`);
       const candidate = zone as { id?: unknown; cells?: unknown };
       assert(typeof candidate.id === 'string' && candidate.id.length > 0, `spawnZones[${zoneIndex}].id is required`);
       assert(Array.isArray(candidate.cells), `spawnZones[${zoneIndex}].cells must be array`);
 
-      const cells = candidate.cells.map((cell, cellIndex) => {
-        validateCellInBounds(cell, `spawnZones[${zoneIndex}].cells[${cellIndex}]`);
-        return { x: cell.x, y: cell.y };
+      const cells = (candidate.cells as unknown[]).map((cell: unknown, cellIndex: number) => {
+        const validCell = validateCellInBounds(cell, `spawnZones[${zoneIndex}].cells[${cellIndex}]`);
+        return { x: validCell.x, y: validCell.y };
       });
 
-      return { id: candidate.id, cells };
+      return { id: candidate.id as string, cells };
     });
 
-    const goalZones = data.goalZones.map((zone, zoneIndex) => {
+    const goalZones = goalZoneData.map((zone: unknown, zoneIndex: number) => {
       assert(!!zone && typeof zone === 'object', `goalZones[${zoneIndex}] must be object`);
       const candidate = zone as { id?: unknown; cells?: unknown };
       assert(typeof candidate.id === 'string' && candidate.id.length > 0, `goalZones[${zoneIndex}].id is required`);
       assert(Array.isArray(candidate.cells), `goalZones[${zoneIndex}].cells must be array`);
 
-      const cells = candidate.cells.map((cell, cellIndex) => {
-        validateCellInBounds(cell, `goalZones[${zoneIndex}].cells[${cellIndex}]`);
-        return { x: cell.x, y: cell.y };
+      const cells = (candidate.cells as unknown[]).map((cell: unknown, cellIndex: number) => {
+        const validCell = validateCellInBounds(cell, `goalZones[${zoneIndex}].cells[${cellIndex}]`);
+        return { x: validCell.x, y: validCell.y };
       });
 
-      return { id: candidate.id, cells };
+      return { id: candidate.id as string, cells };
     });
 
-    const lootSpawns = data.lootSpawns.map((loot, lootIndex) => {
+    const lootSpawns = lootSpawnData.map((loot: unknown, lootIndex: number) => {
       assert(!!loot && typeof loot === 'object', `lootSpawns[${lootIndex}] must be object`);
-      const candidate = loot as { id?: unknown; type?: unknown; cell?: unknown };
+      const candidate = loot as { id?: unknown; type?: unknown; value?: unknown; cell?: unknown };
       assert(typeof candidate.id === 'string' && candidate.id.length > 0, `lootSpawns[${lootIndex}].id is required`);
       assert(typeof candidate.type === 'string' && candidate.type.length > 0, `lootSpawns[${lootIndex}].type is required`);
-      validateCellInBounds(candidate.cell, `lootSpawns[${lootIndex}].cell`);
+      assert(candidate.value === 10 || candidate.value === 20 || candidate.value === 50, `lootSpawns[${lootIndex}].value must be one of 10, 20, 50`);
+      const validCell = validateCellInBounds(candidate.cell, `lootSpawns[${lootIndex}].cell`);
 
       return {
-        id: candidate.id,
-        type: candidate.type,
+        id: candidate.id as string,
+        type: candidate.type as string,
+        value: candidate.value as 10 | 20 | 50,
         cell: {
-          x: candidate.cell.x,
-          y: candidate.cell.y,
+          x: validCell.x,
+          y: validCell.y,
         },
       };
     });
 
     return {
-      id: data.id,
-      name: data.name,
+      id: data.id as string,
+      name: data.name as string,
       grid: {
         width,
         height,
