@@ -227,8 +227,8 @@ export class PlayScene extends Phaser.Scene {
       const direction = new Phaser.Math.Vector2(horizontal, vertical).normalize();
       const distance = (this.playerSpeed * delta) / 1000;
 
-      this.tryMovePlayer(direction.x * distance, 0);
-      this.tryMovePlayer(0, direction.y * distance);
+      this.tryMovePlayerAlongGrid(direction.x * distance, 0);
+      this.tryMovePlayerAlongGrid(0, direction.y * distance);
     }
   }
 
@@ -327,14 +327,22 @@ export class PlayScene extends Phaser.Scene {
     return true;
   }
 
-  private tryMovePlayer(deltaX: number, deltaY: number): void {
-    if (!this.playerBody || !this.playerShadow) {
+  private tryMovePlayerAlongGrid(deltaX: number, deltaY: number): void {
+    if (!this.playerBody || !this.playerShadow || !this.gridSystem) {
       return;
     }
 
-    const nextX = this.playerBody.x + deltaX;
-    const nextY = this.playerBody.y + deltaY;
-    const nextHitbox = this.getPlayerHitbox(nextX, nextY);
+    const nextPosition = this.gridSystem.moveAlongSurface(
+      { x: this.playerBody.x, y: this.playerBody.y },
+      deltaX,
+      deltaY,
+    );
+
+    if (!nextPosition) {
+      return;
+    }
+
+    const nextHitbox = this.getPlayerHitbox(nextPosition.x, nextPosition.y);
 
     if (!this.isInsidePlayArea(nextHitbox)) {
       return;
@@ -344,8 +352,8 @@ export class PlayScene extends Phaser.Scene {
       return;
     }
 
-    this.playerBody.setPosition(nextX, nextY);
-    this.playerShadow.setPosition(nextX, nextY + 54);
+    this.playerBody.setPosition(nextPosition.x, nextPosition.y);
+    this.playerShadow.setPosition(nextPosition.x, nextPosition.y + 54);
     this.renderPlayerHitbox();
   }
 

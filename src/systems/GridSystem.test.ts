@@ -55,6 +55,24 @@ describe('GridSystem', () => {
     expect(grid.containsPoint({ x: 20, y: 20 })).toBe(false);
   });
 
+  it('converts between screen and surface coordinates', () => {
+    const screenPoint = grid.surfaceToScreen({ u: 0.25, v: 0.6 });
+    const surfacePoint = grid.screenToSurface(screenPoint);
+
+    expect(surfacePoint).not.toBeNull();
+    expect(surfacePoint?.u).toBeCloseTo(0.25, 5);
+    expect(surfacePoint?.v).toBeCloseTo(0.6, 5);
+  });
+
+  it('moves upward along the trapezoid surface instead of pure screen vertical', () => {
+    const startPoint = grid.surfaceToScreen({ u: 0.15, v: 0.7 });
+    const nextPoint = grid.moveAlongSurface(startPoint, 0, -30);
+
+    expect(nextPoint).not.toBeNull();
+    expect(nextPoint!.y).toBeLessThan(startPoint.y);
+    expect(nextPoint!.x).toBeGreaterThan(startPoint.x);
+  });
+
   it('throws when cell is outside bounds', () => {
     expect(() => grid.toScreen({ x: 99, y: 0 })).toThrow(/out of bounds/i);
   });

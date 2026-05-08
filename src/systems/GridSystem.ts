@@ -15,6 +15,11 @@ export type ScreenRect = {
   height: number;
 };
 
+export type SurfacePoint = {
+  u: number;
+  v: number;
+};
+
 export type GridConfig = {
   columns: number;
   rows: number;
@@ -45,6 +50,10 @@ export class GridSystem {
 
   private getTopY(): number {
     return this.config.centerY - this.config.totalHeight / 2;
+  }
+
+  private getWidthAtProgress(progress: number): number {
+    return this.config.topWidth + (this.config.bottomWidth - this.config.topWidth) * progress;
   }
 
   private interpolateEdge(progress: number): { leftX: number; rightX: number; y: number } {
@@ -150,6 +159,64 @@ export class GridSystem {
     }
 
     return isInside;
+  }
+
+  surfaceToScreen(point: SurfacePoint): ScreenPoint {
+    const edge = this.interpolateEdge(point.v);
+    const width = edge.rightX - edge.leftX;
+
+    return {
+      x: edge.leftX + width * point.u,
+      y: edge.y,
+    };
+  }
+
+  screenToSurface(point: ScreenPoint): SurfacePoint | null {
+    const v = (point.y - this.getTopY()) / this.config.totalHeight;
+
+    if (v < 0 || v > 1) {
+      return null;
+    }
+
+    const edge = this.interpolateEdge(v);
+    const width = edge.rightX - edge.leftX;
+
+    if (width <= 0) {
+      return null;
+    }
+
+    const u = (point.x - edge.leftX) / width;
+
+    if (u < 0 || u > 1) {
+      return null;
+    }
+
+    return { u, v };
+  }
+
+  moveAlongSurface(point: ScreenPoint, deltaX: number, deltaY: number): ScreenPoint | null {
+    const surfacePoint = this.screenToSurface(point);
+
+    if (!surfacePoint) {
+      return null;
+    }
+
+    const width = this.getWidthAtProgress(surfacePoint.v);
+    const nextSurfacePoint = {
+      u: surfacePoint.u + deltaX / width,
+      v: surfacePoint.v + deltaY / this.config.totalHeight,
+    };
+
+    if (
+      nextSurfacePoint.u < 0 ||
+      nextSurfacePoint.u > 1 ||
+      nextSurfacePoint.v < 0 ||
+      nextSurfacePoint.v > 1
+    ) {
+      return null;
+    }
+
+    return this.surfaceToScreen(nextSurfacePoint);
   }
 
   allCells(): GridCell[] {
