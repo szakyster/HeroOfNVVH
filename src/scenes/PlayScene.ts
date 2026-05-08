@@ -11,6 +11,12 @@ import {
   type FacingDirection,
 } from '../systems/AttackSystem';
 import { LevelLoader } from '../systems/LevelLoader';
+import {
+  DEFAULT_LOOT_CONFIG,
+  getLootAlpha,
+  isInventoryFull,
+  isLootExpired,
+} from '../systems/LootSystem';
 import { SimpleCollisionProvider } from '../systems/SimpleCollisionProvider';
 import { SCENE_KEYS } from './sceneKeys';
 
@@ -21,8 +27,18 @@ type ActiveEnemy = {
   pathIndex: number;
   speed: number;
   hitsTaken: number;
+  lootDropped: boolean;
   escaped: boolean;
   defeated: boolean;
+};
+
+type ActiveLoot = {
+  id: string;
+  type: string;
+  value: 10 | 20 | 50;
+  body: Phaser.GameObjects.Rectangle;
+  shadow: Phaser.GameObjects.Ellipse;
+  createdAt: number;
 };
 
 export class PlayScene extends Phaser.Scene {
@@ -50,9 +66,17 @@ export class PlayScene extends Phaser.Scene {
 
   private readonly maxEscapedEnemies = 10;
 
+  private readonly lootSize = { width: 28, height: 20 };
+
+  private readonly lootDepositIntervalMs = 400;
+
   private gridSystem?: GridSystem;
 
+  private currentLevel?: LevelData;
+
   private obstacleRects: CollisionRect[] = [];
+
+  private sanctuaryRects: CollisionRect[] = [];
 
   private playerBody?: Phaser.GameObjects.Ellipse;
 
@@ -81,6 +105,14 @@ export class PlayScene extends Phaser.Scene {
   private keySpace?: Phaser.Input.Keyboard.Key;
 
   private activeEnemies: ActiveEnemy[] = [];
+
+  private activeLoots: ActiveLoot[] = [];
+
+  private inventory: Array<{ type: string; value: 10 | 20 | 50 }> = [];
+
+  private droppedLootCount = 0;
+
+  private nextLootDepositAt: number | null = null;
 
   private facingDirection: FacingDirection = 'down';
 
@@ -177,7 +209,7 @@ export class PlayScene extends Phaser.Scene {
     this.levelInfoText = this.add
       .text(width / 2, height - 62, 'Palyabetoltes: folyamatban...', {
         fontFamily: 'Verdana',
-        fontSize: '18px',
+        fontSize: '16px',
         color: '#c9d6df',
       })
       .setOrigin(0.5);
@@ -206,14 +238,14 @@ export class PlayScene extends Phaser.Scene {
     this.levelLoader
       .load('/levels/level-01.json')
       .then((level) => {
+        this.currentLevel = level;
         this.obstacleRects = level.obstacles.map((cell) => this.gridSystem!.cellBounds(cell, 10));
+        this.sanctuaryRects = level.sanctuaryZone.map((cell) => this.gridSystem!.cellBounds(cell, 10));
         this.drawObstacleCells(level);
+        this.drawSanctuaryZone(level);
         this.spawnPlayer(level);
         this.startEnemyWave(level);
-
-        this.levelInfoText?.setText(
-          `Palya: ${level.name} | Akadalyok: ${level.obstacles.length} | Loot: ${level.lootSpawns.length}`,
-        );
+        this.refreshLevelInfo();
       })
       .catch((error: unknown) => {
         this.levelInfoText?.setText('Palyabetoltes hiba');
@@ -241,6 +273,7 @@ export class PlayScene extends Phaser.Scene {
 
     this.renderPlayerHitbox();
     this.updateEnemies(delta);
+    this.updateLoots();
     this.renderEnemyHitboxes();
     this.renderAttackEffect();
 
@@ -285,6 +318,25 @@ export class PlayScene extends Phaser.Scene {
       const polygon = this.gridSystem!.cellPolygon(cell);
       graphics.fillStyle(0xe76f51, 0.35);
       graphics.lineStyle(2, 0xffb4a2, 0.95);
+      graphics.beginPath();
+      graphics.moveTo(polygon[0].x, polygon[0].y);
+      graphics.lineTo(polygon[1].x, polygon[1].y);
+      graphics.lineTo(polygon[2].x, polygon[2].y);
+      graphics.lineTo(polygon[3].x, polygon[3].y);
+      graphics.closePath();
+      graphics.fillPath();
+      graphics.strokePath();
+    }
+  }
+
+  private drawSanctuaryZone(level: LevelData): void {
+    const graphics = this.add.graphics();
+    graphics.setDepth(1.4);
+
+    for (const cell of level.sanctuaryZone) {
+      const polygon = this.gridSystem!.cellPolygon(cell);
+      graphics.fillStyle(0x2a9d8f, 0.22);
+      graphics.lineStyle(2, 0x95d5b2, 0.9);
       graphics.beginPath();
       graphics.moveTo(polygon[0].x, polygon[0].y);
       graphics.lineTo(polygon[1].x, polygon[1].y);
@@ -365,6 +417,7 @@ export class PlayScene extends Phaser.Scene {
       pathIndex: 0,
       speed: this.enemySpeed * Phaser.Math.FloatBetween(0.75, 1.25),
       hitsTaken: 0,
+      lootDropped: false,
       escaped: false,
       defeated: false,
     });
@@ -514,6 +567,11 @@ export class PlayScene extends Phaser.Scene {
       enemy.hitsTaken += 1;
       this.applyEnemyKnockback(enemy);
 
+      if (enemy.hitsTaken === 1 && !enemy.lootDropped) {
+        this.spawnLootAtEnemy(enemy);
+        enemy.lootDropped = true;
+      }
+
       if (enemy.hitsTaken >= 2) {
         this.defeatEnemy(enemy);
         continue;
@@ -548,7 +606,34 @@ export class PlayScene extends Phaser.Scene {
     enemy.defeated = true;
     enemy.body.destroy();
     enemy.shadow.destroy();
-    this.registry.set('score', (this.registry.get('score') ?? 0) + 1);
+    this.refreshLevelInfo();
+  }
+
+  private spawnLootAtEnemy(enemy: ActiveEnemy): void {
+    if (!this.currentLevel || this.currentLevel.lootSpawns.length === 0) {
+      return;
+    }
+
+    const template = this.currentLevel.lootSpawns[this.droppedLootCount % this.currentLevel.lootSpawns.length];
+    this.droppedLootCount += 1;
+
+    const shadow = this.add
+      .ellipse(enemy.body.x, enemy.body.y + 18, 24, 10, 0x111111, 0.22)
+      .setDepth(2.1);
+    const body = this.add
+      .rectangle(enemy.body.x, enemy.body.y + 4, this.lootSize.width, this.lootSize.height, this.getLootColor(template.type), 1)
+      .setStrokeStyle(2, 0x1d3557, 0.9)
+      .setDepth(2.6);
+
+    this.activeLoots.push({
+      id: `${template.id}-${this.droppedLootCount}`,
+      type: template.type,
+      value: template.value,
+      body,
+      shadow,
+      createdAt: this.time.now,
+    });
+    this.refreshLevelInfo();
   }
 
   private getPlayerHitbox(centerX: number, centerY: number): CollisionRect {
@@ -592,6 +677,82 @@ export class PlayScene extends Phaser.Scene {
     this.playerHitboxDebug.clear();
     this.playerHitboxDebug.lineStyle(2, 0xff4d6d, 0.95);
     this.playerHitboxDebug.strokeRect(hitbox.x, hitbox.y, hitbox.width, hitbox.height);
+  }
+
+  private updateLoots(): void {
+    if (!this.playerBody) {
+      return;
+    }
+
+    const now = this.time.now;
+    const playerHitbox = this.getPlayerHitbox(this.playerBody.x, this.playerBody.y);
+
+    for (const loot of [...this.activeLoots]) {
+      if (isLootExpired(loot.createdAt, now)) {
+        this.destroyLoot(loot);
+        continue;
+      }
+
+      const alpha = getLootAlpha(loot.createdAt, now);
+      loot.body.setAlpha(alpha);
+      loot.shadow.setAlpha(Math.max(0.1, alpha * 0.45));
+
+      if (!isInventoryFull(this.inventory.length)) {
+        const lootHitbox = this.getLootHitbox(loot.body.x, loot.body.y);
+        if (this.collisionProvider.intersects(playerHitbox, lootHitbox)) {
+          this.pickUpLoot(loot);
+        }
+      }
+    }
+
+    const isInsideSanctuary = this.isPlayerInsideSanctuary(playerHitbox);
+
+    if (this.inventory.length > 0 && isInsideSanctuary) {
+      this.depositInventory(now);
+    } else {
+      this.nextLootDepositAt = null;
+    }
+  }
+
+  private pickUpLoot(loot: ActiveLoot): void {
+    this.inventory.push({ type: loot.type, value: loot.value });
+    this.destroyLoot(loot, false);
+    this.refreshLevelInfo();
+  }
+
+  private depositInventory(now: number): void {
+    if (this.inventory.length === 0) {
+      return;
+    }
+
+    if (this.nextLootDepositAt === null) {
+      this.nextLootDepositAt = now + this.lootDepositIntervalMs;
+      return;
+    }
+
+    if (now < this.nextLootDepositAt) {
+      return;
+    }
+
+    const depositedLoot = this.inventory.shift();
+    this.registry.set('score', (this.registry.get('score') ?? 0) + (depositedLoot?.value ?? 0));
+    this.nextLootDepositAt += this.lootDepositIntervalMs;
+
+    if (this.inventory.length === 0) {
+      this.nextLootDepositAt = null;
+    }
+
+    this.refreshLevelInfo();
+  }
+
+  private destroyLoot(loot: ActiveLoot, refreshInfo = true): void {
+    loot.body.destroy();
+    loot.shadow.destroy();
+    this.activeLoots = this.activeLoots.filter((activeLoot) => activeLoot.id !== loot.id);
+
+    if (refreshInfo) {
+      this.refreshLevelInfo();
+    }
   }
 
   private updateEnemies(delta: number): void {
@@ -681,6 +842,52 @@ export class PlayScene extends Phaser.Scene {
     this.enemyInfoText?.setText(
       `${this.waveNumber}. hullam: ${this.spawnedEnemies}/${count} ellenfel | Elmenekult: ${escapedEnemies}/${this.maxEscapedEnemies}`,
     );
+  }
+
+  private refreshLevelInfo(): void {
+    if (!this.currentLevel) {
+      return;
+    }
+
+    this.levelInfoText?.setText(
+      `Palya: ${this.currentLevel.name} | Inventory: ${this.getInventoryIcons()} | M Ft: ${this.registry.get('score') ?? 0} | Foldon: ${this.activeLoots.length}`,
+    );
+  }
+
+  private getInventoryIcons(): string {
+    const filledSlots = '■'.repeat(this.inventory.length);
+    const emptySlots = '□'.repeat(Math.max(0, DEFAULT_LOOT_CONFIG.maxInventory - this.inventory.length));
+
+    return `${filledSlots}${emptySlots}`;
+  }
+
+  private isPlayerInsideSanctuary(playerHitbox: CollisionRect): boolean {
+    return this.sanctuaryRects.some((rect) => this.collisionProvider.intersects(playerHitbox, rect));
+  }
+
+  private getLootHitbox(centerX: number, centerY: number): CollisionRect {
+    return {
+      x: centerX - this.lootSize.width / 2,
+      y: centerY - this.lootSize.height / 2,
+      width: this.lootSize.width,
+      height: this.lootSize.height,
+    };
+  }
+
+  private getLootColor(type: string): number {
+    if (type === 'wallet') {
+      return 0x8d6e63;
+    }
+
+    if (type === 'phone') {
+      return 0x577590;
+    }
+
+    if (type === 'bag') {
+      return 0x6a994e;
+    }
+
+    return 0xe9c46a;
   }
 
   private triggerGameOver(): void {
