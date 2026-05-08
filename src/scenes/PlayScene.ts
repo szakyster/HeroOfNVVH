@@ -13,7 +13,9 @@ export class PlayScene extends Phaser.Scene {
 
   private readonly playerSpeed = 220;
 
-  private readonly playerHitboxSize = { width: 22, height: 22 };
+  private readonly playerHitboxSize = { width: 66, height: 36 };
+
+  private readonly playerHitboxOffsetY = 27.1;
 
   private gridSystem?: GridSystem;
 
@@ -22,6 +24,8 @@ export class PlayScene extends Phaser.Scene {
   private playerBody?: Phaser.GameObjects.Ellipse;
 
   private playerShadow?: Phaser.GameObjects.Ellipse;
+
+  private playerHitboxDebug?: Phaser.GameObjects.Graphics;
 
   private levelInfoText?: Phaser.GameObjects.Text;
 
@@ -114,18 +118,20 @@ export class PlayScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    this.playerShadow = this.add.ellipse(0, 0, 24, 10, 0x111111, 0.35).setDepth(2);
+    this.playerShadow = this.add.ellipse(0, 0, 72, 30, 0x111111, 0.35).setDepth(2);
     this.playerBody = this.add
-      .ellipse(0, 0, 24, 30, 0xf4d35e, 1)
+      .ellipse(0, 0, 72, 90, 0xf4d35e, 1)
       .setStrokeStyle(2, 0x102a43, 1)
       .setDepth(3);
+    // DEBUG: Keep hitboxes visible during development. Remove before release build.
+    this.playerHitboxDebug = this.add.graphics().setDepth(4);
     this.playerShadow.setVisible(false);
     this.playerBody.setVisible(false);
 
     this.levelLoader
       .load('/levels/level-01.json')
       .then((level) => {
-        this.obstacleRects = level.obstacles.map((cell) => this.gridSystem!.cellBounds(cell, 6));
+        this.obstacleRects = level.obstacles.map((cell) => this.gridSystem!.cellBounds(cell, 10));
         this.drawObstacleCells(level);
         this.spawnPlayer(level);
 
@@ -145,13 +151,15 @@ export class PlayScene extends Phaser.Scene {
   }
 
   update(_time: number, delta: number): void {
-    if (!this.playerBody || !this.playerShadow || !this.gridSystem) {
+    if (!this.playerBody || !this.playerShadow || !this.gridSystem || !this.playerHitboxDebug) {
       return;
     }
 
     if (!this.playerBody.visible) {
       return;
     }
+
+    this.renderPlayerHitbox();
 
     let horizontal = 0;
     let vertical = 0;
@@ -206,8 +214,8 @@ export class PlayScene extends Phaser.Scene {
     }
 
     const center = this.gridSystem!.cellCenter(startCell);
-    this.playerBody.setPosition(center.x, center.y - 8).setVisible(true);
-    this.playerShadow.setPosition(center.x, center.y + 10).setVisible(true);
+    this.playerBody.setPosition(center.x, center.y - 24).setVisible(true);
+    this.playerShadow.setPosition(center.x, center.y + 30).setVisible(true);
   }
 
   private tryMovePlayer(deltaX: number, deltaY: number): void {
@@ -228,13 +236,14 @@ export class PlayScene extends Phaser.Scene {
     }
 
     this.playerBody.setPosition(nextX, nextY);
-    this.playerShadow.setPosition(nextX, nextY + 18);
+    this.playerShadow.setPosition(nextX, nextY + 54);
+    this.renderPlayerHitbox();
   }
 
   private getPlayerHitbox(centerX: number, centerY: number): CollisionRect {
     return {
       x: centerX - this.playerHitboxSize.width / 2,
-      y: centerY - this.playerHitboxSize.height / 2,
+      y: centerY - this.playerHitboxSize.height / 2 + this.playerHitboxOffsetY,
       width: this.playerHitboxSize.width,
       height: this.playerHitboxSize.height,
     };
@@ -251,5 +260,17 @@ export class PlayScene extends Phaser.Scene {
       { x: rect.x + rect.width, y: rect.y + rect.height },
       { x: rect.x, y: rect.y + rect.height },
     ].every((corner) => this.gridSystem!.containsPoint(corner));
+  }
+
+  private renderPlayerHitbox(): void {
+    if (!this.playerBody || !this.playerHitboxDebug) {
+      return;
+    }
+
+    // DEBUG: Temporary hitbox overlay for gameplay tuning. Remove before release.
+    const hitbox = this.getPlayerHitbox(this.playerBody.x, this.playerBody.y);
+    this.playerHitboxDebug.clear();
+    this.playerHitboxDebug.lineStyle(2, 0xff4d6d, 0.95);
+    this.playerHitboxDebug.strokeRect(hitbox.x, hitbox.y, hitbox.width, hitbox.height);
   }
 }
