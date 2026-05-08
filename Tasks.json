@@ -9,7 +9,6 @@
     {
       "id": 2,
       "name": "Scene Framework",
-      "status": "in-progress"
       "status": "closed"
     },
     {
@@ -58,7 +57,7 @@
       "id": 10,
       "name": "UI/HUD Implementation",
       "description": "Create in-game HUD showing score (Pont), inventory display (0-4), escaped enemies count (Reptérre érkeztek), and current level/wave. Reference: JatekLeiras.md section 12 (HUD Specs), Vizualitas.md section 8",
-      "status": "ready"
+      "status": "in-progress"
     },
     {
       "id": 11,

@@ -50,6 +50,10 @@ type ActiveLoot = {
 };
 
 export class PlayScene extends Phaser.Scene {
+  private readonly handleDebugGameOver = () => {
+    this.triggerGameOver();
+  };
+
   private readonly levelLoader = new LevelLoader();
 
   private readonly collisionProvider = new SimpleCollisionProvider();
@@ -95,6 +99,14 @@ export class PlayScene extends Phaser.Scene {
   private enemyHitboxDebug?: Phaser.GameObjects.Graphics;
 
   private attackDebug?: Phaser.GameObjects.Graphics;
+
+  private scoreValueText?: Phaser.GameObjects.Text;
+
+  private inventoryValueText?: Phaser.GameObjects.Text;
+
+  private escapedValueText?: Phaser.GameObjects.Text;
+
+  private waveValueText?: Phaser.GameObjects.Text;
 
   private levelInfoText?: Phaser.GameObjects.Text;
 
@@ -156,6 +168,7 @@ export class PlayScene extends Phaser.Scene {
 
   create(): void {
     const { width, height } = this.scale;
+    this.resetRuntimeState();
     this.audioSystem = getAudioSystem(this);
     applyAudioSettingsFromRegistry(this);
     this.audioSystem.playMusic(AUDIO_KEYS.AMBIENT, true);
@@ -168,6 +181,7 @@ export class PlayScene extends Phaser.Scene {
       bottomWidth: width * 0.7,
       totalHeight: height * 0.7,
     });
+    this.createBackground(width, height);
 
     this.cursors = this.input.keyboard?.createCursorKeys();
     this.keyW = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.W);
@@ -178,70 +192,43 @@ export class PlayScene extends Phaser.Scene {
     this.registry.set('score', 0);
     this.registry.set('escapedEnemies', 0);
 
-    this.add.rectangle(width / 2, height / 2, width, height, 0x1f2d3d, 1);
+    this.createHud(width, height);
+    this.refreshHud();
 
     const graphics = this.add.graphics();
     graphics.setDepth(1);
 
-    graphics.lineStyle(2, 0x8ecae6, 0.95);
+    graphics.lineStyle(2, 0xb8d8d8, 0.78);
     for (const cell of this.gridSystem.allCells()) {
       const polygon = this.gridSystem.cellPolygon(cell);
+      graphics.fillStyle((cell.x + cell.y) % 2 === 0 ? 0x355c5d : 0x406f70, 0.48);
       graphics.beginPath();
       graphics.moveTo(polygon[0].x, polygon[0].y);
       graphics.lineTo(polygon[1].x, polygon[1].y);
       graphics.lineTo(polygon[2].x, polygon[2].y);
       graphics.lineTo(polygon[3].x, polygon[3].y);
       graphics.closePath();
+      graphics.fillPath();
       graphics.strokePath();
     }
 
-    this.add
-      .text(width / 2, 34, 'PlayScene', {
-        fontFamily: 'Verdana',
-        fontSize: '36px',
-        color: '#f2cc8f',
-      })
-      .setOrigin(0.5);
-
-    this.add
-      .text(width / 2, 68, 'Task #3-tol jon a palya + gameplay', {
-        fontFamily: 'Verdana',
-        fontSize: '20px',
-        color: '#f4f1de',
-      })
-      .setOrigin(0.5);
-
-    this.add
-      .text(width / 2, 96, 'Task #4: 7x6 perspektivikus trapEz grid aktiv', {
-        fontFamily: 'Verdana',
-        fontSize: '18px',
-        color: '#9fd3c7',
-      })
-      .setOrigin(0.5);
-
-    this.add
-      .text(width / 2, height - 34, 'Mozgas: WASD vagy nyilak | SPACE: Tamadas | G: Game Over teszt', {
-        fontFamily: 'Verdana',
-        fontSize: '18px',
-        color: '#81b29a',
-      })
-      .setOrigin(0.5);
-
     this.levelInfoText = this.add
-      .text(width / 2, height - 62, 'Palyabetoltes: folyamatban...', {
+      .text(24, height - 58, 'Pályabetöltés: folyamatban...', {
         fontFamily: 'Verdana',
-        fontSize: '16px',
-        color: '#c9d6df',
+        fontSize: '17px',
+        color: '#f1faee',
       })
-      .setOrigin(0.5);
+      .setOrigin(0, 0.5)
+      .setDepth(7);
 
     this.enemyInfoText = this.add
-      .text(width / 2, height - 88, 'Enemy wave: inicializalas...', {
+      .text(24, height - 28, 'Ellenségállapot: inicializálás...', {
         fontFamily: 'Verdana',
-        fontSize: '18px',
-        color: '#ffb703',
+        fontSize: '17px',
+        color: '#ffd166',
       })
-      .setOrigin(0.5);
+      .setOrigin(0, 0.5)
+      .setDepth(7);
 
     this.createAudioToggleButtons(width);
 
@@ -275,14 +262,110 @@ export class PlayScene extends Phaser.Scene {
         console.error('Level loading failed', error);
       });
 
-    this.input.keyboard?.on('keydown-G', () => {
-      this.triggerGameOver();
+    this.input.keyboard?.off('keydown-G', this.handleDebugGameOver, this);
+    this.input.keyboard?.on('keydown-G', this.handleDebugGameOver, this);
+
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.input.keyboard?.off('keydown-G', this.handleDebugGameOver, this);
     });
+  }
+
+  private resetRuntimeState(): void {
+    this.currentLevel = undefined;
+    this.obstacleRects = [];
+    this.sanctuaryRects = [];
+    this.playerBody = undefined;
+    this.playerShadow = undefined;
+    this.playerHitboxDebug = undefined;
+    this.enemyHitboxDebug = undefined;
+    this.attackDebug = undefined;
+    this.scoreValueText = undefined;
+    this.inventoryValueText = undefined;
+    this.escapedValueText = undefined;
+    this.waveValueText = undefined;
+    this.levelInfoText = undefined;
+    this.enemyInfoText = undefined;
+    this.musicToggleText = undefined;
+    this.sfxToggleText = undefined;
+    this.activeEnemies = [];
+    this.activeLoots = [];
+    this.inventory = [];
+    this.droppedLootCount = 0;
+    this.nextLootDepositAt = null;
+    this.lastInventoryErrorAt = Number.NEGATIVE_INFINITY;
+    this.facingDirection = 'down';
+    this.attackRect = null;
+    this.attackVisualUntil = 0;
+    this.lastAttackAt = Number.NEGATIVE_INFINITY;
+    this.isGameOver = false;
+    this.waveNumber = 1;
+    this.spawnedEnemies = 0;
+  }
+
+  private createBackground(width: number, height: number): void {
+    this.add.rectangle(width / 2, height / 2, width, height, 0x14323d, 1).setDepth(0);
+    this.add.ellipse(width * 0.18, height * 0.14, width * 0.45, height * 0.18, 0x2f5d62, 0.2).setDepth(0.1);
+    this.add.ellipse(width * 0.82, height * 0.22, width * 0.4, height * 0.16, 0x3a6b6f, 0.18).setDepth(0.1);
+
+    const atmosphere = this.add.graphics();
+    atmosphere.setDepth(0.15);
+    atmosphere.fillStyle(0x1d4d4f, 0.35);
+    atmosphere.fillRoundedRect(18, 18, width - 36, 92, 24);
+    atmosphere.fillStyle(0x10252d, 0.42);
+    atmosphere.fillRoundedRect(18, height - 80, width - 36, 52, 18);
+    atmosphere.fillStyle(0x4d6a6d, 0.22);
+    atmosphere.fillRect(width * 0.08, height * 0.74, width * 0.84, height * 0.12);
+  }
+
+  private createHud(width: number, _height: number): void {
+    const panel = this.add.graphics();
+    panel.setDepth(6);
+    panel.fillStyle(0x102a43, 0.84);
+    panel.fillRoundedRect(18, 18, width - 36, 92, 24);
+    panel.lineStyle(2, 0xf4d35e, 0.45);
+    panel.strokeRoundedRect(18, 18, width - 36, 92, 24);
+
+    const metricY = 36;
+    const valueY = 68;
+    const columns = [42, 228, 430, 628];
+
+    this.addHudLabel(columns[0], metricY, 'Pont');
+    this.scoreValueText = this.addHudValue(columns[0], valueY);
+
+    this.addHudLabel(columns[1], metricY, 'Hátizsák');
+    this.inventoryValueText = this.addHudValue(columns[1], valueY);
+
+    this.addHudLabel(columns[2], metricY, 'Reptérre érkeztek');
+    this.escapedValueText = this.addHudValue(columns[2], valueY);
+
+    this.addHudLabel(columns[3], metricY, 'Hullám');
+    this.waveValueText = this.addHudValue(columns[3], valueY);
+  }
+
+  private addHudLabel(x: number, y: number, text: string): void {
+    this.add
+      .text(x, y, text, {
+        fontFamily: 'Verdana',
+        fontSize: '15px',
+        color: '#a8dadc',
+      })
+      .setDepth(7);
+  }
+
+  private addHudValue(x: number, y: number): Phaser.GameObjects.Text {
+    return this.add
+      .text(x, y, '', {
+        fontFamily: 'Verdana',
+        fontSize: '24px',
+        color: '#f1faee',
+        fontStyle: 'bold',
+      })
+      .setDepth(7);
   }
 
   private createAudioToggleButtons(width: number): void {
     this.musicToggleText = this.add
-      .text(width - 18, 18, '', {
+      .text(width - 18, 122, '', {
         fontFamily: 'Verdana',
         fontSize: '15px',
         color: '#f4f1de',
@@ -302,7 +385,7 @@ export class PlayScene extends Phaser.Scene {
     });
 
     this.sfxToggleText = this.add
-      .text(width - 18, 58, '', {
+      .text(width - 18, 160, '', {
         fontFamily: 'Verdana',
         fontSize: '15px',
         color: '#f4f1de',
@@ -931,6 +1014,7 @@ export class PlayScene extends Phaser.Scene {
     const escapedEnemies = (this.registry.get('escapedEnemies') ?? 0) + 1;
     this.registry.set('escapedEnemies', escapedEnemies);
     this.refreshEnemyInfo();
+    this.refreshHud();
 
     if (escapedEnemies >= this.maxEscapedEnemies) {
       this.triggerGameOver();
@@ -938,20 +1022,26 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private refreshEnemyInfo(count: number = this.targetEnemyCount): void {
-    const escapedEnemies = this.registry.get('escapedEnemies') ?? 0;
     this.enemyInfoText?.setText(
-      `${this.waveNumber}. hullam: ${this.spawnedEnemies}/${count} ellenfel | Elmenekult: ${escapedEnemies}/${this.maxEscapedEnemies}`,
+      `Aktív ellenfelek: ${this.activeEnemies.length} | Spawn ebben a hullámban: ${this.spawnedEnemies}/${count}`,
     );
+    this.refreshHud();
   }
 
   private refreshLevelInfo(): void {
-    if (!this.currentLevel) {
-      return;
-    }
-
     this.levelInfoText?.setText(
-      `Palya: ${this.currentLevel.name} | Inventory: ${this.getInventoryIcons()} | M Ft: ${this.registry.get('score') ?? 0} | Foldon: ${this.activeLoots.length}`,
+      `Pálya: ${this.currentLevel?.name ?? 'betöltés alatt'} | Földön: ${this.activeLoots.length} tárgy | Leadási sáv: ${this.inventory.length > 0 ? 'aktív' : 'üres'}`,
     );
+    this.refreshHud();
+  }
+
+  private refreshHud(): void {
+    this.scoreValueText?.setText(`${this.registry.get('score') ?? 0} M Ft`);
+    this.inventoryValueText?.setText(`${this.inventory.length}/${DEFAULT_LOOT_CONFIG.maxInventory}  ${this.getInventoryIcons()}`);
+    this.escapedValueText?.setText(
+      `${this.registry.get('escapedEnemies') ?? 0}/${this.maxEscapedEnemies}`,
+    );
+    this.waveValueText?.setText(`${this.waveNumber}. hullám`);
   }
 
   private getInventoryIcons(): string {
