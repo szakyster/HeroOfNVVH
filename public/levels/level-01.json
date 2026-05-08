@@ -31,8 +31,8 @@
     }
   ],
   "sanctuaryZone": [
-    { "x": 3, "y": 5 },
-    { "x": 4, "y": 5 }
+    { "x": 2, "y": 5 },
+    { "x": 3, "y": 5 }
   ],
   "lootSpawns": [
     { "id": "loot-1", "type": "wallet", "cell": { "x": 2, "y": 4 } },
