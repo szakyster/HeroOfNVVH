@@ -40,13 +40,13 @@
       "id": 7,
       "name": "Attack System",
       "description": "Implement player attack (spell/sword strike) with area-of-effect collision detection. Handle enemy knockback and attack cooldown mechanics. Reference: JatekLeiras.md section 6.2-6.3",
-      "status": "in-progress"
+      "status": "closed"
     },
     {
       "id": 8,
       "name": "Loot System",
       "description": "Implement loot spawning and despawning, pickup mechanics, inventory storage (max 4 items), and deposit at sanctuary zones. Handle loot visual feedback (blinking when close to despawn). Reference: JatekLeiras.md section 5.2, Vizualitas.md section 4.2",
-      "status": "ready"
+      "status": "in-progress"
     },
     {
       "id": 9,
