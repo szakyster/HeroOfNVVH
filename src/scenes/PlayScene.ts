@@ -26,7 +26,7 @@ export class PlayScene extends Phaser.Scene {
 
   private readonly playerSpeed = 220;
 
-  private readonly enemySpeed = 110;
+  private readonly enemySpeed = 88;
 
   private readonly playerHitboxSize = { width: 66, height: 36 };
 
@@ -69,7 +69,7 @@ export class PlayScene extends Phaser.Scene {
   private spawnedEnemies = 0;
 
   private get targetEnemyCount(): number {
-    return Math.min(this.waveNumber + 1, 8);
+    return Math.min(Math.floor(this.waveNumber * 0.75 + 1), 8);
   }
 
   constructor() {
@@ -271,8 +271,8 @@ export class PlayScene extends Phaser.Scene {
     this.enemyInfoText?.setText(`${this.waveNumber}. hullam: 0/${count} ellenfel`);
 
     for (let i = 0; i < count; i++) {
-      const baseDelay = (i / count) * waveWindow;
-      const randomExtra = Math.random() * 2000;
+      const baseDelay = (i / count) * (waveWindow-1500);
+      const randomExtra = Math.random() * 1000;
       this.time.delayedCall(baseDelay + randomExtra, () => {
         const spawned = this.spawnEnemy(level);
         if (spawned) {
@@ -320,7 +320,7 @@ export class PlayScene extends Phaser.Scene {
       shadow,
       path,
       pathIndex: 0,
-      speed: this.enemySpeed,
+      speed: this.enemySpeed * Phaser.Math.FloatBetween(0.75, 1.25),
       escaped: false,
     });
 
@@ -397,12 +397,12 @@ export class PlayScene extends Phaser.Scene {
       return;
     }
 
-    const deltaDistance = (delta / 1000) * this.enemySpeed;
-
     for (const enemy of this.activeEnemies) {
       if (enemy.escaped) {
         continue;
       }
+
+      const deltaDistance = (delta / 1000) * enemy.speed;
 
       const nextGridCell = enemy.path[enemy.pathIndex + 1];
       if (!nextGridCell) {
