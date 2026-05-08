@@ -1,0 +1,39 @@
+import { describe, expect, it } from 'vitest';
+import { LevelLoader } from './LevelLoader';
+
+describe('LevelLoader', () => {
+  const loader = new LevelLoader();
+
+  it('parses valid level JSON shape', () => {
+    const parsed = loader.parse({
+      id: 'level-test',
+      name: 'Test Level',
+      grid: { width: 7, height: 6 },
+      obstacles: [{ x: 1, y: 1 }],
+      spawnZones: [{ id: 'spawn-1', cells: [{ x: 0, y: 0 }] }],
+      goalZones: [{ id: 'goal-1', cells: [{ x: 6, y: 5 }] }],
+      sanctuaryZone: [{ x: 3, y: 5 }],
+      lootSpawns: [{ id: 'loot-1', type: 'wallet', cell: { x: 2, y: 4 } }],
+    });
+
+    expect(parsed.id).toBe('level-test');
+    expect(parsed.grid.width).toBe(7);
+    expect(parsed.spawnZones[0].id).toBe('spawn-1');
+    expect(parsed.lootSpawns[0].cell.x).toBe(2);
+  });
+
+  it('throws when a cell is outside grid bounds', () => {
+    expect(() =>
+      loader.parse({
+        id: 'bad-level',
+        name: 'Bad Level',
+        grid: { width: 7, height: 6 },
+        obstacles: [{ x: 9, y: 1 }],
+        spawnZones: [{ id: 'spawn-1', cells: [{ x: 0, y: 0 }] }],
+        goalZones: [{ id: 'goal-1', cells: [{ x: 6, y: 5 }] }],
+        sanctuaryZone: [{ x: 3, y: 5 }],
+        lootSpawns: [{ id: 'loot-1', type: 'wallet', cell: { x: 2, y: 4 } }],
+      }),
+    ).toThrow(/validation error/i);
+  });
+});

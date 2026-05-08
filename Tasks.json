@@ -16,7 +16,7 @@
       "id": 3,
       "name": "Pálya JSON Loader",
       "description": "Implement level loader that reads JSON pálya files. Parse grid-based obstacles, spawn points, goal zones, and loot positions. Reference: Tech.md section 4.2, JatekLeiras.md section 5",
-      "status": "ready"
+      "status": "in-progress"
     },
     {
       "id": 4,

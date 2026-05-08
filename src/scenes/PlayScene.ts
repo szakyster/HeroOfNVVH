@@ -1,7 +1,10 @@
 import Phaser from 'phaser';
+import { LevelLoader } from '../systems/LevelLoader';
 import { SCENE_KEYS } from './sceneKeys';
 
 export class PlayScene extends Phaser.Scene {
+  private readonly levelLoader = new LevelLoader();
+
   constructor() {
     super(SCENE_KEYS.PLAY);
   }
@@ -34,6 +37,26 @@ export class PlayScene extends Phaser.Scene {
         color: '#81b29a',
       })
       .setOrigin(0.5);
+
+    const levelInfoText = this.add
+      .text(width / 2, height / 2 + 92, 'Palyabetoltes: folyamatban...', {
+        fontFamily: 'Verdana',
+        fontSize: '18px',
+        color: '#c9d6df',
+      })
+      .setOrigin(0.5);
+
+    this.levelLoader
+      .load('/levels/level-01.json')
+      .then((level) => {
+        levelInfoText.setText(
+          `Palya: ${level.name} | Akadalyok: ${level.obstacles.length} | Loot: ${level.lootSpawns.length}`,
+        );
+      })
+      .catch((error: unknown) => {
+        levelInfoText.setText('Palyabetoltes hiba');
+        console.error('Level loading failed', error);
+      });
 
     this.input.keyboard?.on('keydown-G', () => {
       const currentScore = this.registry.get('score') ?? 0;
