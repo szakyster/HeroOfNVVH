@@ -52,7 +52,7 @@
       "id": 9,
       "name": "Audio Integration",
       "description": "Integrate audio system with IAudioService interface wrapper around Phaser audio. Implement background music, sound effects for attacks, pickups, and events. Reference: D-016 (Audio Architecture), Tech.md section 7.2, Architecture.md section 8",
-      "status": "in-progress"
+      "status": "closed"
     },
     {
       "id": 10,
