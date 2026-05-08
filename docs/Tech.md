@@ -15,15 +15,15 @@ Ez a dokumentum rögzíti a Heroes of NVVH HTML5 játék megvalósításához sz
 
 ## 2. Alapválasztások
 
-| Szempont | Választás | Indoklás |
-|---------|----------|----------|
-| **Nyelvv** | TypeScript | Típusbiztonság, jobb IDE támogatás, nagyobb projektek közül tanulható |
-| **Engine** | Phaser 3 | Teljes 2D framework, beépített input/physics/scene/audio, nagyközösség |
-| **Build tool** | Vite | Gyors dev server, optimális production build, natív ES modules |
-| **Test framework** | Vitest | Vite-nal integrálva, gyors, Jest-kompatibilis szintaxis |
-| **Pályatárolás** | JSON (custom) | Egyszerű, könnyen szerkeszthető, gyors loadás |
-| **Collision detection** | Saját, cserélhető abstraction mögött | MVP-re egyszerű rectangle alapú logika, később lecserélhető |
-| **Deploy** | GitHub Pages | Ingyen hosting direkt a repo-ból |
+| Szempont | Választás | Indoklás | Döntés ID |
+|---------|----------|----------|-----------|
+| **Nyelvv** | TypeScript | Típusbiztonság, jobb IDE támogatás, nagyobb projektek közül tanulható | D-002 |
+| **Engine** | Phaser 3 | Teljes 2D framework, beépített input/physics/scene/audio, nagyközösség | D-001 |
+| **Build tool** | Vite | Gyors dev server, optimális production build, natív ES modules | D-003 |
+| **Test framework** | Vitest | Vite-nal integrálva, gyors, Jest-kompatibilis szintaxis | D-004 |
+| **Pályatárolás** | JSON (custom) | Egyszerű, könnyen szerkeszthető, gyors loadás | D-006 |
+| **Collision detection** | Saját, cserélhető abstraction mögött | MVP-re egyszerű rectangle alapú logika, később lecserélhető | D-014 |
+| **Deploy** | GitHub Pages | Ingyen hosting direkt a repo-ból | D-005 |
 | **Verziókezelés** | Git + GitHub | Standard, már beállítva |
 
 ---
@@ -173,6 +173,8 @@ HeroesOfNVVH/
 
 A 7×6-os pálya egy custom JSON formátumban tárolódik.
 
+Kapcsolódó döntés ID-k: **D-006, D-007, D-008**.
+
 ### 5.1 level01.json szerkezete
 
 ```json
@@ -219,6 +221,8 @@ const obstacles = levelData.obstacles;  // [...]
 ---
 
 ## 6. Asset Pipeline
+
+Kapcsolódó döntés ID: **D-012**.
 
 ### 6.1 Választott megoldás: Sprite Sheets (PNG/WebP) + TextureAtlas
 **Előnyei:**
@@ -282,6 +286,8 @@ const obstacles = levelData.obstacles;  // [...]
 
 ## 7. Audio
 
+Kapcsolódó döntés ID: **D-016**.
+
 ### 7.1 Választott megoldás: Phaser audio wrapper mögött
 - **Telepítés:** már része a Phaser 3-nak.
 - **Formátum:** MP3, OGG, WAV.
@@ -344,6 +350,8 @@ Lehetséges későbbi csere:
 
 ## 8.5 Collision architektúra
 
+Kapcsolódó döntés ID: **D-014**.
+
 A választott megoldás egy **saját rectangle-alapú collision detection**, de nem közvetlenül a scene-ekbe drótozva, hanem cserélhető szolgáltatásként.
 
 ### Cél
@@ -391,6 +399,8 @@ npm run preview
 ```
 
 ### 9.2 GitHub Pages Deploy
+
+Kapcsolódó döntés ID-k: **D-005, D-018**.
 
 Az `vite.config.ts`-ben:
 ```typescript
