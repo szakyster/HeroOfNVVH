@@ -34,7 +34,7 @@
       "id": 6,
       "name": "Enemy Spawning & A* Pathfinding",
       "description": "Implement enemy spawning system with wave mechanics. Create A* pathfinding algorithm for grid-based enemy movement with static paths calculated at spawn. Reference: D-013 (Custom A* Pathfinding), JatekLeiras.md section 5.1, Architecture.md section 6.4",
-      "status": "ready"
+      "status": "in-progress"
     },
     {
       "id": 7,
