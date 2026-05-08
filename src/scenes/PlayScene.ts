@@ -6,15 +6,7 @@ import { SCENE_KEYS } from './sceneKeys';
 export class PlayScene extends Phaser.Scene {
   private readonly levelLoader = new LevelLoader();
 
-  private readonly gridSystem = new GridSystem({
-    columns: 7,
-    rows: 6,
-    originX: 180,
-    originY: 130,
-    cellTopWidth: 44,
-    cellBottomWidth: 64,
-    cellHeight: 36,
-  });
+  private gridSystem?: GridSystem;
 
   constructor() {
     super(SCENE_KEYS.PLAY);
@@ -22,11 +14,22 @@ export class PlayScene extends Phaser.Scene {
 
   create(): void {
     const { width, height } = this.scale;
-    const graphics = this.add.graphics();
+    this.gridSystem = new GridSystem({
+      columns: 7,
+      rows: 6,
+      centerX: width / 2,
+      centerY: height / 2,
+      topWidth: width * 0.52,
+      bottomWidth: width * 0.7,
+      totalHeight: height * 0.7,
+    });
 
     this.add.rectangle(width / 2, height / 2, width, height, 0x1f2d3d, 1);
 
-    graphics.lineStyle(1, 0x7ea8be, 0.7);
+    const graphics = this.add.graphics();
+    graphics.setDepth(1);
+
+    graphics.lineStyle(2, 0x8ecae6, 0.95);
     for (const cell of this.gridSystem.allCells()) {
       const polygon = this.gridSystem.cellPolygon(cell);
       graphics.beginPath();
@@ -39,23 +42,23 @@ export class PlayScene extends Phaser.Scene {
     }
 
     this.add
-      .text(width / 2, height / 2 - 40, 'PlayScene', {
+      .text(width / 2, 34, 'PlayScene', {
         fontFamily: 'Verdana',
-        fontSize: '44px',
+        fontSize: '36px',
         color: '#f2cc8f',
       })
       .setOrigin(0.5);
 
     this.add
-      .text(width / 2, height / 2 + 10, 'Task #3-tol jon a palya + gameplay', {
+      .text(width / 2, 68, 'Task #3-tol jon a palya + gameplay', {
         fontFamily: 'Verdana',
-        fontSize: '22px',
+        fontSize: '20px',
         color: '#f4f1de',
       })
       .setOrigin(0.5);
 
     this.add
-      .text(width / 2, height / 2 + 70, 'Task #4: 7x6 trapezoid grid aktiv', {
+      .text(width / 2, 96, 'Task #4: 7x6 perspektivikus trapEz grid aktiv', {
         fontFamily: 'Verdana',
         fontSize: '18px',
         color: '#9fd3c7',
@@ -63,15 +66,15 @@ export class PlayScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     this.add
-      .text(width / 2, height / 2 + 50, 'Nyomj G-t a Game Over teszthez', {
+      .text(width / 2, height - 34, 'Nyomj G-t a Game Over teszthez', {
         fontFamily: 'Verdana',
-        fontSize: '20px',
+        fontSize: '18px',
         color: '#81b29a',
       })
       .setOrigin(0.5);
 
     const levelInfoText = this.add
-      .text(width / 2, height / 2 + 108, 'Palyabetoltes: folyamatban...', {
+      .text(width / 2, height - 62, 'Palyabetoltes: folyamatban...', {
         fontFamily: 'Verdana',
         fontSize: '18px',
         color: '#c9d6df',

@@ -11,11 +11,11 @@ export type ScreenPoint = {
 export type GridConfig = {
   columns: number;
   rows: number;
-  originX: number;
-  originY: number;
-  cellTopWidth: number;
-  cellBottomWidth: number;
-  cellHeight: number;
+  centerX: number;
+  centerY: number;
+  topWidth: number;
+  bottomWidth: number;
+  totalHeight: number;
 };
 
 export class GridSystem {
@@ -36,34 +36,61 @@ export class GridSystem {
     );
   }
 
+  private getTopY(): number {
+    return this.config.centerY - this.config.totalHeight / 2;
+  }
+
+  private interpolateEdge(progress: number): { leftX: number; rightX: number; y: number } {
+    const clampedProgress = Math.max(0, Math.min(1, progress));
+    const width = this.config.topWidth + (this.config.bottomWidth - this.config.topWidth) * clampedProgress;
+    const y = this.getTopY() + this.config.totalHeight * clampedProgress;
+
+    return {
+      leftX: this.config.centerX - width / 2,
+      rightX: this.config.centerX + width / 2,
+      y,
+    };
+  }
+
   toScreen(cell: GridCell): ScreenPoint {
     if (!this.isWithinBounds(cell)) {
       throw new Error(`Grid cell out of bounds: (${cell.x}, ${cell.y})`);
     }
 
-    const rowOffset = (this.config.cellBottomWidth - this.config.cellTopWidth) / 2;
-    const widthDeltaPerRow = this.config.cellBottomWidth - this.config.cellTopWidth;
+    const topEdge = this.interpolateEdge(cell.y / this.config.rows);
+    const topStep = (topEdge.rightX - topEdge.leftX) / this.config.columns;
 
-    const x =
-      this.config.originX +
-      cell.x * this.config.cellTopWidth +
-      cell.y * rowOffset +
-      (cell.y * widthDeltaPerRow) / 2;
-
-    const y = this.config.originY + cell.y * this.config.cellHeight;
+    const x = topEdge.leftX + cell.x * topStep;
+    const y = topEdge.y;
 
     return { x, y };
   }
 
   cellPolygon(cell: GridCell): [ScreenPoint, ScreenPoint, ScreenPoint, ScreenPoint] {
-    const topLeft = this.toScreen(cell);
+    if (!this.isWithinBounds(cell)) {
+      throw new Error(`Grid cell out of bounds: (${cell.x}, ${cell.y})`);
+    }
+
+    const topEdge = this.interpolateEdge(cell.y / this.config.rows);
+    const bottomEdge = this.interpolateEdge((cell.y + 1) / this.config.rows);
+    const topStep = (topEdge.rightX - topEdge.leftX) / this.config.columns;
+    const bottomStep = (bottomEdge.rightX - bottomEdge.leftX) / this.config.columns;
 
     return [
-      topLeft,
-      { x: topLeft.x + this.config.cellTopWidth, y: topLeft.y },
-      { x: topLeft.x + this.config.cellBottomWidth, y: topLeft.y + this.config.cellHeight },
-      { x: topLeft.x, y: topLeft.y + this.config.cellHeight },
+      { x: topEdge.leftX + cell.x * topStep, y: topEdge.y },
+      { x: topEdge.leftX + (cell.x + 1) * topStep, y: topEdge.y },
+      { x: bottomEdge.leftX + (cell.x + 1) * bottomStep, y: bottomEdge.y },
+      { x: bottomEdge.leftX + cell.x * bottomStep, y: bottomEdge.y },
     ];
+  }
+
+  cellCenter(cell: GridCell): ScreenPoint {
+    const polygon = this.cellPolygon(cell);
+
+    return {
+      x: (polygon[0].x + polygon[1].x + polygon[2].x + polygon[3].x) / 4,
+      y: (polygon[0].y + polygon[1].y + polygon[2].y + polygon[3].y) / 4,
+    };
   }
 
   allCells(): GridCell[] {
