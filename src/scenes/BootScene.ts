@@ -14,10 +14,10 @@ export class BootScene extends Phaser.Scene {
 
   preload(): void {
     this.load.audio(AUDIO_KEYS.ATTACK, ['assets/sprites/Punch01.mp3']);
-    this.load.audio(AUDIO_KEYS.DEATH_1, ['assets/sprites/death01.mp3']);
-    this.load.audio(AUDIO_KEYS.DEATH_2, ['assets/sprites/death02.mp3']);
-    this.load.audio(AUDIO_KEYS.DEATH_3, ['assets/sprites/death03.mp3']);
-    this.load.audio(AUDIO_KEYS.DEATH_4, ['assets/sprites/death04.mp3']);
+    this.load.audio(AUDIO_KEYS.DEATH_1, ['assets/audio/effect/death01.mp3']);
+    this.load.audio(AUDIO_KEYS.DEATH_2, ['assets/audio/effect/death02.mp3']);
+    this.load.audio(AUDIO_KEYS.DEATH_3, ['assets/audio/effect/death03.mp3']);
+    this.load.audio(AUDIO_KEYS.DEATH_4, ['assets/audio/effect/death04.mp3']);
     this.load.audio(AUDIO_KEYS.MENU, ['assets/audio/Preparation of hunting.mp3']);
     this.load.audio(AUDIO_KEYS.AMBIENT, ['assets/audio/The Hero.mp3']);
   }
