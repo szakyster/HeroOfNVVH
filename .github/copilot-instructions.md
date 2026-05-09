@@ -29,6 +29,7 @@ Task closing workflow:
 
 - Before closing a task, run the build.
 - Before closing a task, run the relevant tests.
+- Before closing a task, if any relevant file's code coverage is below 25%, report that back to the user.
 - If there are uncommitted changes, perform `CP` (git add + commit + push).
 - When merging a completed task branch, use a non-fast-forward merge.
 - After merge, close the task in `Tasks.json`.

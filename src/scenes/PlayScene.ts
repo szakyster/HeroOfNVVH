@@ -917,8 +917,11 @@ export class PlayScene extends Phaser.Scene {
     }
 
     const depositedLoot = this.inventory.shift();
-    this.registry.set('score', (this.registry.get('score') ?? 0) + (depositedLoot?.value ?? 0));
+    const depositedValue = depositedLoot?.value ?? 0;
+
+    this.registry.set('score', (this.registry.get('score') ?? 0) + depositedValue);
     this.audioSystem?.playSfx(AUDIO_KEYS.DEPOSIT);
+    this.showDepositValuePopup(depositedValue);
     this.nextLootDepositAt += this.lootDepositIntervalMs;
 
     if (this.inventory.length === 0) {
@@ -926,6 +929,49 @@ export class PlayScene extends Phaser.Scene {
     }
 
     this.refreshLevelInfo();
+  }
+
+  private showDepositValuePopup(value: number): void {
+    if (value <= 0 || !this.playerBody) {
+      return;
+    }
+
+    const fontSize = value >= 50 ? '30px' : value >= 20 ? '26px' : '22px';
+    const color = this.getDepositPopupColor(value);
+    const popup = this.add
+      .text(this.playerBody.x, this.playerBody.y - 78, `+${value} M Ft`, {
+        fontFamily: 'Verdana',
+        fontSize,
+        color,
+        fontStyle: 'bold',
+        stroke: '#102a43',
+        strokeThickness: 5,
+      })
+      .setOrigin(0.5)
+      .setDepth(8);
+
+    this.tweens.add({
+      targets: popup,
+      y: popup.y - 54,
+      alpha: 0,
+      duration: 975,
+      ease: 'Cubic.easeOut',
+      onComplete: () => {
+        popup.destroy();
+      },
+    });
+  }
+
+  private getDepositPopupColor(value: number): string {
+    if (value >= 50) {
+      return '#ffd166';
+    }
+
+    if (value >= 20) {
+      return '#80ed99';
+    }
+
+    return '#8ecae6';
   }
 
   private destroyLoot(loot: ActiveLoot, refreshInfo = true): void {
