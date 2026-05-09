@@ -1,24 +1,62 @@
 # HeroOfNVVH
 
-Egyszerű, arcade jellegű, böngészőben futó 2.5D játék koncepció és előkészítő dokumentáció.
+Heroes of NVVH egy Phaser + TypeScript alapú böngészős játékprototípus. A projekt jelenleg már futtatható játékot tartalmaz menüvel, játéktérrel, HUD-dal, audióval és helyi eredménylistával.
 
-## Projekt cél
-A játék alapötletének, játékmenetének és vizuális irányának rögzítése egy könnyen követhető dokumentációban, amely alapján elkészíthető egy HTML/TypeScript alapú prototípus.
+## Fejlesztői indulás
+
+### Előfeltételek
+- Node.js 22 vagy újabb
+- npm
+
+### Telepítés
+```bash
+npm install
+```
+
+### Fejlesztői futtatás
+```bash
+npm run dev
+```
+
+### Production build
+```bash
+npm run build
+```
+
+### Lokális build preview
+```bash
+npm run preview
+```
+
+### Tesztek
+```bash
+npm run test -- --run
+```
+
+### Coverage
+```bash
+npm run test:coverage -- --run
+```
+
+## Projektstruktúra
+- `src/scenes/` - Phaser scene-ek
+- `src/systems/` - újrafelhasználható gameplay rendszerek
+- `public/` - statikus assetek és pályaadatok
+- `docs/` - architektúra, játékleírás, technikai és vizuális dokumentáció
 
 ## Dokumentáció
-- [Játékleírás](docs/JatekLeiras.md)
-- [Vizuális koncepció](docs/Vizualitas.md)
-- [Koncept-art (SVG)](docs/koncept-art.svg)
+- [Architecture](docs/Architecture.md) - architektúra és scene/system felelősségek
+- [Decisions](docs/Decisions.md) - rögzített technikai és termékdöntések
+- [JatekLeiras](docs/JatekLeiras.md) - játékszabályok és feature specifikáció
+- [Tech](docs/Tech.md) - stack, projektstruktúra, implementációs jegyzetek
+- [Vizualitas](docs/Vizualitas.md) - vizuális irányelvek és HUD elvárások
+- [conceptart01.svg](docs/conceptart01.svg) - elsődleges koncept-art referencia
+- [conceptart02.svg](docs/conceptart02.svg) - kiegészítő koncept-art referencia
 
-## Aktuális státusz
-- Játékkoncepció dokumentálva
-- Vizuális irányelvek dokumentálva
-- Első koncept-art illusztráció elkészült
-
-## Következő lépések (javaslat)
-- Phaser + TypeScript projektváz létrehozása
-- 7×6 pálya prototípus implementálása
-- Core gameplay loop (spawn -> chase -> hit -> loot -> deposit) MVP szintű megvalósítása
+## Deploy
+- A projekt GitHub Pages-re van előkészítve.
+- A deploy workflow a `main` ágra történő push esetén fut le.
+- A Vite build a GitHub Pages repository útvonalához van igazítva.
 
 ## Licenc
 
