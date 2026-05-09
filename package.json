@@ -1,6 +1,6 @@
 {
   "name": "heroesofnvvh",
-  "version": "1.0.0",
+  "version": "0.1.0-alpha.1",
   "description": "Heroes of NVVH - 2.5D arcade browser game",
   "main": "src/main.ts",
   "type": "commonjs",
