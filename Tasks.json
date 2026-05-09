@@ -69,13 +69,13 @@
       "id": 12,
       "name": "Testing & Polish",
       "description": "Write unit tests for game systems (collision, pathfinding, scoring). Performance optimization, balance tuning, visual polish, and gameplay refinement. Reference: D-004 (Vitest), Architecture.md section 11",
-      "status": "in-progress"
+      "status": "closed"
     },
     {
       "id": 13,
       "name": "Deployment & Docs",
       "description": "Configure GitHub Pages deployment. Build static assets pipeline. Create developer documentation for onboarding. Reference: D-018 (GitHub Pages), Tech.md section 9",
-      "status": "ready"
+      "status": "in-progress"
     }
   ]
 }
