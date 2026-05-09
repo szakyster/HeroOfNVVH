@@ -354,7 +354,7 @@ A cél egy könnyed, szórakoztató, nem agresszív arcade-hatás.
 A HUD-on **mindig láthatónak kell lennie**:
 
 - **Pont**: a jelenlegi pontszám (az eddigi sikeres leadások összege)
-- **Inventory**: hány érték van a nála (0/4, 1/4, stb.),
+- **Hátizsák**: hány érték van nála (0/4, 1/4, stb.),
 - **Elszökött ellenségek**: hányan jutottak már a reptérre,
 - **Játékidő vagy nehézségi szint** (szükség szerint).
 
@@ -417,7 +417,7 @@ Az ikonok:
 
 Példák:
 - loot ikon,
-- inventory slot ikon,
+- hátizsák slot ikon,
 - pontszám jelző,
 - help ikon,
 - eredménylista ikon,
@@ -457,7 +457,7 @@ A legerősebb koncepció valószínűleg egy olyan nézet lesz, amelyben:
 - a főszereplő és az ellenség **felismerhető (nem túl karikatúrás) emberalakú** karakterként van megjelenítve,
 - egy vagy több akadály jól tagolja a teret,
 - **legalább egy-két loot tárgy látszik** az egy-egy rácskockában,
-- a HUD **pont és inventory** jelzéssel,
+- a HUD **pont és hátizsák** jelzéssel,
 - a hangulat játékos és könnyed.
 
 ## 14.3 Mit kell elkerülni a koncept-artban
@@ -474,7 +474,7 @@ A legerősebb koncepció valószínűleg egy olyan nézet lesz, amelyben:
 Az alábbi rövid összefoglaló közvetlenül használható art briefként is.
 
 ### Rövid brief
-Egy arcade jellegű, humoros hangulatú 2.5D böngészős játék vizuális terve szükséges. A pálya fix kamerás, teljes egészében látható, városias környezetben játszódik, **perspektívikus (trapéz) rácselrendezéssel**, amely oldalnézetből felülnézetes hatást ad. A játéktér 7 × 6-os rács logikájára épül, de a mozgás szabad és folyamatos. Az akadályok (autók, házak) **egy egész rácskockát foglalnak el**. A karakterek **felismerhető arcokkal és testalkattakkal** rendelkezzenek – realisztikus emberalakúak, de nem realista stílusa, inkább jól rajzolt humoros figurák. Az ellenfelek mozgása és az ütés animációja enyhén komikus, könnyed hangulatú. A három különleges pont – Hatvanpuszta, Reptér, NVVH székház – a pálya mellett helyezkedik el, vizuálisan kapcsolódnak a játéktérhez, de nem részei annak. A HUD-on **pont és inventory** jelzése feltűnő. A képen jól elkülönül a játékos, az ellenség, a loot (egy-egy rácskockában) és az akadályok rendszere.
+Egy arcade jellegű, humoros hangulatú 2.5D böngészős játék vizuális terve szükséges. A pálya fix kamerás, teljes egészében látható, városias környezetben játszódik, **perspektívikus (trapéz) rácselrendezéssel**, amely oldalnézetből felülnézetes hatást ad. A játéktér 7 × 6-os rács logikájára épül, de a mozgás szabad és folyamatos. Az akadályok (autók, házak) **egy egész rácskockát foglalnak el**. A karakterek **felismerhető arcokkal és testalkattakkal** rendelkezzenek – realisztikus emberalakúak, de nem realista stílusa, inkább jól rajzolt humoros figurák. Az ellenfelek mozgása és az ütés animációja enyhén komikus, könnyed hangulatú. A három különleges pont – Hatvanpuszta, Reptér, NVVH székház – a pálya mellett helyezkedik el, vizuálisan kapcsolódnak a játéktérhez, de nem részei annak. A HUD-on **pont és hátizsák** jelzése feltűnő. A képen jól elkülönül a játékos, az ellenség, a loot (egy-egy rácskockában) és az akadályok rendszere.
 
 ---
 
