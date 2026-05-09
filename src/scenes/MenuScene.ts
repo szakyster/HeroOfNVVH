@@ -32,29 +32,29 @@ export class MenuScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     this.add
-      .text(width / 2, height / 2, 'Nyomj SPACE-t a kezdéshez', {
+      .text(width / 2, height / 2 - 2, 'Heroes of NVVH védelmi prototípus', {
         fontFamily: 'Verdana',
         fontSize: '24px',
         color: '#81b29a',
       })
       .setOrigin(0.5);
 
-    this.add
-      .text(width / 2, height / 2 + 42, 'Vagy kattints bárhová', {
-        fontFamily: 'Verdana',
-        fontSize: '20px',
-        color: '#e07a5f',
-      })
-      .setOrigin(0.5);
+    this.createMenuButton(width / 2, height / 2 + 64, 'Játék indítása', () => {
+      this.scene.start(SCENE_KEYS.PLAY);
+    });
 
-    this.musicToggleText = this.createToggleButton(width / 2, height / 2 + 112, () => {
+    this.createMenuButton(width / 2, height / 2 + 116, 'Eredménylista', () => {
+      this.scene.start(SCENE_KEYS.LEADERBOARD);
+    });
+
+    this.musicToggleText = this.createMenuButton(width / 2, height / 2 + 182, '', () => {
       const nextValue = !Boolean(this.registry.get(AUDIO_SETTINGS_KEYS.MUSIC_MUTED));
       this.registry.set(AUDIO_SETTINGS_KEYS.MUSIC_MUTED, nextValue);
       audioSystem.setMusicMuted(nextValue);
       this.refreshAudioToggleTexts();
     });
 
-    this.sfxToggleText = this.createToggleButton(width / 2, height / 2 + 158, () => {
+    this.sfxToggleText = this.createMenuButton(width / 2, height / 2 + 234, '', () => {
       const nextValue = !Boolean(this.registry.get(AUDIO_SETTINGS_KEYS.SFX_MUTED));
       this.registry.set(AUDIO_SETTINGS_KEYS.SFX_MUTED, nextValue);
       audioSystem.setSfxMuted(nextValue);
@@ -67,41 +67,18 @@ export class MenuScene extends Phaser.Scene {
       audioSystem.playMusic(AUDIO_KEYS.MENU, true);
     }
 
-    const startGame = () => {
-      this.scene.start(SCENE_KEYS.PLAY);
-    };
-
-    let started = false;
-
-    const handlePointerStart = (
-      _pointer: Phaser.Input.Pointer,
-      currentlyOver: Phaser.GameObjects.GameObject[] = [],
-    ) => {
-      if (started || currentlyOver.some((gameObject) => gameObject.getData('ui-button') === true)) {
-        return;
-      }
-
-      started = true;
-      this.input.off('pointerdown', handlePointerStart);
-      startGame();
-    };
-
-    this.input.on('pointerdown', handlePointerStart);
-
     this.input.keyboard?.once('keydown-SPACE', () => {
-      if (started) {
-        return;
-      }
+      this.scene.start(SCENE_KEYS.PLAY);
+    });
 
-      started = true;
-      this.input.off('pointerdown', handlePointerStart);
-      startGame();
+    this.input.keyboard?.once('keydown-L', () => {
+      this.scene.start(SCENE_KEYS.LEADERBOARD);
     });
   }
 
-  private createToggleButton(x: number, y: number, onToggle: () => void): Phaser.GameObjects.Text {
+  private createMenuButton(x: number, y: number, label: string, onSelect: () => void): Phaser.GameObjects.Text {
     const button = this.add
-      .text(x, y, '', {
+      .text(x, y, label, {
         fontFamily: 'Verdana',
         fontSize: '20px',
         color: '#f4f1de',
@@ -112,7 +89,7 @@ export class MenuScene extends Phaser.Scene {
       .setInteractive({ useHandCursor: true });
 
     button.setData('ui-button', true);
-    button.on('pointerdown', onToggle);
+    button.on('pointerdown', onSelect);
     button.on('pointerover', () => {
       button.setStyle({ backgroundColor: '#314863' });
     });

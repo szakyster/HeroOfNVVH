@@ -24,3 +24,12 @@ When working in this project:
 - Keep in-game UI text in Hungarian unless the task explicitly requires something else.
 - Add or update Vitest tests when changing reusable systems or fixing regressions.
 - Avoid unrelated refactors while implementing a task.
+
+Task closing workflow:
+
+- Before closing a task, run the build.
+- Before closing a task, run the relevant tests.
+- If there are uncommitted changes, perform `CP` (git add + commit + push).
+- When merging a completed task branch, use a non-fast-forward merge.
+- After merge, close the task in `Tasks.json`.
+- Unless the user says otherwise, open the next task after closing the current one.
