@@ -195,6 +195,9 @@ describe('PlayScene runtime reset', () => {
     expect((scene.getLootColor as (type: string) => number)('phone')).toBe(0x577590);
     expect((scene.getLootColor as (type: string) => number)('bag')).toBe(0x6a994e);
     expect((scene.getLootColor as (type: string) => number)('other')).toBe(0xe9c46a);
+    expect((scene.getDepositPopupColor as (value: number) => string)(10)).toBe('#8ecae6');
+    expect((scene.getDepositPopupColor as (value: number) => string)(20)).toBe('#80ed99');
+    expect((scene.getDepositPopupColor as (value: number) => string)(50)).toBe('#ffd166');
   });
 
   it('creates loot hitboxes from center coordinates and checks sanctuary overlap', () => {
@@ -245,11 +248,13 @@ describe('PlayScene runtime reset', () => {
   it('deposits inventory over time and updates score and info state', () => {
     const playSfx = vi.fn();
     const refreshLevelInfo = vi.fn();
+    const showDepositValuePopup = vi.fn();
     const registryState = { score: 40 };
     const scene = new PlayScene() as unknown as Record<string, unknown>;
 
     scene.audioSystem = { playSfx };
     scene.refreshLevelInfo = refreshLevelInfo;
+    scene.showDepositValuePopup = showDepositValuePopup;
     scene.inventory = [{ type: 'wallet', value: 10 }, { type: 'bag', value: 50 }];
     scene.nextLootDepositAt = null;
     scene.registry = {
@@ -270,11 +275,13 @@ describe('PlayScene runtime reset', () => {
     expect(scene.inventory).toHaveLength(1);
     expect(registryState.score).toBe(50);
     expect(playSfx).toHaveBeenCalledWith('sfx-deposit');
+    expect(showDepositValuePopup).toHaveBeenCalledWith(10);
     expect(scene.nextLootDepositAt).toBe(1800);
 
     (scene.depositInventory as (now: number) => void)(1800);
     expect(scene.inventory).toHaveLength(0);
     expect(registryState.score).toBe(100);
+    expect(showDepositValuePopup).toHaveBeenCalledWith(50);
     expect(scene.nextLootDepositAt).toBeNull();
     expect(refreshLevelInfo).toHaveBeenCalledTimes(2);
   });
