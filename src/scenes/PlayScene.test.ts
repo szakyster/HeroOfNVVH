@@ -119,4 +119,81 @@ describe('PlayScene runtime reset', () => {
     expect(scene.waveNumber).toBe(1);
     expect(scene.spawnedEnemies).toBe(0);
   });
+
+  it('refreshes HUD texts from registry values and inventory state', () => {
+    const scene = new PlayScene() as unknown as Record<string, unknown>;
+    const scoreValueText = { setText: vi.fn() };
+    const inventoryValueText = { setText: vi.fn() };
+    const escapedValueText = { setText: vi.fn() };
+    const waveValueText = { setText: vi.fn() };
+
+    scene.registry = {
+      get: vi.fn((key: string) => {
+        if (key === 'score') {
+          return 150;
+        }
+
+        if (key === 'escapedEnemies') {
+          return 3;
+        }
+
+        return undefined;
+      }),
+    };
+    scene.scoreValueText = scoreValueText;
+    scene.inventoryValueText = inventoryValueText;
+    scene.escapedValueText = escapedValueText;
+    scene.waveValueText = waveValueText;
+    scene.inventory = [{ type: 'wallet', value: 10 }, { type: 'phone', value: 20 }];
+    scene.waveNumber = 4;
+
+    (scene.refreshHud as () => void)();
+
+    expect(scoreValueText.setText).toHaveBeenCalledWith('150 M Ft');
+    expect(inventoryValueText.setText).toHaveBeenCalledWith('2/4  ■■□□');
+    expect(escapedValueText.setText).toHaveBeenCalledWith('3/10');
+    expect(waveValueText.setText).toHaveBeenCalledWith('4. hullám');
+  });
+
+  it('formats auxiliary level and enemy info texts', () => {
+    const scene = new PlayScene() as unknown as Record<string, unknown>;
+    const levelInfoText = { setText: vi.fn() };
+    const enemyInfoText = { setText: vi.fn() };
+
+    scene.levelInfoText = levelInfoText;
+    scene.enemyInfoText = enemyInfoText;
+    scene.currentLevel = { name: 'Teszt pálya' };
+    scene.activeLoots = [{ id: 'loot-1' }];
+    scene.inventory = [{ type: 'bag', value: 50 }];
+    scene.activeEnemies = [{ defeated: false }];
+    scene.spawnedEnemies = 2;
+    scene.waveNumber = 2;
+    scene.registry = { get: vi.fn(() => 0) };
+    scene.scoreValueText = { setText: vi.fn() };
+    scene.inventoryValueText = { setText: vi.fn() };
+    scene.escapedValueText = { setText: vi.fn() };
+    scene.waveValueText = { setText: vi.fn() };
+
+    (scene.refreshLevelInfo as () => void)();
+    (scene.refreshEnemyInfo as (count?: number) => void)(5);
+
+    expect(levelInfoText.setText).toHaveBeenCalledWith(
+      'Pálya: Teszt pálya | Földön: 1 tárgy | Leadási sáv: aktív',
+    );
+    expect(enemyInfoText.setText).toHaveBeenCalledWith(
+      'Aktív ellenfelek: 1 | Spawn ebben a hullámban: 2/5',
+    );
+  });
+
+  it('maps loot colors and inventory icons consistently', () => {
+    const scene = new PlayScene() as unknown as Record<string, unknown>;
+
+    scene.inventory = [{ type: 'wallet', value: 10 }, { type: 'bag', value: 50 }, { type: 'phone', value: 20 }];
+
+    expect((scene.getInventoryIcons as () => string)()).toBe('■■■□');
+    expect((scene.getLootColor as (type: string) => number)('wallet')).toBe(0x8d6e63);
+    expect((scene.getLootColor as (type: string) => number)('phone')).toBe(0x577590);
+    expect((scene.getLootColor as (type: string) => number)('bag')).toBe(0x6a994e);
+    expect((scene.getLootColor as (type: string) => number)('other')).toBe(0xe9c46a);
+  });
 });
