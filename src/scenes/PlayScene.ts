@@ -50,6 +50,8 @@ type ActiveLoot = {
 };
 
 export class PlayScene extends Phaser.Scene {
+  private readonly levelPath = `${import.meta.env.BASE_URL}levels/level-01.json`;
+
   private readonly handleDebugGameOver = () => {
     this.triggerGameOver();
   };
@@ -246,7 +248,7 @@ export class PlayScene extends Phaser.Scene {
     this.playerBody.setVisible(false);
 
     this.levelLoader
-      .load('/levels/level-01.json')
+      .load(this.levelPath)
       .then((level) => {
         this.currentLevel = level;
         this.obstacleRects = level.obstacles.map((cell) => this.gridSystem!.cellBounds(cell, 10));
