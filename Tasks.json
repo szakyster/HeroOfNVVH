@@ -63,13 +63,13 @@
       "id": 11,
       "name": "Leaderboard & LocalStorage",
       "description": "Implement score persistence via LocalStorage. Create leaderboard display for top scores. Reference: D-017 (No Telemetry), JatekLeiras.md section 13",
-      "status": "in-progress"
+      "status": "closed"
     },
     {
       "id": 12,
       "name": "Testing & Polish",
       "description": "Write unit tests for game systems (collision, pathfinding, scoring). Performance optimization, balance tuning, visual polish, and gameplay refinement. Reference: D-004 (Vitest), Architecture.md section 11",
-      "status": "ready"
+      "status": "in-progress"
     },
     {
       "id": 13,
