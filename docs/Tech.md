@@ -92,79 +92,68 @@ Ez a dokumentum rögzíti a Heroes of NVVH HTML5 játék megvalósításához sz
 ```
 HeroesOfNVVH/
 ├── .git/
+├── .github/
+│   └── copilot-instructions.md
 ├── docs/
+│   ├── Architecture.md
+│   ├── Decisions.md
 │   ├── JatekLeiras.md
+│   ├── Tech.md
 │   ├── Vizualitas.md
 │   ├── conceptart01.svg
 │   ├── conceptart02.svg
-│   └── Tech.md (ez a fájl)
+│   └── concepts/
+│       ├── Enemy/
+│       └── PSZ/
+├── public/
+│   ├── assets/
+│   │   ├── audio/
+│   │   │   ├── effect/
+│   │   │   ├── Preparation of hunting.mp3
+│   │   │   └── The Hero.mp3
+│   │   └── sprites/
+│   └── levels/
+│       └── level-01.json
 ├── src/
-│   ├── index.ts                  # Entry point
+│   ├── main.ts
+│   ├── main.test.ts
 │   ├── scenes/
 │   │   ├── BootScene.ts
-│   │   ├── GameScene.ts
-│   │   ├── UIScene.ts
-│   │   ├── MenuScene.ts
 │   │   ├── GameOverScene.ts
-│   │   └── HelpScene.ts
-│   ├── objects/
-│   │   ├── Player.ts
-│   │   ├── Enemy.ts
-│   │   ├── Loot.ts
-│   │   ├── Obstacle.ts
-│   │   └── Projectile.ts (ha szükséges)
+│   │   ├── MenuScene.ts
+│   │   ├── PlayScene.ts
+│   │   ├── PlayScene.test.ts
+│   │   └── sceneKeys.ts
 │   ├── systems/
-│   │   ├── GameState.ts
-│   │   ├── CollisionSystem.ts
+│   │   ├── AStarPathfinder.ts
+│   │   ├── AStarPathfinder.test.ts
+│   │   ├── AttackSystem.ts
+│   │   ├── AttackSystem.test.ts
+│   │   ├── AudioProfiles.ts
 │   │   ├── ICollisionProvider.ts
-│   │   ├── SimpleCollisionProvider.ts
 │   │   ├── AudioSystem.ts
-│   │   ├── DifficultyManager.ts
-│   │   └── ScoreManager.ts
-│   ├── utils/
-│   │   ├── Constants.ts
-│   │   ├── GridUtils.ts
-│   │   ├── PathFinding.ts (A* ha szükséges)
-│   │   └── Helpers.ts
+│   │   ├── AudioSystem.test.ts
+│   │   ├── GridSystem.ts
+│   │   ├── GridSystem.test.ts
+│   │   ├── LevelLoader.ts
+│   │   ├── LevelLoader.test.ts
+│   │   ├── LootSystem.ts
+│   │   ├── LootSystem.test.ts
+│   │   ├── SimpleCollisionProvider.ts
+│   │   └── SimpleCollisionProvider.test.ts
 │   ├── types/
-│   │   ├── index.ts
-│   │   └── Game.ts
-│   ├── data/
-│   │   └── maps/
-│   │       ├── level01.json
-│   │       └── config.json
-│   └── assets/
-│       ├── sprites/
-│       │   ├── player.png (sprite sheet vagy SVG)
-│       │   ├── enemies.png
-│       │   ├── loot.png
-│       │   └── ui.png
-│       ├── audio/
-│       │   ├── hit.wav
-│       │   ├── pickup.wav
-│       │   ├── deposit.wav
-│       │   └── ambient.mp3
-│       └── fonts/
-│           └── game-font.ttf (opcionális)
-├── tests/
-│   ├── unit/
-│   │   ├── GridUtils.test.ts
-│   │   ├── GameState.test.ts
-│   │   └── PathFinding.test.ts
-│   └── integration/
-│       └── Game.test.ts
-├── public/
-│   ├── index.html
-│   └── favicon.ico
+│   │   └── level.ts
+│   ├── utils/
+│   └── ...
+├── index.html
 ├── vite.config.ts
 ├── tsconfig.json
-├── vitest.config.ts (vagy vite.config.ts-ben)
+├── tsconfig.node.json
+├── vitest.config.ts
 ├── package.json
-├── package-lock.json
-├── .gitignore
 ├── README.md
 ├── CONTRIBUTING.md
-└── LICENSE (opcionális)
+└── Tasks.json
 ```
 
 ---
@@ -292,11 +281,12 @@ Kapcsolódó döntés ID: **D-016**.
 - **Telepítés:** már része a Phaser 3-nak.
 - **Formátum:** MP3, OGG, WAV.
 - **Fájlok:**
-  - `hit.wav` (15-30ms)
-  - `pickup.wav` (200-300ms)
-  - `deposit.wav` (300-400ms)
-  - `error.wav` (100ms)
-  - `ambient.mp3` (loop, opcionális).
+  - `public/assets/audio/Preparation of hunting.mp3` - menüzene
+  - `public/assets/audio/The Hero.mp3` - játékon belüli ambient loop
+  - `public/assets/sprites/Punch01.mp3` - támadás SFX
+  - `public/assets/audio/effect/death01.mp3` ... `death04.mp3` - halál SFX variációk
+
+Az MVP-ben a rövid effektusokhoz fallback synth hang is tartozhat, ha a betöltött audio nem érhető el.
 
 **Miért ez a döntés:**
 - az MVP hangigénye egyszerű,
@@ -311,14 +301,22 @@ Az audio kezelést nem közvetlenül a Phaser scene-ekbe kell írni, hanem egy c
 export interface IAudioService {
   playSfx(key: string): void;
   playMusic(key: string, loop?: boolean): void;
+  fadeOutMusic(durationMs?: number, onComplete?: () => void): void;
   stopMusic(): void;
   setMasterVolume(value: number): void;
   setMuted(muted: boolean): void;
+  setMusicMuted(muted: boolean): void;
+  setSfxMuted(muted: boolean): void;
 }
 ```
 
 Első implementáció:
 - `PhaserAudioService`
+
+Jelenlegi használat:
+- a `BootScene` preloadolja a fő zenei és effekt asseteket,
+- a `MenuScene` és a `PlayScene` külön zene/SFX némítási kapcsolót használ,
+- a beállítások Phaser registry-n keresztül maradnak meg a scene-ek között.
 
 Lehetséges későbbi csere:
 - `HowlerAudioService`

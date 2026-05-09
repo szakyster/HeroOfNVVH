@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1100" viewBox="0 0 1500 1100" role="img" aria-labelledby="title desc">
   <title id="title">Heroes of NVVH – Koncept-art v2 (Trapéz perspektíva, Realisztikus karakterek, HUD)</title>
-  <desc id="desc">Frissített koncept-art a Heroes of NVVH játékhoz: perspektívikus trapéz rács, realisztikus emberalakú karakterek, HUD (pont, inventory), rácskocka-alapú loot és akadályok.</desc>
+  <desc id="desc">Frissített koncept-art a Heroes of NVVH játékhoz: perspektívikus trapéz rács, realisztikus emberalakú karakterek, HUD (pont, hátizsák), rácskocka-alapú loot és akadályok.</desc>
   <defs>
     <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#87ceeb"/>
@@ -222,11 +222,11 @@
     <text class="hud-value" x="0" y="35">2850</text>
   </g>
   
-  <!-- Inventory -->
+  <!-- Hátizsák -->
   <g transform="translate(400 50)">
-    <text class="hud-label">Inventory:</text>
+    <text class="hud-label">Hátizsák:</text>
     <g transform="translate(0 25)">
-      <!-- Inventory slot background -->
+      <!-- Hátizsák slot háttér -->
       <rect x="0" y="0" width="40" height="35" rx="6" fill="#34495e" stroke="#1a1a1a" stroke-width="2"/>
       <text x="20" y="23" font-size="16" font-weight="bold" fill="#ffeb3b" text-anchor="middle">🪙</text>
       <text x="20" y="50" font-size="14" font-weight="bold" fill="#ffffff" text-anchor="middle">2/4</text>

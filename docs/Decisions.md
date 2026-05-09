@@ -50,7 +50,7 @@ Ez a dokumentum csak azokat a pontokat tartalmazza, amelyekben már megszületet
 - **Indoklás:** Egyszerűbb UX, egyszerűbb technikai megvalósítás, jobb arcade-érzet.
 
 ## D-010 – HUD kötelező elemei
-- **Döntés:** a HUD-on látszódjon a pontszám, inventory, elszökött ellenségek száma, valamint opcionálisan idő vagy nehézségi szint
+- **Döntés:** a HUD-on látszódjon a pontszám, hátizsák-kapacitás, elszökött ellenségek száma, valamint opcionálisan idő vagy nehézségi szint
 - **Státusz:** elfogadva
 - **Indoklás:** Ezek az alapvető, játék közben folyamatosan szükséges információk.
 

@@ -150,7 +150,7 @@ Az NVVH a leadási zóna.
 Ha a játékos értéket hord magán, és belép az NVVH területére:
 - a nála lévő összes érték leadásra kerül,
 - a rendszer pontokat ír jóvá,
-- a játékos inventory-ja kiürül.
+- a játékos hátizsákja kiürül.
 
 ## 5.5 Reptér
 A reptér az ellenség célpontja.
@@ -210,10 +210,10 @@ Ez tempót ad a játéknak, és döntésre kényszeríti a játékost:
 - üldözze tovább az ellenséget,
 - vagy menjen vissza a lootért.
 
-## 6.5 Inventory limit
+## 6.5 Hátizsák limit
 A játékos legfeljebb 4 lootot vihet magával.
 
-Ha az inventory tele van:
+Ha a hátizsák tele van:
 - további lootot nem tud felvenni,
 - ezért előbb le kell adnia a nála lévőket.
 
@@ -274,7 +274,7 @@ Előnyei:
 A játékosnak mindig látnia kell:
 - hol vannak az ellenségek,
 - mi a loot,
-- mennyi szabad hely van az inventory-ban,
+- mennyi szabad hely van a hátizsákban,
 - hol van az NVVH,
 - mennyi ellenség jutott el a reptérre.
 
@@ -315,7 +315,7 @@ Javasolt tartalom:
 - támadás gomb,
 - célok leírása,
 - loot működése,
-- inventory limit,
+- hátizsák limit,
 - vereségi feltétel.
 
 A help-ablak legyen rövid, vizuálisan tagolt, könnyen átfutható.
@@ -338,7 +338,7 @@ A HUD nem külön ablak, hanem folyamatosan látható információs réteg.
 
 Javasolt elemek:
 - aktuális pontszám,
-- inventory: 0/4 – 4/4,
+- hátizsák: 0/4 – 4/4,
 - elszökött ellenségek száma,
 - esetleg aktuális nehézségi szint vagy eltelt idő.
 
@@ -459,16 +459,16 @@ Az alábbi use-case-ek a játék fő felhasználói és rendszereseményeit írj
 **Szereplő:** játékos  
 **Cél:** érték felvétele.
 
-**Előfeltétel:** loot van a pályán, a játékos inventory-ja nincs tele.
+**Előfeltétel:** loot van a pályán, a játékos hátizsákja nincs tele.
 
 **Fő folyamat:**
 1. A játékos hozzáér a loothoz.
-2. A rendszer ellenőrzi az inventory kapacitását.
-3. A rendszer a lootot hozzáadja az inventory-hoz.
+2. A rendszer ellenőrzi a hátizsák kapacitását.
+3. A rendszer a lootot hozzáadja a hátizsákhoz.
 4. A loot eltűnik a pályáról.
 
 **Alternatív folyamat:**
-- Ha az inventory tele van, a loot a pályán marad, amíg le nem jár az ideje.
+- Ha a hátizsák tele van, a loot a pályán marad, amíg le nem jár az ideje.
 
 **Eredmény:** a játékos eggyel több értéket visz.
 
@@ -496,7 +496,7 @@ Az alábbi use-case-ek a játék fő felhasználói és rendszereseményeit írj
 1. A játékos belép az NVVH zónába.
 2. A rendszer megszámolja a nála lévő lootot.
 3. A rendszer jóváírja a pontokat.
-4. A rendszer kiüríti az inventory-t.
+4. A rendszer kiüríti a hátizsákot.
 5. A rendszer visszajelzést ad a sikeres leadásról.
 
 **Eredmény:** a játékos pontot kap és újra szabad kapacitással rendelkezik.
@@ -551,13 +551,13 @@ A HUD minimális, de informatív legyen.
 
 Kötelező, **prominens elemek**:
 - **Pont**: a jelenlegi pontszám (az eddigi sikeres leadások összege) – nagy, jól látható
-- **Inventory**: hány érték van nála (0/4, 1/4, ... 4/4) – vizuálisan világos, ikonnal vagy szöveggel
+- **Hátizsák**: hány érték van nála (0/4, 1/4, ... 4/4) – vizuálisan világos, ikonnal vagy szöveggel
 - **Elszökött ellenségek**: hányan jutottak már a reptérre (pl. "3/10") – figyelmeztető hatáson
 - **Játékidő vagy nehézségi szint** – szükség szerint.
 
 Opcionális elemek:
 - rövid üzenet leadáskor ("+ 100 pont!"),
-- rövid üzenet inventory megtelésekor ("Inventory megtelt!"),
+- rövid üzenet hátizsák megtelésekor ("A hátizsák megtelt!"),
 - rövid figyelmeztetés, ha közel a game over ("Még 2 ellenség!").
 
 ---
@@ -624,6 +624,6 @@ A legfontosabb tervezési előnyök:
 A játék erőssége a letisztult core loop:
 **üldözés → ütés → loot → leadás → pontszerzés**.
 
-A HUD világos megjelenítése (pont, inventory, elszökött ellenségek) és az akadályok/loot rácskocka-alapú elrendezése támogatja az egyértelmű játékélményt.
+A HUD világos megjelenítése (pont, hátizsák, elszökött ellenségek) és az akadályok/loot rácskocka-alapú elrendezése támogatja az egyértelmű játékélményt.
 
 Ez megfelelő alapot ad egy gyorsan elkészíthető és később bővíthető HTML-alapú játékhoz.
