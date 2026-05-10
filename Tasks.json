@@ -81,13 +81,13 @@
       "id": 14,
       "name": "Art Direction & AI Pipeline",
       "description": "Define the visual production rules for the next design phase: AI prompting conventions, camera and perspective constraints, palette, export sizes, file naming, and what should be background, sprite, or UI asset. Reference: Vizualitas.md sections 2-4, 8 and Tech.md section 6",
-      "status": "in-progress"
+      "status": "closed"
     },
     {
       "id": 15,
       "name": "Scene Background Graphics",
       "description": "Create distinct background artwork for the Menu, Play, Leaderboard, and Game Over scenes that matches the established art direction and keeps the UI readable. Reference: Vizualitas.md sections 2-5",
-      "status": "ready"
+      "status": "in-progress"
     },
     {
       "id": 16,
