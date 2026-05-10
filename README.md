@@ -53,6 +53,7 @@ npm run test:coverage -- --run
 - `docs/` - architektúra, játékleírás, technikai és vizuális dokumentáció
 
 ## Dokumentáció
+- [ArtDirectionAIPipeline](docs/ArtDirectionAIPipeline.md) - AI promptolási, exportálási és assetgyártási szabályok
 - [Architecture](docs/Architecture.md) - architektúra és scene/system felelősségek
 - [Decisions](docs/Decisions.md) - rögzített technikai és termékdöntések
 - [JatekLeiras](docs/JatekLeiras.md) - játékszabályok és feature specifikáció
