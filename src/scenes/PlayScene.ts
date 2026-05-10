@@ -26,6 +26,7 @@ import {
   isLootExpired,
 } from '../systems/LootSystem';
 import { SimpleCollisionProvider } from '../systems/SimpleCollisionProvider';
+import { PLAY_ASSET_KEYS } from './BootScene';
 import { SCENE_KEYS } from './sceneKeys';
 
 type ActiveEnemy = {
@@ -480,21 +481,40 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private drawObstacleCells(level: LevelData): void {
-    const graphics = this.add.graphics();
-    graphics.setDepth(1.5);
+    const hasObstacleTexture = this.textures.exists(PLAY_ASSET_KEYS.obstacleResidential);
+
+    if (!hasObstacleTexture) {
+      const graphics = this.add.graphics();
+      graphics.setDepth(1.5);
+
+      for (const cell of level.obstacles) {
+        const polygon = this.gridSystem!.cellPolygon(cell);
+        graphics.fillStyle(0xe76f51, 0.35);
+        graphics.lineStyle(2, 0xffb4a2, 0.95);
+        graphics.beginPath();
+        graphics.moveTo(polygon[0].x, polygon[0].y);
+        graphics.lineTo(polygon[1].x, polygon[1].y);
+        graphics.lineTo(polygon[2].x, polygon[2].y);
+        graphics.lineTo(polygon[3].x, polygon[3].y);
+        graphics.closePath();
+        graphics.fillPath();
+        graphics.strokePath();
+      }
+
+      return;
+    }
 
     for (const cell of level.obstacles) {
-      const polygon = this.gridSystem!.cellPolygon(cell);
-      graphics.fillStyle(0xe76f51, 0.35);
-      graphics.lineStyle(2, 0xffb4a2, 0.95);
-      graphics.beginPath();
-      graphics.moveTo(polygon[0].x, polygon[0].y);
-      graphics.lineTo(polygon[1].x, polygon[1].y);
-      graphics.lineTo(polygon[2].x, polygon[2].y);
-      graphics.lineTo(polygon[3].x, polygon[3].y);
-      graphics.closePath();
-      graphics.fillPath();
-      graphics.strokePath();
+      const center = this.gridSystem!.cellCenter(cell);
+      const bounds = this.gridSystem!.cellBounds(cell, 8);
+      const targetSize = bounds.width * 1.35;
+      const anchorY = bounds.y + bounds.height * 1.08;
+
+      this.add
+        .image(center.x, anchorY, PLAY_ASSET_KEYS.obstacleResidential)
+        .setOrigin(0.5, 1)
+        .setDisplaySize(targetSize, targetSize)
+        .setDepth(this.getGameplayDepth(anchorY));
     }
   }
 
@@ -526,6 +546,7 @@ export class PlayScene extends Phaser.Scene {
     const center = this.gridSystem!.cellCenter(startCell);
     this.playerBody.setPosition(center.x, center.y - 24).setVisible(true);
     this.playerShadow.setPosition(center.x, center.y + 30).setVisible(true);
+    this.updatePlayerRenderDepth();
     this.renderPlayerHitbox();
   }
 
@@ -579,7 +600,7 @@ export class PlayScene extends Phaser.Scene {
       .setStrokeStyle(2, 0x3d0c11, 1)
       .setDepth(3);
 
-    this.activeEnemies.push({
+    const enemy: ActiveEnemy = {
       body,
       shadow,
       path,
@@ -589,7 +610,10 @@ export class PlayScene extends Phaser.Scene {
       lootDropped: false,
       escaped: false,
       defeated: false,
-    });
+    };
+
+    this.activeEnemies.push(enemy);
+    this.updateEnemyRenderDepth(enemy);
 
     return true;
   }
@@ -692,7 +716,43 @@ export class PlayScene extends Phaser.Scene {
 
     this.playerBody.setPosition(nextPosition.x, nextPosition.y);
     this.playerShadow.setPosition(nextPosition.x, nextPosition.y + 54);
+    this.updatePlayerRenderDepth();
     this.renderPlayerHitbox();
+  }
+
+  private getGameplayDepth(worldY: number): number {
+    return 1.2 + worldY / 1000;
+  }
+
+  private updatePlayerRenderDepth(): void {
+    if (!this.playerBody || !this.playerShadow) {
+      return;
+    }
+
+    const bodyDepth = this.getGameplayDepth(this.playerBody.y + this.playerHitboxOffsetY);
+
+    this.setGameObjectDepth(this.playerBody, bodyDepth);
+    this.setGameObjectDepth(this.playerShadow, bodyDepth - 0.05);
+  }
+
+  private updateEnemyRenderDepth(enemy: ActiveEnemy): void {
+    const bodyDepth = this.getGameplayDepth(enemy.body.y + this.enemyHitboxOffsetY);
+
+    this.setGameObjectDepth(enemy.body, bodyDepth);
+    this.setGameObjectDepth(enemy.shadow, bodyDepth - 0.05);
+  }
+
+  private updateLootRenderDepth(loot: ActiveLoot): void {
+    const bodyDepth = this.getGameplayDepth(loot.body.y + this.lootSize.height / 2);
+
+    this.setGameObjectDepth(loot.body, bodyDepth);
+    this.setGameObjectDepth(loot.shadow, bodyDepth - 0.05);
+  }
+
+  private setGameObjectDepth(gameObject: { setDepth?: (value: number) => unknown }, depth: number): void {
+    if (typeof gameObject.setDepth === 'function') {
+      gameObject.setDepth(depth);
+    }
   }
 
   private performAttack(): void {
@@ -777,6 +837,7 @@ export class PlayScene extends Phaser.Scene {
 
     enemy.body.setPosition(nextX, nextY);
     enemy.shadow.setPosition(nextX, nextY + 18);
+    this.updateEnemyRenderDepth(enemy);
   }
 
   private defeatEnemy(enemy: ActiveEnemy): void {
@@ -803,14 +864,17 @@ export class PlayScene extends Phaser.Scene {
       .setStrokeStyle(2, 0x1d3557, 0.9)
       .setDepth(2.6);
 
-    this.activeLoots.push({
+    const loot: ActiveLoot = {
       id: `${template.id}-${this.droppedLootCount}`,
       type: template.type,
       value: template.value,
       body,
       shadow,
       createdAt: this.time.now,
-    });
+    };
+
+    this.activeLoots.push(loot);
+    this.updateLootRenderDepth(loot);
     this.refreshLevelInfo();
   }
 
@@ -1021,6 +1085,8 @@ export class PlayScene extends Phaser.Scene {
         enemy.body.setPosition(enemy.body.x + vector.x, enemy.body.y + vector.y);
         enemy.shadow.setPosition(enemy.body.x, enemy.body.y + 18);
       }
+
+      this.updateEnemyRenderDepth(enemy);
     }
 
     this.activeEnemies = this.activeEnemies.filter((enemy) => !enemy.escaped && !enemy.defeated);

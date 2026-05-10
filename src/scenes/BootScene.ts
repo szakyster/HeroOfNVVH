@@ -7,12 +7,17 @@ import {
 } from '../systems/AudioSystem';
 import { SCENE_KEYS } from './sceneKeys';
 
+export const PLAY_ASSET_KEYS = {
+  obstacleResidential: 'obstacle-residential',
+} as const;
+
 export class BootScene extends Phaser.Scene {
   constructor() {
     super(SCENE_KEYS.BOOT);
   }
 
   preload(): void {
+    this.load.image(PLAY_ASSET_KEYS.obstacleResidential, ['assets/obstacles/residental01.png']);
     this.load.audio(AUDIO_KEYS.ATTACK, ['assets/sprites/Punch01.mp3']);
     this.load.audio(AUDIO_KEYS.DEATH_1, ['assets/audio/effect/death01.mp3']);
     this.load.audio(AUDIO_KEYS.DEATH_2, ['assets/audio/effect/death02.mp3']);
