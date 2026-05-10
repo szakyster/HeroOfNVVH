@@ -26,6 +26,7 @@ import {
   isInventoryFull,
   isLootExpired,
 } from '../systems/LootSystem';
+import { addSceneBackground } from '../systems/SceneBackgrounds';
 import { SimpleCollisionProvider } from '../systems/SimpleCollisionProvider';
 import { getHrsAssetKey } from '../systems/HrsAssets';
 import { getObstacleAssetKey, hasObstacleAsset } from '../systems/ObstacleAssets';
@@ -325,7 +326,7 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private createBackground(width: number, height: number): void {
-    this.add.rectangle(width / 2, height / 2, width, height, 0x14323d, 1).setDepth(0);
+    addSceneBackground(this, 'play');
     this.add.ellipse(width * 0.18, height * 0.14, width * 0.45, height * 0.18, 0x2f5d62, 0.2).setDepth(0.1);
     this.add.ellipse(width * 0.82, height * 0.22, width * 0.4, height * 0.16, 0x3a6b6f, 0.18).setDepth(0.1);
 

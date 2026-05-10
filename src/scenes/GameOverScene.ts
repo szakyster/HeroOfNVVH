@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { AUDIO_KEYS, getAudioSystem } from '../systems/AudioSystem';
 import { LeaderboardStorage } from '../systems/LeaderboardStorage';
+import { addSceneBackground } from '../systems/SceneBackgrounds';
 import { SCENE_KEYS } from './sceneKeys';
 
 type GameOverData = {
@@ -20,7 +21,7 @@ export class GameOverScene extends Phaser.Scene {
     const audioSystem = getAudioSystem(this);
     const savedEntry = score > 0 ? this.saveScore(score) : null;
 
-    this.add.rectangle(width / 2, height / 2, width, height, 0x3d1120, 1);
+    addSceneBackground(this, 'gameOver');
 
     this.add
       .text(width / 2, height / 2 - 80, 'Game Over', {

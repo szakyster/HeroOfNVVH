@@ -5,6 +5,7 @@ import {
   applyAudioSettingsFromRegistry,
   getAudioSystem,
 } from '../systems/AudioSystem';
+import { addSceneBackground } from '../systems/SceneBackgrounds';
 import { SCENE_KEYS } from './sceneKeys';
 
 export class MenuScene extends Phaser.Scene {
@@ -21,7 +22,7 @@ export class MenuScene extends Phaser.Scene {
     const audioSystem = getAudioSystem(this);
     applyAudioSettingsFromRegistry(this);
 
-    this.add.rectangle(width / 2, height / 2, width, height, 0x112233, 1);
+    addSceneBackground(this, 'menu');
 
     this.add
       .text(width / 2, height / 2 - 80, 'Heroes of NVVH', {
@@ -32,7 +33,7 @@ export class MenuScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     this.add
-      .text(width / 2, height / 2 - 2, 'Heroes of NVVH védelmi prototípus', {
+      .text(width / 2, height / 2 - 2, 'Heroes of NVVH', {
         fontFamily: 'Verdana',
         fontSize: '24px',
         color: '#81b29a',
