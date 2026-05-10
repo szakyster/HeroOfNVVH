@@ -49,6 +49,14 @@ Ide tartozik:
 Kimenet:
 - egyedi PNG/WebP elemek vagy kisebb atlas-csomagok
 
+Jelenlegi obstacle referencia-alapok:
+- `docs/concepts/Obstacles/car01.png`
+- `docs/concepts/Obstacles/office.png`
+- `docs/concepts/Obstacles/police.png`
+- `docs/concepts/Obstacles/residental01.png`
+- `docs/concepts/Obstacles/residental02.png`
+- `docs/concepts/Obstacles/tree01.png`
+
 ### 3.3 Interaktív propok és loot
 Kisebb gameplay-objektumok, amelyeknek kis méretben is olvashatónak kell maradniuk.
 
@@ -144,6 +152,13 @@ Negatív prompt vagy manuális szűrés szintjén kerülendő:
 
 ### 6.3 Prompt-sablon háttérelemekhez
 `stylized arcade game environment, fixed 2.5D perspective, humorous city setting, clean readable shapes, low clutter, strong silhouette separation, gameplay-first composition, muted background palette, no photorealism`
+
+### 6.3a Prompt-sablon akadályokhoz
+`Stylized 2D browser game asset, chibi urban cartoon style, thick outlines, soft shading, readable at small sizes, matching city action game aesthetic, compact proportions, polished indie game art, [ITEM NAME], transparent background.`
+
+Megjegyzés:
+- a `[ITEM NAME]` helyére az adott obstacle típusa kerüljön, például `small city car`, `police checkpoint booth`, `office building`, `residential house`, `stylized street tree`
+- ez a prompt a `docs/concepts/Obstacles/` mappába feltöltött első obstacle alapokhoz tartozik
 
 ### 6.4 Prompt-sablon karakterekhez
 `stylized but readable human character for arcade game, fixed 2.5D gameplay view, recognizable face and body shape, clean silhouette, light humorous tone, readable at small scale, no photorealism, no cinematic camera`
