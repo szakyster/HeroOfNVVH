@@ -258,6 +258,11 @@ A főszereplő vizuális követelményei:
 - mozgás közben jól olvasható pózokkal,
 - támadáskor komikus, de nem gyerekes mozdulatok.
 
+Jelenlegi referenciaállapot:
+- a jelenleg preferált főhős-koncepció a `docs/concepts/PSZ/PSZ01.png`
+- a további karaktertervek ezt tekintsék alapnak, és csak kontrollált iterációban térjenek el tőle
+- a cél nem új főhős-koncepció keresése, hanem a `PSZ01` játékba illesztett, következetes továbbvitele
+
 Az arc és a testalkat legyen felismerhető, még kis méretben is, de ne realisztikus – inkább "jó rajzfilm emberek" szinten.
 
 ## 8.3 Ellenségek

@@ -76,6 +76,60 @@
       "name": "Deployment & Docs",
       "description": "Configure GitHub Pages deployment. Build static assets pipeline. Create developer documentation for onboarding. Reference: D-018 (GitHub Pages), Tech.md section 9",
       "status": "closed"
+    },
+    {
+      "id": 14,
+      "name": "Art Direction & AI Pipeline",
+      "description": "Define the visual production rules for the next design phase: AI prompting conventions, camera and perspective constraints, palette, export sizes, file naming, and what should be background, sprite, or UI asset. Reference: Vizualitas.md sections 2-4, 8 and Tech.md section 6",
+      "status": "in-progress"
+    },
+    {
+      "id": 15,
+      "name": "Scene Background Graphics",
+      "description": "Create distinct background artwork for the Menu, Play, Leaderboard, and Game Over scenes that matches the established art direction and keeps the UI readable. Reference: Vizualitas.md sections 2-5",
+      "status": "ready"
+    },
+    {
+      "id": 16,
+      "name": "Environment & Landmark Assets",
+      "description": "Produce the visual environment kit for the playable map and connected landmarks: ground treatment, Hatvanpuszta, Reptér, NVVH székház, sanctuary/deposit area, and the main obstacle family. Reference: Vizualitas.md sections 4-7",
+      "status": "ready"
+    },
+    {
+      "id": 17,
+      "name": "Loot & Interactive Props",
+      "description": "Create final visual assets for loot types, pickup/deposit related props, and smaller interactive map elements with clear readability at gameplay scale. Reference: JatekLeiras.md section 5.2 and Vizualitas.md sections 4, 6, 7",
+      "status": "ready"
+    },
+    {
+      "id": 18,
+      "name": "Hero Character Design",
+      "description": "Create the main character's final visual design and gameplay-facing poses for idle, movement, and attack states before animation sheet production. Reference: Vizualitas.md section 8.2",
+      "status": "ready"
+    },
+    {
+      "id": 19,
+      "name": "Enemy Character Design",
+      "description": "Create the enemy visual family with readable silhouettes and gameplay-facing state variations that remain distinct from the hero and the environment. Reference: Vizualitas.md section 8.3 and JatekLeiras.md section 5.1",
+      "status": "ready"
+    },
+    {
+      "id": 20,
+      "name": "Character Animation Integration",
+      "description": "Turn the approved hero and enemy designs into animation-ready sheets or atlases and integrate them into Phaser with correct state timing. Reference: Tech.md section 6 and Architecture.md sections 3-5",
+      "status": "ready"
+    },
+    {
+      "id": 21,
+      "name": "UI Graphic Skin",
+      "description": "Replace placeholder UI visuals with final graphic elements for HUD panels, backpack display, menu buttons, leaderboard panels, and other interface chrome. Reference: Vizualitas.md section 10 and JatekLeiras.md section 12",
+      "status": "ready"
+    },
+    {
+      "id": 22,
+      "name": "Visual FX & Feedback Polish",
+      "description": "Add or refine lightweight visual feedback such as hit flashes, deposit popups, pickup highlights, scene transitions, and other final polish effects once the core art assets are in place. Reference: Vizualitas.md sections 8-10",
+      "status": "ready"
     }
   ]
 }
