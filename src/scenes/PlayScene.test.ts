@@ -256,6 +256,47 @@ describe('PlayScene runtime reset', () => {
     expect((scene.getDepositPopupColor as (value: number) => string)(50)).toBe('#ffd166');
   });
 
+  it('creates deposit popups with Bungee font and larger sizes', () => {
+    const destroy = vi.fn();
+    const setOrigin = vi.fn().mockReturnThis();
+    const setDepth = vi.fn().mockReturnThis();
+    const popup = {
+      y: 142,
+      destroy,
+      setOrigin,
+      setDepth,
+    };
+    const addText = vi.fn(() => popup);
+    const tweensAdd = vi.fn();
+    const scene = new PlayScene() as unknown as Record<string, unknown>;
+
+    scene.playerBody = { x: 320, y: 220 };
+    scene.add = { text: addText };
+    scene.tweens = { add: tweensAdd };
+
+    (scene.showDepositValuePopup as (value: number) => void)(20);
+
+    expect(addText).toHaveBeenCalledWith(
+      320,
+      142,
+      '+20 M Ft',
+      expect.objectContaining({
+        fontFamily: 'Bungee, Verdana, sans-serif',
+        fontSize: '34px',
+        color: '#80ed99',
+      }),
+    );
+    expect(setOrigin).toHaveBeenCalledWith(0.5);
+    expect(setDepth).toHaveBeenCalledWith(8);
+    expect(tweensAdd).toHaveBeenCalledWith(
+      expect.objectContaining({
+        targets: popup,
+        y: 88,
+        alpha: 0,
+      }),
+    );
+  });
+
   it('scales obstacle sprites with width and height caps while keeping aspect ratio', () => {
     const scene = new PlayScene() as unknown as Record<string, unknown>;
 

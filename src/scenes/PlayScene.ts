@@ -34,6 +34,7 @@ import { HEADLINE_FONT_FAMILY } from '../utils/typography';
 import { SCENE_KEYS } from './sceneKeys';
 const HEADER_EMPHASIS_COLOR = '#f4e6a2';
 const ESCAPED_WARNING_COLOR = '#ff4d4f';
+const DEPOSIT_POPUP_FONT_FAMILY = 'Bungee, Verdana, sans-serif';
 
 type ActiveEnemy = {
   body: Phaser.GameObjects.Ellipse;
@@ -1229,11 +1230,11 @@ export class PlayScene extends Phaser.Scene {
       return;
     }
 
-    const fontSize = value >= 50 ? '30px' : value >= 20 ? '26px' : '22px';
+    const fontSize = value >= 50 ? '39px' : value >= 20 ? '34px' : '29px';
     const color = this.getDepositPopupColor(value);
     const popup = this.add
       .text(this.playerBody.x, this.playerBody.y - 78, `+${value} M Ft`, {
-        fontFamily: 'Verdana',
+        fontFamily: DEPOSIT_POPUP_FONT_FAMILY,
         fontSize,
         color,
         fontStyle: 'bold',
