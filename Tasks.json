@@ -87,13 +87,13 @@
       "id": 15,
       "name": "Scene Background Graphics",
       "description": "Create distinct background artwork for the Menu, Play, Leaderboard, and Game Over scenes that matches the established art direction and keeps the UI readable. Reference: Vizualitas.md sections 2-5",
-      "status": "on-hold"
+      "status": "in-progress"
     },
     {
       "id": 16,
       "name": "Environment & Landmark Assets",
       "description": "Produce the visual environment kit for the playable map and connected landmarks: ground treatment, Hatvanpuszta, Reptér, NVVH székház, sanctuary/deposit area, and the main obstacle family. Reference: Vizualitas.md sections 4-7",
-      "status": "in-progress"
+      "status": "closed"
     },
     {
       "id": 17,

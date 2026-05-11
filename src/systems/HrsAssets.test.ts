@@ -20,14 +20,14 @@ describe('HrsAssets', () => {
         url: `${PUBLIC_BASE_URL}assets/hrs/hatvanpuszta01.png`,
       },
       {
+        imageName: 'nvvh01.png',
+        key: getHrsAssetKey('nvvh01.png'),
+        url: `${PUBLIC_BASE_URL}assets/hrs/nvvh01.png`,
+      },
+      {
         imageName: 'repter01.png',
         key: getHrsAssetKey('repter01.png'),
         url: `${PUBLIC_BASE_URL}assets/hrs/repter01.png`,
-      },
-      {
-        imageName: 'sanctuary01.png',
-        key: getHrsAssetKey('sanctuary01.png'),
-        url: `${PUBLIC_BASE_URL}assets/hrs/sanctuary01.png`,
       },
     ]);
 

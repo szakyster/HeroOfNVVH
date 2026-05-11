@@ -1,6 +1,6 @@
 const HRS_ASSET_KEY_PREFIX = 'hrs:';
 const ALLOWED_IMAGE_EXTENSION_PATTERN = /\.(png|jpe?g|webp)$/i;
-const HRS_IMAGE_NAMES = ['hatvanpuszta01.png', 'repter01.png', 'sanctuary01.png'];
+const HRS_IMAGE_NAMES = ['hatvanpuszta01.png', 'repter01.png', 'nvvh01.png'];
 const PUBLIC_BASE_URL = import.meta.env.BASE_URL ?? '/';
 
 export type HrsAssetEntry = {

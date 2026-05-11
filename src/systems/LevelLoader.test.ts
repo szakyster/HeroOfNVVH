@@ -16,7 +16,7 @@ describe('LevelLoader', () => {
       hrsImages: [
         { id: 'hrs-spawn', zoneType: 'spawn', zoneId: 'spawn-1', image: 'hatvanpuszta01.png', side: 'left' },
         { id: 'hrs-goal', zoneType: 'goal', zoneId: 'goal-1', image: 'repter01.png', side: 'right' },
-        { id: 'hrs-sanctuary', zoneType: 'sanctuary', image: 'sanctuary01.png', side: 'bottom' },
+        { id: 'hrs-sanctuary', zoneType: 'sanctuary', image: 'nvvh01.png', side: 'bottom' },
       ],
       lootSpawns: [{ id: 'loot-1', type: 'wallet', value: 20, cell: { x: 2, y: 4 } }],
     });
