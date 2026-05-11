@@ -200,6 +200,25 @@ describe('PlayScene runtime reset', () => {
     expect((scene.getDepositPopupColor as (value: number) => string)(50)).toBe('#ffd166');
   });
 
+  it('scales obstacle sprites with width and height caps while keeping aspect ratio', () => {
+    const scene = new PlayScene() as unknown as Record<string, unknown>;
+
+    expect(
+      (scene.getObstacleDisplaySize as (
+        bounds: { x: number; y: number; width: number; height: number },
+        textureSize: { width: number; height: number },
+      ) => { width: number; height: number })({ x: 0, y: 0, width: 70, height: 74 }, { width: 768, height: 768 }),
+    ).toEqual({ width: 84, height: 84 });
+
+    const tallTextureSize = (scene.getObstacleDisplaySize as (
+      bounds: { x: number; y: number; width: number; height: number },
+      textureSize: { width: number; height: number },
+    ) => { width: number; height: number })({ x: 0, y: 0, width: 70, height: 74 }, { width: 512, height: 1024 });
+
+    expect(tallTextureSize.width).toBeCloseTo(59.2);
+    expect(tallTextureSize.height).toBeCloseTo(118.4);
+  });
+
   it('creates loot hitboxes from center coordinates and checks sanctuary overlap', () => {
     const scene = new PlayScene() as unknown as Record<string, unknown>;
     const intersects = vi.fn()

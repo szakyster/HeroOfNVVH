@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import type { LevelData } from '../types/level';
 import type { GridCell } from '../types/level';
 import { GridSystem } from '../systems/GridSystem';
+import type { ScreenRect } from '../systems/GridSystem';
 import type { CollisionRect } from '../systems/ICollisionProvider';
 import { AStarPathfinder } from '../systems/AStarPathfinder';
 import {
@@ -84,6 +85,10 @@ export class PlayScene extends Phaser.Scene {
   private readonly lootSize = { width: 28, height: 20 };
 
   private readonly lootDepositIntervalMs = 400;
+
+  private readonly obstacleSpriteMaxWidthScale = 1.2;
+
+  private readonly obstacleSpriteMaxHeightScale = 1.6;
 
   private gridSystem?: GridSystem;
 
@@ -504,18 +509,44 @@ export class PlayScene extends Phaser.Scene {
       return;
     }
 
+    const sourceImage = this.textures.get(PLAY_ASSET_KEYS.obstacleResidential).getSourceImage();
+    const textureSource = Array.isArray(sourceImage) ? sourceImage[0] : sourceImage;
+    const textureSize = {
+      width: textureSource?.width ?? 1,
+      height: textureSource?.height ?? 1,
+    };
+
     for (const cell of level.obstacles) {
       const center = this.gridSystem!.cellCenter(cell);
       const bounds = this.gridSystem!.cellBounds(cell, 8);
-      const targetSize = bounds.width * 1.35;
+      const displaySize = this.getObstacleDisplaySize(bounds, textureSize);
       const anchorY = bounds.y + bounds.height * 1.08;
 
       this.add
         .image(center.x, anchorY, PLAY_ASSET_KEYS.obstacleResidential)
         .setOrigin(0.5, 1)
-        .setDisplaySize(targetSize, targetSize)
+        .setDisplaySize(displaySize.width, displaySize.height)
         .setDepth(this.getGameplayDepth(anchorY));
     }
+  }
+
+  private getObstacleDisplaySize(
+    bounds: ScreenRect,
+    textureSize: { width: number; height: number },
+  ): { width: number; height: number } {
+    const maxWidth = bounds.width * this.obstacleSpriteMaxWidthScale;
+    const maxHeight = bounds.height * this.obstacleSpriteMaxHeightScale;
+
+    if (textureSize.width <= 0 || textureSize.height <= 0) {
+      return { width: maxWidth, height: maxHeight };
+    }
+
+    const scale = Math.min(maxWidth / textureSize.width, maxHeight / textureSize.height);
+
+    return {
+      width: textureSize.width * scale,
+      height: textureSize.height * scale,
+    };
   }
 
   private drawSanctuaryZone(level: LevelData): void {
