@@ -21,7 +21,7 @@ When working in this project:
 - Keep level and static asset references aligned with the existing `public/` structure.
 - Preserve the current Phaser scene flow: `BootScene`, `MenuScene`, `PlayScene`, `GameOverScene`.
 - Prefer extending the existing audio abstraction in `src/systems/AudioSystem.ts` instead of calling Phaser audio APIs ad hoc from scenes.
-- Keep in-game UI text in Hungarian unless the task explicitly requires something else.
+- Keep in-game UI text in Hungarian unless the task explicitly requires a different language.
 - Add or update Vitest tests when changing reusable systems or fixing regressions.
 - Avoid unrelated refactors while implementing a task.
 
@@ -29,6 +29,7 @@ Task closing workflow:
 
 - Before closing a task, run the build.
 - Before closing a task, run the relevant tests.
+- If the build or tests fail, investigate and give detailed information about the failure. Do not try to solve the issue and stop the process.
 - Before closing a task, if any relevant file's code coverage is below 25%, report that back to the user.
 - If there are uncommitted changes, perform `CP` (git add + commit + push).
 - When merging a completed task branch, use a non-fast-forward merge.

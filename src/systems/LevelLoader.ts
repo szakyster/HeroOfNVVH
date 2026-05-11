@@ -1,4 +1,9 @@
-import type { LevelData } from '../types/level';
+import type { HrsImageDefinition, HrsImageSide, HrsZoneType, LevelData } from '../types/level';
+import { hasHrsAsset, isHrsImageNameAllowed } from './HrsAssets';
+import { hasObstacleAsset, isObstacleImageNameAllowed } from './ObstacleAssets';
+
+const HRS_IMAGE_SIDES: HrsImageSide[] = ['left', 'right', 'top', 'bottom'];
+const HRS_ZONE_TYPES: HrsZoneType[] = ['spawn', 'goal', 'sanctuary'];
 
 function isValidCell(value: unknown): value is { x: number; y: number } {
   if (!value || typeof value !== 'object') {
@@ -44,6 +49,7 @@ export class LevelLoader {
     assert(Array.isArray(data.spawnZones), 'spawnZones must be an array');
     assert(Array.isArray(data.goalZones), 'goalZones must be an array');
     assert(Array.isArray(data.sanctuaryZone), 'sanctuaryZone must be an array');
+    assert(data.hrsImages === undefined || Array.isArray(data.hrsImages), 'hrsImages must be an array when provided');
     assert(Array.isArray(data.lootSpawns), 'lootSpawns must be an array');
 
     const width = grid.width as number;
@@ -59,13 +65,26 @@ export class LevelLoader {
 
     const obstacleData = data.obstacles as unknown[];
     const sanctuaryData = data.sanctuaryZone as unknown[];
+    const hrsImagesData = (data.hrsImages as unknown[] | undefined) ?? [];
     const spawnZoneData = data.spawnZones as unknown[];
     const goalZoneData = data.goalZones as unknown[];
     const lootSpawnData = data.lootSpawns as unknown[];
 
-    const obstacles = obstacleData.map((cell: unknown, index: number) => {
-      const validCell = validateCellInBounds(cell, `obstacles[${index}]`);
-      return { x: validCell.x, y: validCell.y };
+    const obstacles = obstacleData.map((obstacle: unknown, index: number) => {
+      assert(!!obstacle && typeof obstacle === 'object', `obstacles[${index}] must be object`);
+      const candidate = obstacle as { x?: unknown; y?: unknown; image?: unknown };
+      const validCell = validateCellInBounds(candidate, `obstacles[${index}]`);
+      assert(typeof candidate.image === 'string' && candidate.image.length > 0, `obstacles[${index}].image is required`);
+      assert(
+        isObstacleImageNameAllowed(candidate.image),
+        `obstacles[${index}].image must be a direct filename from the obstacles folder`,
+      );
+      assert(
+        hasObstacleAsset(candidate.image),
+        `obstacles[${index}].image must reference an existing file in the obstacles folder root`,
+      );
+
+      return { x: validCell.x, y: validCell.y, image: candidate.image };
     });
 
     const sanctuaryZone = sanctuaryData.map((cell: unknown, index: number) => {
@@ -101,6 +120,88 @@ export class LevelLoader {
       return { id: candidate.id as string, cells };
     });
 
+    const spawnZoneIds = new Set(spawnZones.map((zone) => zone.id));
+    const goalZoneIds = new Set(goalZones.map((zone) => zone.id));
+    const hrsZoneKeys = new Set<string>();
+
+    const hrsImages = hrsImagesData.map((hrsImage: unknown, index: number): HrsImageDefinition => {
+      assert(!!hrsImage && typeof hrsImage === 'object', `hrsImages[${index}] must be object`);
+      const candidate = hrsImage as {
+        id?: unknown;
+        zoneType?: unknown;
+        zoneId?: unknown;
+        image?: unknown;
+        side?: unknown;
+        offsetX?: unknown;
+        offsetY?: unknown;
+        scale?: unknown;
+      };
+
+      assert(typeof candidate.id === 'string' && candidate.id.length > 0, `hrsImages[${index}].id is required`);
+      assert(
+        typeof candidate.zoneType === 'string' && HRS_ZONE_TYPES.includes(candidate.zoneType as HrsZoneType),
+        `hrsImages[${index}].zoneType must be one of ${HRS_ZONE_TYPES.join(', ')}`,
+      );
+      assert(typeof candidate.image === 'string' && candidate.image.length > 0, `hrsImages[${index}].image is required`);
+      assert(
+        isHrsImageNameAllowed(candidate.image),
+        `hrsImages[${index}].image must be a direct filename from the hrs folder`,
+      );
+      assert(
+        hasHrsAsset(candidate.image),
+        `hrsImages[${index}].image must reference an existing file in the hrs folder root`,
+      );
+      assert(
+        typeof candidate.side === 'string' && HRS_IMAGE_SIDES.includes(candidate.side as HrsImageSide),
+        `hrsImages[${index}].side must be one of ${HRS_IMAGE_SIDES.join(', ')}`,
+      );
+
+      const zoneType = candidate.zoneType as HrsZoneType;
+      const zoneId = typeof candidate.zoneId === 'string' && candidate.zoneId.length > 0 ? candidate.zoneId : undefined;
+
+      if (zoneType === 'spawn') {
+        assert(zoneId !== undefined, `hrsImages[${index}].zoneId is required for spawn zones`);
+        assert(spawnZoneIds.has(zoneId), `hrsImages[${index}].zoneId must reference an existing spawn zone`);
+      }
+
+      if (zoneType === 'goal') {
+        assert(zoneId !== undefined, `hrsImages[${index}].zoneId is required for goal zones`);
+        assert(goalZoneIds.has(zoneId), `hrsImages[${index}].zoneId must reference an existing goal zone`);
+      }
+
+      if (zoneType === 'sanctuary') {
+        assert(zoneId === undefined || zoneId === 'sanctuary', `hrsImages[${index}].zoneId must be omitted or 'sanctuary'`);
+      }
+
+      assert(
+        candidate.offsetX === undefined || typeof candidate.offsetX === 'number',
+        `hrsImages[${index}].offsetX must be a number when provided`,
+      );
+      assert(
+        candidate.offsetY === undefined || typeof candidate.offsetY === 'number',
+        `hrsImages[${index}].offsetY must be a number when provided`,
+      );
+      assert(
+        candidate.scale === undefined || (typeof candidate.scale === 'number' && candidate.scale > 0),
+        `hrsImages[${index}].scale must be a positive number when provided`,
+      );
+
+      const zoneKey = `${zoneType}:${zoneType === 'sanctuary' ? 'sanctuary' : zoneId}`;
+      assert(!hrsZoneKeys.has(zoneKey), `hrsImages[${index}] duplicates an existing HRS zone image assignment`);
+      hrsZoneKeys.add(zoneKey);
+
+      return {
+        id: candidate.id as string,
+        zoneType,
+        zoneId,
+        image: candidate.image as string,
+        side: candidate.side as HrsImageSide,
+        offsetX: candidate.offsetX as number | undefined,
+        offsetY: candidate.offsetY as number | undefined,
+        scale: candidate.scale as number | undefined,
+      };
+    });
+
     const lootSpawns = lootSpawnData.map((loot: unknown, lootIndex: number) => {
       assert(!!loot && typeof loot === 'object', `lootSpawns[${lootIndex}] must be object`);
       const candidate = loot as { id?: unknown; type?: unknown; value?: unknown; cell?: unknown };
@@ -131,6 +232,7 @@ export class LevelLoader {
       spawnZones,
       goalZones,
       sanctuaryZone,
+      hrsImages,
       lootSpawns,
     };
   }

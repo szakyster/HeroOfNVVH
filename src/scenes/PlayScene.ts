@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import type { LevelData } from '../types/level';
 import type { GridCell } from '../types/level';
 import { GridSystem } from '../systems/GridSystem';
+import type { ScreenRect } from '../systems/GridSystem';
 import type { CollisionRect } from '../systems/ICollisionProvider';
 import { AStarPathfinder } from '../systems/AStarPathfinder';
 import {
@@ -26,6 +27,8 @@ import {
   isLootExpired,
 } from '../systems/LootSystem';
 import { SimpleCollisionProvider } from '../systems/SimpleCollisionProvider';
+import { getHrsAssetKey } from '../systems/HrsAssets';
+import { getObstacleAssetKey, hasObstacleAsset } from '../systems/ObstacleAssets';
 import { SCENE_KEYS } from './sceneKeys';
 
 type ActiveEnemy = {
@@ -47,6 +50,14 @@ type ActiveLoot = {
   body: Phaser.GameObjects.Rectangle;
   shadow: Phaser.GameObjects.Ellipse;
   createdAt: number;
+};
+
+type HrsPlacement = {
+  x: number;
+  y: number;
+  originX: number;
+  originY: number;
+  depthY: number;
 };
 
 export class PlayScene extends Phaser.Scene {
@@ -83,6 +94,14 @@ export class PlayScene extends Phaser.Scene {
   private readonly lootSize = { width: 28, height: 20 };
 
   private readonly lootDepositIntervalMs = 400;
+
+  private readonly obstacleSpriteMaxWidthScale = 1.2;
+
+  private readonly obstacleSpriteMaxHeightScale = 1.6;
+
+  private readonly hrsSpriteMaxWidthScale = 1.95;
+
+  private readonly hrsSpriteMaxHeightScale = 2.3;
 
   private gridSystem?: GridSystem;
 
@@ -251,10 +270,11 @@ export class PlayScene extends Phaser.Scene {
       .load(this.levelPath)
       .then((level) => {
         this.currentLevel = level;
-        this.obstacleRects = level.obstacles.map((cell) => this.gridSystem!.cellBounds(cell, 10));
+        this.obstacleRects = this.getObstacleCells(level).map((cell) => this.gridSystem!.cellBounds(cell, 10));
         this.sanctuaryRects = level.sanctuaryZone.map((cell) => this.gridSystem!.cellBounds(cell, 10));
         this.drawObstacleCells(level);
         this.drawSanctuaryZone(level);
+        this.drawHrsImages(level);
         this.spawnPlayer(level);
         this.startEnemyWave(level);
         this.refreshLevelInfo();
@@ -480,22 +500,226 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private drawObstacleCells(level: LevelData): void {
-    const graphics = this.add.graphics();
-    graphics.setDepth(1.5);
+    let fallbackGraphics: Phaser.GameObjects.Graphics | undefined;
+    const obstacleTextureSizes = new Map<string, { width: number; height: number }>();
 
-    for (const cell of level.obstacles) {
-      const polygon = this.gridSystem!.cellPolygon(cell);
-      graphics.fillStyle(0xe76f51, 0.35);
-      graphics.lineStyle(2, 0xffb4a2, 0.95);
-      graphics.beginPath();
-      graphics.moveTo(polygon[0].x, polygon[0].y);
-      graphics.lineTo(polygon[1].x, polygon[1].y);
-      graphics.lineTo(polygon[2].x, polygon[2].y);
-      graphics.lineTo(polygon[3].x, polygon[3].y);
-      graphics.closePath();
-      graphics.fillPath();
-      graphics.strokePath();
+    for (const obstacle of level.obstacles) {
+      const textureKey = getObstacleAssetKey(obstacle.image);
+
+      if (!hasObstacleAsset(obstacle.image) || !this.textures.exists(textureKey)) {
+        fallbackGraphics ??= this.add.graphics().setDepth(1.5);
+        this.drawFallbackObstacleCell(fallbackGraphics, obstacle);
+        continue;
+      }
+
+      let textureSize = obstacleTextureSizes.get(textureKey);
+
+      if (!textureSize) {
+        const sourceImage = this.textures.get(textureKey).getSourceImage();
+        const textureSource = Array.isArray(sourceImage) ? sourceImage[0] : sourceImage;
+        textureSize = {
+          width: textureSource?.width ?? 1,
+          height: textureSource?.height ?? 1,
+        };
+        obstacleTextureSizes.set(textureKey, textureSize);
+      }
+
+      const center = this.gridSystem!.cellCenter(obstacle);
+      const bounds = this.gridSystem!.cellBounds(obstacle, 8);
+      const displaySize = this.getObstacleDisplaySize(bounds, textureSize);
+      const anchorY = bounds.y + bounds.height * 1.08;
+
+      this.add
+        .image(center.x, anchorY, textureKey)
+        .setOrigin(0.5, 1)
+        .setDisplaySize(displaySize.width, displaySize.height)
+        .setDepth(this.getGameplayDepth(anchorY));
     }
+  }
+
+  private drawFallbackObstacleCell(graphics: Phaser.GameObjects.Graphics, cell: GridCell): void {
+    const polygon = this.gridSystem!.cellPolygon(cell);
+    graphics.fillStyle(0xe76f51, 0.35);
+    graphics.lineStyle(2, 0xffb4a2, 0.95);
+    graphics.beginPath();
+    graphics.moveTo(polygon[0].x, polygon[0].y);
+    graphics.lineTo(polygon[1].x, polygon[1].y);
+    graphics.lineTo(polygon[2].x, polygon[2].y);
+    graphics.lineTo(polygon[3].x, polygon[3].y);
+    graphics.closePath();
+    graphics.fillPath();
+    graphics.strokePath();
+  }
+
+  private getObstacleCells(level: LevelData): GridCell[] {
+    return level.obstacles.map((obstacle) => ({ x: obstacle.x, y: obstacle.y }));
+  }
+
+  private getObstacleDisplaySize(
+    bounds: ScreenRect,
+    textureSize: { width: number; height: number },
+  ): { width: number; height: number } {
+    return this.getFittedSpriteDisplaySize(
+      bounds,
+      textureSize,
+      this.obstacleSpriteMaxWidthScale,
+      this.obstacleSpriteMaxHeightScale,
+    );
+  }
+
+  private getHrsDisplaySize(
+    bounds: ScreenRect,
+    textureSize: { width: number; height: number },
+    scale = 1,
+  ): { width: number; height: number } {
+    return this.getFittedSpriteDisplaySize(
+      bounds,
+      textureSize,
+      this.hrsSpriteMaxWidthScale * scale,
+      this.hrsSpriteMaxHeightScale * scale,
+    );
+  }
+
+  private getFittedSpriteDisplaySize(
+    bounds: ScreenRect,
+    textureSize: { width: number; height: number },
+    maxWidthScale: number,
+    maxHeightScale: number,
+  ): { width: number; height: number } {
+    const maxWidth = bounds.width * maxWidthScale;
+    const maxHeight = bounds.height * maxHeightScale;
+
+    if (textureSize.width <= 0 || textureSize.height <= 0) {
+      return { width: maxWidth, height: maxHeight };
+    }
+
+    const scale = Math.min(maxWidth / textureSize.width, maxHeight / textureSize.height);
+
+    return {
+      width: textureSize.width * scale,
+      height: textureSize.height * scale,
+    };
+  }
+
+  private drawHrsImages(level: LevelData): void {
+    if (level.hrsImages.length === 0) {
+      return;
+    }
+
+    const textureSizes = new Map<string, { width: number; height: number }>();
+
+    for (const hrsImage of level.hrsImages) {
+      const textureKey = getHrsAssetKey(hrsImage.image);
+
+      if (!this.textures.exists(textureKey)) {
+        continue;
+      }
+
+      const zoneCells = this.getHrsZoneCells(level, hrsImage);
+
+      if (zoneCells.length === 0) {
+        continue;
+      }
+
+      let textureSize = textureSizes.get(textureKey);
+
+      if (!textureSize) {
+        const sourceImage = this.textures.get(textureKey).getSourceImage();
+        const textureSource = Array.isArray(sourceImage) ? sourceImage[0] : sourceImage;
+        textureSize = {
+          width: textureSource?.width ?? 1,
+          height: textureSource?.height ?? 1,
+        };
+        textureSizes.set(textureKey, textureSize);
+      }
+
+      const zoneBounds = this.getGridCellsBounds(zoneCells);
+      const placement = this.getHrsPlacement(zoneBounds, hrsImage.side, hrsImage.offsetX, hrsImage.offsetY);
+      const displaySize = this.getHrsDisplaySize(zoneBounds, textureSize, hrsImage.scale);
+
+      this.add
+        .image(placement.x, placement.y, textureKey)
+        .setOrigin(placement.originX, placement.originY)
+        .setDisplaySize(displaySize.width, displaySize.height)
+        .setDepth(this.getGameplayDepth(placement.depthY) - 0.08);
+    }
+  }
+
+  private getHrsZoneCells(level: LevelData, hrsImage: LevelData['hrsImages'][number]): GridCell[] {
+    if (hrsImage.zoneType === 'sanctuary') {
+      return [...level.sanctuaryZone];
+    }
+
+    if (hrsImage.zoneType === 'spawn') {
+      return level.spawnZones.find((zone) => zone.id === hrsImage.zoneId)?.cells ?? [];
+    }
+
+    return level.goalZones.find((zone) => zone.id === hrsImage.zoneId)?.cells ?? [];
+  }
+
+  private getGridCellsBounds(cells: GridCell[]): ScreenRect {
+    const cellBounds = cells.map((cell) => this.gridSystem!.cellBounds(cell, 0));
+    const minX = Math.min(...cellBounds.map((bounds) => bounds.x));
+    const minY = Math.min(...cellBounds.map((bounds) => bounds.y));
+    const maxX = Math.max(...cellBounds.map((bounds) => bounds.x + bounds.width));
+    const maxY = Math.max(...cellBounds.map((bounds) => bounds.y + bounds.height));
+
+    return {
+      x: minX,
+      y: minY,
+      width: maxX - minX,
+      height: maxY - minY,
+    };
+  }
+
+  private getHrsPlacement(
+    zoneBounds: ScreenRect,
+    side: LevelData['hrsImages'][number]['side'],
+    offsetX = 0,
+    offsetY = 0,
+  ): HrsPlacement {
+    const centerX = zoneBounds.x + zoneBounds.width / 2;
+    const horizontalMargin = Math.max(26, zoneBounds.width * 0.36);
+    const verticalMargin = Math.max(18, zoneBounds.height * 0.34);
+    const baseBottomY = zoneBounds.y + zoneBounds.height;
+
+    if (side === 'left') {
+      return {
+        x: zoneBounds.x - horizontalMargin + offsetX,
+        y: baseBottomY + offsetY,
+        originX: 1,
+        originY: 1,
+        depthY: baseBottomY,
+      };
+    }
+
+    if (side === 'right') {
+      return {
+        x: zoneBounds.x + zoneBounds.width + horizontalMargin + offsetX,
+        y: baseBottomY + offsetY,
+        originX: 0,
+        originY: 1,
+        depthY: baseBottomY,
+      };
+    }
+
+    if (side === 'top') {
+      return {
+        x: centerX + offsetX,
+        y: zoneBounds.y - verticalMargin + offsetY,
+        originX: 0.5,
+        originY: 1,
+        depthY: zoneBounds.y,
+      };
+    }
+
+    return {
+      x: centerX + offsetX,
+      y: baseBottomY + verticalMargin + offsetY,
+      originX: 0.5,
+      originY: 0,
+      depthY: baseBottomY,
+    };
   }
 
   private drawSanctuaryZone(level: LevelData): void {
@@ -526,6 +750,7 @@ export class PlayScene extends Phaser.Scene {
     const center = this.gridSystem!.cellCenter(startCell);
     this.playerBody.setPosition(center.x, center.y - 24).setVisible(true);
     this.playerShadow.setPosition(center.x, center.y + 30).setVisible(true);
+    this.updatePlayerRenderDepth();
     this.renderPlayerHitbox();
   }
 
@@ -579,7 +804,7 @@ export class PlayScene extends Phaser.Scene {
       .setStrokeStyle(2, 0x3d0c11, 1)
       .setDepth(3);
 
-    this.activeEnemies.push({
+    const enemy: ActiveEnemy = {
       body,
       shadow,
       path,
@@ -589,7 +814,10 @@ export class PlayScene extends Phaser.Scene {
       lootDropped: false,
       escaped: false,
       defeated: false,
-    });
+    };
+
+    this.activeEnemies.push(enemy);
+    this.updateEnemyRenderDepth(enemy);
 
     return true;
   }
@@ -598,25 +826,26 @@ export class PlayScene extends Phaser.Scene {
     const waypoint = this.pickEnemyWaypoint(level, spawnCell, goalCell);
 
     if (waypoint) {
+      const obstacleCells = this.getObstacleCells(level);
       const waypointPath = this.pathfinder.findPathViaWaypoint(
         level.grid.width,
         level.grid.height,
         spawnCell,
         waypoint,
         goalCell,
-        level.obstacles,
+        obstacleCells,
       );
 
       if (waypointPath && waypointPath.length > 0) {
         return waypointPath;
       }
     }
-
-    return this.pathfinder.findPath(level.grid.width, level.grid.height, spawnCell, goalCell, level.obstacles);
+    return this.pathfinder.findPath(level.grid.width, level.grid.height, spawnCell, goalCell, this.getObstacleCells(level));
   }
 
   private pickEnemyWaypoint(level: LevelData, spawnCell: GridCell, goalCell: GridCell): GridCell | null {
-    const blockedKeys = new Set(level.obstacles.map((cell) => this.cellKey(cell)));
+    const obstacleCells = this.getObstacleCells(level);
+    const blockedKeys = new Set(obstacleCells.map((cell) => this.cellKey(cell)));
     const candidates = this.gridSystem
       ?.allCells()
       .filter((cell) => {
@@ -646,7 +875,7 @@ export class PlayScene extends Phaser.Scene {
         spawnCell,
         candidate,
         goalCell,
-        level.obstacles,
+        obstacleCells,
       );
 
       if (waypointPath && waypointPath.length > 0) {
@@ -692,7 +921,43 @@ export class PlayScene extends Phaser.Scene {
 
     this.playerBody.setPosition(nextPosition.x, nextPosition.y);
     this.playerShadow.setPosition(nextPosition.x, nextPosition.y + 54);
+    this.updatePlayerRenderDepth();
     this.renderPlayerHitbox();
+  }
+
+  private getGameplayDepth(worldY: number): number {
+    return 1.2 + worldY / 1000;
+  }
+
+  private updatePlayerRenderDepth(): void {
+    if (!this.playerBody || !this.playerShadow) {
+      return;
+    }
+
+    const bodyDepth = this.getGameplayDepth(this.playerBody.y + this.playerHitboxOffsetY);
+
+    this.setGameObjectDepth(this.playerBody, bodyDepth);
+    this.setGameObjectDepth(this.playerShadow, bodyDepth - 0.05);
+  }
+
+  private updateEnemyRenderDepth(enemy: ActiveEnemy): void {
+    const bodyDepth = this.getGameplayDepth(enemy.body.y + this.enemyHitboxOffsetY);
+
+    this.setGameObjectDepth(enemy.body, bodyDepth);
+    this.setGameObjectDepth(enemy.shadow, bodyDepth - 0.05);
+  }
+
+  private updateLootRenderDepth(loot: ActiveLoot): void {
+    const bodyDepth = this.getGameplayDepth(loot.body.y + this.lootSize.height / 2);
+
+    this.setGameObjectDepth(loot.body, bodyDepth);
+    this.setGameObjectDepth(loot.shadow, bodyDepth - 0.05);
+  }
+
+  private setGameObjectDepth(gameObject: { setDepth?: (value: number) => unknown }, depth: number): void {
+    if (typeof gameObject.setDepth === 'function') {
+      gameObject.setDepth(depth);
+    }
   }
 
   private performAttack(): void {
@@ -777,6 +1042,7 @@ export class PlayScene extends Phaser.Scene {
 
     enemy.body.setPosition(nextX, nextY);
     enemy.shadow.setPosition(nextX, nextY + 18);
+    this.updateEnemyRenderDepth(enemy);
   }
 
   private defeatEnemy(enemy: ActiveEnemy): void {
@@ -803,14 +1069,17 @@ export class PlayScene extends Phaser.Scene {
       .setStrokeStyle(2, 0x1d3557, 0.9)
       .setDepth(2.6);
 
-    this.activeLoots.push({
+    const loot: ActiveLoot = {
       id: `${template.id}-${this.droppedLootCount}`,
       type: template.type,
       value: template.value,
       body,
       shadow,
       createdAt: this.time.now,
-    });
+    };
+
+    this.activeLoots.push(loot);
+    this.updateLootRenderDepth(loot);
     this.refreshLevelInfo();
   }
 
@@ -1021,6 +1290,8 @@ export class PlayScene extends Phaser.Scene {
         enemy.body.setPosition(enemy.body.x + vector.x, enemy.body.y + vector.y);
         enemy.shadow.setPosition(enemy.body.x, enemy.body.y + 18);
       }
+
+      this.updateEnemyRenderDepth(enemy);
     }
 
     this.activeEnemies = this.activeEnemies.filter((enemy) => !enemy.escaped && !enemy.defeated);
