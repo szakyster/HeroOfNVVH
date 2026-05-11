@@ -5,11 +5,8 @@ import {
   applyAudioSettingsFromRegistry,
   getAudioSystem,
 } from '../systems/AudioSystem';
+import { getAvailableObstacleAssets } from '../systems/ObstacleAssets';
 import { SCENE_KEYS } from './sceneKeys';
-
-export const PLAY_ASSET_KEYS = {
-  obstacleResidential: 'obstacle-residential',
-} as const;
 
 export class BootScene extends Phaser.Scene {
   constructor() {
@@ -17,7 +14,10 @@ export class BootScene extends Phaser.Scene {
   }
 
   preload(): void {
-    this.load.image(PLAY_ASSET_KEYS.obstacleResidential, ['assets/obstacles/residental01.png']);
+    for (const obstacleAsset of getAvailableObstacleAssets()) {
+      this.load.image(obstacleAsset.key, [obstacleAsset.url]);
+    }
+
     this.load.audio(AUDIO_KEYS.ATTACK, ['assets/sprites/Punch01.mp3']);
     this.load.audio(AUDIO_KEYS.DEATH_1, ['assets/audio/effect/death01.mp3']);
     this.load.audio(AUDIO_KEYS.DEATH_2, ['assets/audio/effect/death02.mp3']);

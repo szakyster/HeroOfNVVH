@@ -20,6 +20,10 @@ export type LootSpawn = {
   cell: GridCell;
 };
 
+export type ObstacleDefinition = GridCell & {
+  image: string;
+};
+
 export type LevelData = {
   id: string;
   name: string;
@@ -27,7 +31,7 @@ export type LevelData = {
     width: number;
     height: number;
   };
-  obstacles: GridCell[];
+  obstacles: ObstacleDefinition[];
   spawnZones: SpawnZone[];
   goalZones: GoalZone[];
   sanctuaryZone: GridCell[];

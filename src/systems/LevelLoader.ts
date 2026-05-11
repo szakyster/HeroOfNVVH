@@ -1,4 +1,5 @@
 import type { LevelData } from '../types/level';
+import { hasObstacleAsset, isObstacleImageNameAllowed } from './ObstacleAssets';
 
 function isValidCell(value: unknown): value is { x: number; y: number } {
   if (!value || typeof value !== 'object') {
@@ -63,9 +64,21 @@ export class LevelLoader {
     const goalZoneData = data.goalZones as unknown[];
     const lootSpawnData = data.lootSpawns as unknown[];
 
-    const obstacles = obstacleData.map((cell: unknown, index: number) => {
-      const validCell = validateCellInBounds(cell, `obstacles[${index}]`);
-      return { x: validCell.x, y: validCell.y };
+    const obstacles = obstacleData.map((obstacle: unknown, index: number) => {
+      assert(!!obstacle && typeof obstacle === 'object', `obstacles[${index}] must be object`);
+      const candidate = obstacle as { x?: unknown; y?: unknown; image?: unknown };
+      const validCell = validateCellInBounds(candidate, `obstacles[${index}]`);
+      assert(typeof candidate.image === 'string' && candidate.image.length > 0, `obstacles[${index}].image is required`);
+      assert(
+        isObstacleImageNameAllowed(candidate.image),
+        `obstacles[${index}].image must be a direct filename from the obstacles folder`,
+      );
+      assert(
+        hasObstacleAsset(candidate.image),
+        `obstacles[${index}].image must reference an existing file in the obstacles folder root`,
+      );
+
+      return { x: validCell.x, y: validCell.y, image: candidate.image };
     });
 
     const sanctuaryZone = sanctuaryData.map((cell: unknown, index: number) => {

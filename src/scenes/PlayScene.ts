@@ -27,7 +27,7 @@ import {
   isLootExpired,
 } from '../systems/LootSystem';
 import { SimpleCollisionProvider } from '../systems/SimpleCollisionProvider';
-import { PLAY_ASSET_KEYS } from './BootScene';
+import { getObstacleAssetKey, hasObstacleAsset } from '../systems/ObstacleAssets';
 import { SCENE_KEYS } from './sceneKeys';
 
 type ActiveEnemy = {
@@ -257,7 +257,7 @@ export class PlayScene extends Phaser.Scene {
       .load(this.levelPath)
       .then((level) => {
         this.currentLevel = level;
-        this.obstacleRects = level.obstacles.map((cell) => this.gridSystem!.cellBounds(cell, 10));
+        this.obstacleRects = this.getObstacleCells(level).map((cell) => this.gridSystem!.cellBounds(cell, 10));
         this.sanctuaryRects = level.sanctuaryZone.map((cell) => this.gridSystem!.cellBounds(cell, 10));
         this.drawObstacleCells(level);
         this.drawSanctuaryZone(level);
@@ -486,48 +486,59 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private drawObstacleCells(level: LevelData): void {
-    const hasObstacleTexture = this.textures.exists(PLAY_ASSET_KEYS.obstacleResidential);
+    let fallbackGraphics: Phaser.GameObjects.Graphics | undefined;
+    const obstacleTextureSizes = new Map<string, { width: number; height: number }>();
 
-    if (!hasObstacleTexture) {
-      const graphics = this.add.graphics();
-      graphics.setDepth(1.5);
+    for (const obstacle of level.obstacles) {
+      const textureKey = getObstacleAssetKey(obstacle.image);
 
-      for (const cell of level.obstacles) {
-        const polygon = this.gridSystem!.cellPolygon(cell);
-        graphics.fillStyle(0xe76f51, 0.35);
-        graphics.lineStyle(2, 0xffb4a2, 0.95);
-        graphics.beginPath();
-        graphics.moveTo(polygon[0].x, polygon[0].y);
-        graphics.lineTo(polygon[1].x, polygon[1].y);
-        graphics.lineTo(polygon[2].x, polygon[2].y);
-        graphics.lineTo(polygon[3].x, polygon[3].y);
-        graphics.closePath();
-        graphics.fillPath();
-        graphics.strokePath();
+      if (!hasObstacleAsset(obstacle.image) || !this.textures.exists(textureKey)) {
+        fallbackGraphics ??= this.add.graphics().setDepth(1.5);
+        this.drawFallbackObstacleCell(fallbackGraphics, obstacle);
+        continue;
       }
 
-      return;
-    }
+      let textureSize = obstacleTextureSizes.get(textureKey);
 
-    const sourceImage = this.textures.get(PLAY_ASSET_KEYS.obstacleResidential).getSourceImage();
-    const textureSource = Array.isArray(sourceImage) ? sourceImage[0] : sourceImage;
-    const textureSize = {
-      width: textureSource?.width ?? 1,
-      height: textureSource?.height ?? 1,
-    };
+      if (!textureSize) {
+        const sourceImage = this.textures.get(textureKey).getSourceImage();
+        const textureSource = Array.isArray(sourceImage) ? sourceImage[0] : sourceImage;
+        textureSize = {
+          width: textureSource?.width ?? 1,
+          height: textureSource?.height ?? 1,
+        };
+        obstacleTextureSizes.set(textureKey, textureSize);
+      }
 
-    for (const cell of level.obstacles) {
-      const center = this.gridSystem!.cellCenter(cell);
-      const bounds = this.gridSystem!.cellBounds(cell, 8);
+      const center = this.gridSystem!.cellCenter(obstacle);
+      const bounds = this.gridSystem!.cellBounds(obstacle, 8);
       const displaySize = this.getObstacleDisplaySize(bounds, textureSize);
       const anchorY = bounds.y + bounds.height * 1.08;
 
       this.add
-        .image(center.x, anchorY, PLAY_ASSET_KEYS.obstacleResidential)
+        .image(center.x, anchorY, textureKey)
         .setOrigin(0.5, 1)
         .setDisplaySize(displaySize.width, displaySize.height)
         .setDepth(this.getGameplayDepth(anchorY));
     }
+  }
+
+  private drawFallbackObstacleCell(graphics: Phaser.GameObjects.Graphics, cell: GridCell): void {
+    const polygon = this.gridSystem!.cellPolygon(cell);
+    graphics.fillStyle(0xe76f51, 0.35);
+    graphics.lineStyle(2, 0xffb4a2, 0.95);
+    graphics.beginPath();
+    graphics.moveTo(polygon[0].x, polygon[0].y);
+    graphics.lineTo(polygon[1].x, polygon[1].y);
+    graphics.lineTo(polygon[2].x, polygon[2].y);
+    graphics.lineTo(polygon[3].x, polygon[3].y);
+    graphics.closePath();
+    graphics.fillPath();
+    graphics.strokePath();
+  }
+
+  private getObstacleCells(level: LevelData): GridCell[] {
+    return level.obstacles.map((obstacle) => ({ x: obstacle.x, y: obstacle.y }));
   }
 
   private getObstacleDisplaySize(
@@ -653,25 +664,26 @@ export class PlayScene extends Phaser.Scene {
     const waypoint = this.pickEnemyWaypoint(level, spawnCell, goalCell);
 
     if (waypoint) {
+      const obstacleCells = this.getObstacleCells(level);
       const waypointPath = this.pathfinder.findPathViaWaypoint(
         level.grid.width,
         level.grid.height,
         spawnCell,
         waypoint,
         goalCell,
-        level.obstacles,
+        obstacleCells,
       );
 
       if (waypointPath && waypointPath.length > 0) {
         return waypointPath;
       }
     }
-
-    return this.pathfinder.findPath(level.grid.width, level.grid.height, spawnCell, goalCell, level.obstacles);
+    return this.pathfinder.findPath(level.grid.width, level.grid.height, spawnCell, goalCell, this.getObstacleCells(level));
   }
 
   private pickEnemyWaypoint(level: LevelData, spawnCell: GridCell, goalCell: GridCell): GridCell | null {
-    const blockedKeys = new Set(level.obstacles.map((cell) => this.cellKey(cell)));
+    const obstacleCells = this.getObstacleCells(level);
+    const blockedKeys = new Set(obstacleCells.map((cell) => this.cellKey(cell)));
     const candidates = this.gridSystem
       ?.allCells()
       .filter((cell) => {
@@ -701,7 +713,7 @@ export class PlayScene extends Phaser.Scene {
         spawnCell,
         candidate,
         goalCell,
-        level.obstacles,
+        obstacleCells,
       );
 
       if (waypointPath && waypointPath.length > 0) {
