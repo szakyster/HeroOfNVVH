@@ -87,7 +87,7 @@
       "id": 15,
       "name": "Play Scene Background Graphics",
       "description": "Create the final background artwork for the Play scene only, matching the established art direction while preserving gameplay readability and contrast against actors, loot, landmarks, and HUD overlays. Reference: Vizualitas.md sections 2-5",
-      "status": "on-hold"
+      "status": "closed"
     },
     {
       "id": 16,
