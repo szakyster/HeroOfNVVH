@@ -124,7 +124,7 @@ describe('PlayScene runtime reset', () => {
     const scene = new PlayScene() as unknown as Record<string, unknown>;
     const scoreValueText = { setText: vi.fn() };
     const inventoryValueText = { setText: vi.fn() };
-    const escapedValueText = { setText: vi.fn() };
+    const escapedValueText = { setText: vi.fn(), setColor: vi.fn(), setPosition: vi.fn(), x: 430, y: 63 };
     const waveValueText = { setText: vi.fn() };
 
     scene.registry = {
@@ -143,16 +143,72 @@ describe('PlayScene runtime reset', () => {
     scene.scoreValueText = scoreValueText;
     scene.inventoryValueText = inventoryValueText;
     scene.escapedValueText = escapedValueText;
+    scene.escapedValueBaseX = 430;
+    scene.escapedValueBaseY = 63;
     scene.waveValueText = waveValueText;
     scene.inventory = [{ type: 'wallet', value: 10 }, { type: 'phone', value: 20 }];
     scene.waveNumber = 4;
+    scene.tweens = { add: vi.fn() };
 
     (scene.refreshHud as () => void)();
 
     expect(scoreValueText.setText).toHaveBeenCalledWith('150 M Ft');
     expect(inventoryValueText.setText).toHaveBeenCalledWith('2/4  ■■□□');
     expect(escapedValueText.setText).toHaveBeenCalledWith('3/10');
+    expect(escapedValueText.setColor).toHaveBeenCalledWith('#f4e6a2');
+    expect(escapedValueText.setPosition).toHaveBeenCalledWith(430, 63);
     expect(waveValueText.setText).toHaveBeenCalledWith('4. hullám');
+  });
+
+  it('turns the escaped enemy counter bright red and shakes it at 8 or above', () => {
+    const warningTween = { stop: vi.fn() };
+    const tweensAdd = vi.fn(() => warningTween);
+    const escapedValueText = {
+      setText: vi.fn(),
+      setColor: vi.fn(),
+      setPosition: vi.fn(),
+      x: 430,
+      y: 63,
+    };
+    const scene = new PlayScene() as unknown as Record<string, unknown>;
+
+    scene.registry = {
+      get: vi.fn((key: string) => {
+        if (key === 'score') {
+          return 150;
+        }
+
+        if (key === 'escapedEnemies') {
+          return 8;
+        }
+
+        return undefined;
+      }),
+    };
+    scene.scoreValueText = { setText: vi.fn() };
+    scene.inventoryValueText = { setText: vi.fn() };
+    scene.escapedValueText = escapedValueText;
+    scene.escapedValueBaseX = 430;
+    scene.escapedValueBaseY = 63;
+    scene.waveValueText = { setText: vi.fn() };
+    scene.inventory = [];
+    scene.waveNumber = 1;
+    scene.tweens = { add: tweensAdd };
+
+    (scene.refreshHud as () => void)();
+    (scene.refreshHud as () => void)();
+
+    expect(escapedValueText.setText).toHaveBeenCalledWith('8/10');
+    expect(escapedValueText.setColor).toHaveBeenCalledWith('#ff4d4f');
+    expect(tweensAdd).toHaveBeenCalledTimes(1);
+    expect(tweensAdd).toHaveBeenCalledWith(
+      expect.objectContaining({
+        targets: escapedValueText,
+        x: 434,
+        yoyo: true,
+        repeat: -1,
+      }),
+    );
   });
 
   it('formats auxiliary level and enemy info texts', () => {
@@ -198,6 +254,47 @@ describe('PlayScene runtime reset', () => {
     expect((scene.getDepositPopupColor as (value: number) => string)(10)).toBe('#8ecae6');
     expect((scene.getDepositPopupColor as (value: number) => string)(20)).toBe('#80ed99');
     expect((scene.getDepositPopupColor as (value: number) => string)(50)).toBe('#ffd166');
+  });
+
+  it('creates deposit popups with Bungee font and larger sizes', () => {
+    const destroy = vi.fn();
+    const setOrigin = vi.fn().mockReturnThis();
+    const setDepth = vi.fn().mockReturnThis();
+    const popup = {
+      y: 142,
+      destroy,
+      setOrigin,
+      setDepth,
+    };
+    const addText = vi.fn(() => popup);
+    const tweensAdd = vi.fn();
+    const scene = new PlayScene() as unknown as Record<string, unknown>;
+
+    scene.playerBody = { x: 320, y: 220 };
+    scene.add = { text: addText };
+    scene.tweens = { add: tweensAdd };
+
+    (scene.showDepositValuePopup as (value: number) => void)(20);
+
+    expect(addText).toHaveBeenCalledWith(
+      320,
+      142,
+      '+20 M Ft',
+      expect.objectContaining({
+        fontFamily: 'Bungee, Verdana, sans-serif',
+        fontSize: '34px',
+        color: '#80ed99',
+      }),
+    );
+    expect(setOrigin).toHaveBeenCalledWith(0.5);
+    expect(setDepth).toHaveBeenCalledWith(8);
+    expect(tweensAdd).toHaveBeenCalledWith(
+      expect.objectContaining({
+        targets: popup,
+        y: 88,
+        alpha: 0,
+      }),
+    );
   });
 
   it('scales obstacle sprites with width and height caps while keeping aspect ratio', () => {

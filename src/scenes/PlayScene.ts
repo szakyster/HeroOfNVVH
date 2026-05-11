@@ -26,10 +26,15 @@ import {
   isInventoryFull,
   isLootExpired,
 } from '../systems/LootSystem';
+import { addSceneBackground } from '../systems/SceneBackgrounds';
 import { SimpleCollisionProvider } from '../systems/SimpleCollisionProvider';
 import { getHrsAssetKey } from '../systems/HrsAssets';
 import { getObstacleAssetKey, hasObstacleAsset } from '../systems/ObstacleAssets';
+import { HEADLINE_FONT_FAMILY } from '../utils/typography';
 import { SCENE_KEYS } from './sceneKeys';
+const HEADER_EMPHASIS_COLOR = '#f4e6a2';
+const ESCAPED_WARNING_COLOR = '#ff4d4f';
+const DEPOSIT_POPUP_FONT_FAMILY = 'Bungee, Verdana, sans-serif';
 
 type ActiveEnemy = {
   body: Phaser.GameObjects.Ellipse;
@@ -126,6 +131,12 @@ export class PlayScene extends Phaser.Scene {
   private inventoryValueText?: Phaser.GameObjects.Text;
 
   private escapedValueText?: Phaser.GameObjects.Text;
+
+  private escapedValueWarningTween?: Phaser.Tweens.Tween;
+
+  private escapedValueBaseX?: number;
+
+  private escapedValueBaseY?: number;
 
   private waveValueText?: Phaser.GameObjects.Text;
 
@@ -304,6 +315,10 @@ export class PlayScene extends Phaser.Scene {
     this.scoreValueText = undefined;
     this.inventoryValueText = undefined;
     this.escapedValueText = undefined;
+    this.escapedValueWarningTween?.stop();
+    this.escapedValueWarningTween = undefined;
+    this.escapedValueBaseX = undefined;
+    this.escapedValueBaseY = undefined;
     this.waveValueText = undefined;
     this.levelInfoText = undefined;
     this.enemyInfoText = undefined;
@@ -325,31 +340,37 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private createBackground(width: number, height: number): void {
-    this.add.rectangle(width / 2, height / 2, width, height, 0x14323d, 1).setDepth(0);
+    addSceneBackground(this, 'play');
     this.add.ellipse(width * 0.18, height * 0.14, width * 0.45, height * 0.18, 0x2f5d62, 0.2).setDepth(0.1);
     this.add.ellipse(width * 0.82, height * 0.22, width * 0.4, height * 0.16, 0x3a6b6f, 0.18).setDepth(0.1);
 
     const atmosphere = this.add.graphics();
-    atmosphere.setDepth(0.15);
-    atmosphere.fillStyle(0x1d4d4f, 0.35);
-    atmosphere.fillRoundedRect(18, 18, width - 36, 92, 24);
-    atmosphere.fillStyle(0x10252d, 0.42);
-    atmosphere.fillRoundedRect(18, height - 80, width - 36, 52, 18);
-    atmosphere.fillStyle(0x4d6a6d, 0.22);
-    atmosphere.fillRect(width * 0.08, height * 0.74, width * 0.84, height * 0.12);
+    atmosphere.setDepth(5.5);
+    //atmosphere.fillStyle(0x1d4d4f, 0.35);
+    //atmosphere.fillRoundedRect(18, 18, width - 36, 92, 24);
+    atmosphere.fillStyle(0x10252d, 0.62);
+    atmosphere.fillRoundedRect(16, height - 80, width - 396, 70, 18);
+    //atmosphere.fillStyle(0x4d6a6d, 0.22);
+    //atmosphere.fillRect(width * 0.08, height * 0.74, width * 0.84, height * 0.12);
   }
 
   private createHud(width: number, _height: number): void {
+    const panelLeft = 18;
+    const panelWidth = width - 36;
+    const contentLeft = panelLeft + 28;
+    const contentWidth = panelWidth - 56;
+    const hudTop = 13;
+
     const panel = this.add.graphics();
     panel.setDepth(6);
-    panel.fillStyle(0x102a43, 0.84);
-    panel.fillRoundedRect(18, 18, width - 36, 92, 24);
+    panel.fillStyle(0x102a43, 0.38);
+    panel.fillRoundedRect(panelLeft, hudTop, panelWidth, 92, 24);
     panel.lineStyle(2, 0xf4d35e, 0.45);
-    panel.strokeRoundedRect(18, 18, width - 36, 92, 24);
+    panel.strokeRoundedRect(panelLeft, hudTop, panelWidth, 92, 24);
 
-    const metricY = 36;
-    const valueY = 68;
-    const columns = [42, 228, 430, 628];
+    const metricY = 31;
+    const valueY = 63;
+    const columns = [0, 0.24, 0.52, 0.8].map((ratio) => contentLeft + contentWidth * ratio);
 
     this.addHudLabel(columns[0], metricY, 'Pont');
     this.scoreValueText = this.addHudValue(columns[0], valueY);
@@ -359,6 +380,8 @@ export class PlayScene extends Phaser.Scene {
 
     this.addHudLabel(columns[2], metricY, 'Reptérre érkeztek');
     this.escapedValueText = this.addHudValue(columns[2], valueY);
+    this.escapedValueBaseX = columns[2];
+    this.escapedValueBaseY = valueY;
 
     this.addHudLabel(columns[3], metricY, 'Hullám');
     this.waveValueText = this.addHudValue(columns[3], valueY);
@@ -377,9 +400,9 @@ export class PlayScene extends Phaser.Scene {
   private addHudValue(x: number, y: number): Phaser.GameObjects.Text {
     return this.add
       .text(x, y, '', {
-        fontFamily: 'Verdana',
+        fontFamily: HEADLINE_FONT_FAMILY,
         fontSize: '24px',
-        color: '#f1faee',
+        color: HEADER_EMPHASIS_COLOR,
         fontStyle: 'bold',
       })
       .setDepth(7);
@@ -1207,11 +1230,11 @@ export class PlayScene extends Phaser.Scene {
       return;
     }
 
-    const fontSize = value >= 50 ? '30px' : value >= 20 ? '26px' : '22px';
+    const fontSize = value >= 50 ? '39px' : value >= 20 ? '34px' : '29px';
     const color = this.getDepositPopupColor(value);
     const popup = this.add
       .text(this.playerBody.x, this.playerBody.y - 78, `+${value} M Ft`, {
-        fontFamily: 'Verdana',
+        fontFamily: DEPOSIT_POPUP_FONT_FAMILY,
         fontSize,
         color,
         fontStyle: 'bold',
@@ -1355,12 +1378,48 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private refreshHud(): void {
+    const escapedEnemies = this.registry.get('escapedEnemies') ?? 0;
+
     this.scoreValueText?.setText(`${this.registry.get('score') ?? 0} M Ft`);
     this.inventoryValueText?.setText(`${this.inventory.length}/${DEFAULT_LOOT_CONFIG.maxInventory}  ${this.getInventoryIcons()}`);
-    this.escapedValueText?.setText(
-      `${this.registry.get('escapedEnemies') ?? 0}/${this.maxEscapedEnemies}`,
-    );
+    this.escapedValueText?.setText(`${escapedEnemies}/${this.maxEscapedEnemies}`);
+    this.updateEscapedEnemyWarningState(escapedEnemies);
     this.waveValueText?.setText(`${this.waveNumber}. hullám`);
+  }
+
+  private updateEscapedEnemyWarningState(escapedEnemies: number): void {
+    if (!this.escapedValueText) {
+      return;
+    }
+
+    const setColor = 'setColor' in this.escapedValueText ? this.escapedValueText.setColor?.bind(this.escapedValueText) : undefined;
+    const setPosition =
+      'setPosition' in this.escapedValueText ? this.escapedValueText.setPosition?.bind(this.escapedValueText) : undefined;
+
+    if (escapedEnemies >= 8) {
+      setColor?.(ESCAPED_WARNING_COLOR);
+
+      if (!this.escapedValueWarningTween) {
+        this.escapedValueWarningTween = this.tweens.add({
+          targets: this.escapedValueText,
+          x: (this.escapedValueBaseX ?? this.escapedValueText.x) + 4,
+          duration: 55,
+          ease: 'Sine.easeInOut',
+          yoyo: true,
+          repeat: -1,
+        });
+      }
+
+      return;
+    }
+
+    setColor?.(HEADER_EMPHASIS_COLOR);
+    this.escapedValueWarningTween?.stop();
+    this.escapedValueWarningTween = undefined;
+
+    if (this.escapedValueBaseX !== undefined && this.escapedValueBaseY !== undefined) {
+      setPosition?.(this.escapedValueBaseX, this.escapedValueBaseY);
+    }
   }
 
   private getInventoryIcons(): string {

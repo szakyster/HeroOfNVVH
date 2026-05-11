@@ -5,6 +5,7 @@ import {
   applyAudioSettingsFromRegistry,
   getAudioSystem,
 } from '../systems/AudioSystem';
+import { preloadSceneBackgrounds } from '../systems/SceneBackgrounds';
 import { getAvailableHrsAssets } from '../systems/HrsAssets';
 import { getAvailableObstacleAssets } from '../systems/ObstacleAssets';
 import { SCENE_KEYS } from './sceneKeys';
@@ -15,6 +16,7 @@ export class BootScene extends Phaser.Scene {
   }
 
   preload(): void {
+    preloadSceneBackgrounds(this);
     for (const obstacleAsset of getAvailableObstacleAssets()) {
       this.load.image(obstacleAsset.key, [obstacleAsset.url]);
     }

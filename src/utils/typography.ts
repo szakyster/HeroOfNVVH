@@ -1,0 +1,1 @@
+export const HEADLINE_FONT_FAMILY = '"Chakra Petch", Verdana, sans-serif';

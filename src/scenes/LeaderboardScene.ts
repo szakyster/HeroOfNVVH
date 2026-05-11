@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
 import { LeaderboardStorage } from '../systems/LeaderboardStorage';
+import { addSceneBackground } from '../systems/SceneBackgrounds';
+import { HEADLINE_FONT_FAMILY } from '../utils/typography';
 import { SCENE_KEYS } from './sceneKeys';
 
 export class LeaderboardScene extends Phaser.Scene {
@@ -13,12 +15,12 @@ export class LeaderboardScene extends Phaser.Scene {
     const { width, height } = this.scale;
     const entries = this.leaderboardStorage.getEntries();
 
-    this.add.rectangle(width / 2, height / 2, width, height, 0x15232f, 1);
+    addSceneBackground(this, 'leaderboard');
     this.add.rectangle(width / 2, height / 2, width * 0.7, height * 0.72, 0x102a43, 0.88).setStrokeStyle(2, 0xf4d35e, 0.4);
 
     this.add
       .text(width / 2, 110, 'Eredménylista', {
-        fontFamily: 'Verdana',
+        fontFamily: HEADLINE_FONT_FAMILY,
         fontSize: '42px',
         color: '#f4f1de',
       })

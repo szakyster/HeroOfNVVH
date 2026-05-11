@@ -85,9 +85,9 @@
     },
     {
       "id": 15,
-      "name": "Scene Background Graphics",
-      "description": "Create distinct background artwork for the Menu, Play, Leaderboard, and Game Over scenes that matches the established art direction and keeps the UI readable. Reference: Vizualitas.md sections 2-5",
-      "status": "in-progress"
+      "name": "Play Scene Background Graphics",
+      "description": "Create the final background artwork for the Play scene only, matching the established art direction while preserving gameplay readability and contrast against actors, loot, landmarks, and HUD overlays. Reference: Vizualitas.md sections 2-5",
+      "status": "on-hold"
     },
     {
       "id": 16,
@@ -129,6 +129,12 @@
       "id": 22,
       "name": "Visual FX & Feedback Polish",
       "description": "Add or refine lightweight visual feedback such as hit flashes, deposit popups, pickup highlights, scene transitions, and other final polish effects once the core art assets are in place. Reference: Vizualitas.md sections 8-10",
+      "status": "ready"
+    },
+    {
+      "id": 23,
+      "name": "Menu, Leaderboard & Game Over Background Graphics",
+      "description": "Create distinct background artwork for the Menu, Leaderboard, and Game Over scenes that matches the established art direction and keeps UI panels, buttons, and score readouts readable. Reference: Vizualitas.md sections 2-5",
       "status": "ready"
     }
   ]
