@@ -6,6 +6,7 @@ import {
   getAudioSystem,
 } from '../systems/AudioSystem';
 import { addSceneBackground } from '../systems/SceneBackgrounds';
+import { HEADLINE_FONT_FAMILY } from '../utils/typography';
 import { SCENE_KEYS } from './sceneKeys';
 
 export class MenuScene extends Phaser.Scene {
@@ -26,7 +27,7 @@ export class MenuScene extends Phaser.Scene {
 
     this.add
       .text(width / 2, height / 2 - 80, 'Heroes of NVVH', {
-        fontFamily: 'Verdana',
+        fontFamily: HEADLINE_FONT_FAMILY,
         fontSize: '52px',
         color: '#f4f1de',
       })
@@ -34,7 +35,7 @@ export class MenuScene extends Phaser.Scene {
 
     this.add
       .text(width / 2, height / 2 - 2, 'Heroes of NVVH', {
-        fontFamily: 'Verdana',
+        fontFamily: HEADLINE_FONT_FAMILY,
         fontSize: '24px',
         color: '#81b29a',
       })

@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { AUDIO_KEYS, getAudioSystem } from '../systems/AudioSystem';
 import { LeaderboardStorage } from '../systems/LeaderboardStorage';
 import { addSceneBackground } from '../systems/SceneBackgrounds';
+import { HEADLINE_FONT_FAMILY } from '../utils/typography';
 import { SCENE_KEYS } from './sceneKeys';
 
 type GameOverData = {
@@ -25,7 +26,7 @@ export class GameOverScene extends Phaser.Scene {
 
     this.add
       .text(width / 2, height / 2 - 80, 'Game Over', {
-        fontFamily: 'Verdana',
+        fontFamily: HEADLINE_FONT_FAMILY,
         fontSize: '56px',
         color: '#f4f1de',
       })

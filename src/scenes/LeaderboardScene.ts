@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { LeaderboardStorage } from '../systems/LeaderboardStorage';
 import { addSceneBackground } from '../systems/SceneBackgrounds';
+import { HEADLINE_FONT_FAMILY } from '../utils/typography';
 import { SCENE_KEYS } from './sceneKeys';
 
 export class LeaderboardScene extends Phaser.Scene {
@@ -19,7 +20,7 @@ export class LeaderboardScene extends Phaser.Scene {
 
     this.add
       .text(width / 2, 110, 'Eredménylista', {
-        fontFamily: 'Verdana',
+        fontFamily: HEADLINE_FONT_FAMILY,
         fontSize: '42px',
         color: '#f4f1de',
       })
