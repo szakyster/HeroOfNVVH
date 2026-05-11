@@ -1,5 +1,6 @@
 const OBSTACLE_ASSET_KEY_PREFIX = 'obstacle:';
 const ALLOWED_IMAGE_EXTENSION_PATTERN = /\.(png|jpe?g|webp)$/i;
+const PUBLIC_BASE_URL = import.meta.env.BASE_URL ?? '/';
 
 export type ObstacleAssetEntry = {
   imageName: string;
@@ -23,6 +24,10 @@ export function getObstacleAssetKey(imageName: string): string {
   return `${OBSTACLE_ASSET_KEY_PREFIX}${imageName}`;
 }
 
+function normalizeObstacleAssetUrl(url: string): string {
+  return url.startsWith('/public/') ? url.slice('/public'.length) : url;
+}
+
 export function createObstacleAssetRegistry(assetUrls: Record<string, string>): ObstacleAssetEntry[] {
   return Object.entries(assetUrls)
     .map(([modulePath, url]) => {
@@ -42,20 +47,21 @@ export function createObstacleAssetRegistry(assetUrls: Record<string, string>): 
       return {
         imageName,
         key: getObstacleAssetKey(imageName),
-        url,
+        url: normalizeObstacleAssetUrl(url),
       };
     })
     .filter((entry): entry is ObstacleAssetEntry => entry !== null)
     .sort((left, right) => left.imageName.localeCompare(right.imageName));
 }
 
-const obstacleAssetModules = import.meta.glob('../../public/assets/obstacles/*.{png,jpg,jpeg,webp}', {
-  eager: true,
-  query: '?url',
-  import: 'default',
-}) as Record<string, string>;
+const OBSTACLE_IMAGE_NAMES = ['car01.png', 'office01.png', 'residental01.png', 'tree01.png'];
 
-const obstacleAssetRegistry = createObstacleAssetRegistry(obstacleAssetModules);
+const obstacleAssetRegistry = OBSTACLE_IMAGE_NAMES.map((imageName) => ({
+  imageName,
+  key: getObstacleAssetKey(imageName),
+  url: `${PUBLIC_BASE_URL}assets/obstacles/${imageName}`,
+})).sort((left, right) => left.imageName.localeCompare(right.imageName));
+
 const obstacleAssetRegistryByName = new Map(obstacleAssetRegistry.map((entry) => [entry.imageName, entry]));
 
 export function getAvailableObstacleAssets(): ObstacleAssetEntry[] {

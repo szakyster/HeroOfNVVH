@@ -5,6 +5,7 @@ import {
   applyAudioSettingsFromRegistry,
   getAudioSystem,
 } from '../systems/AudioSystem';
+import { getAvailableHrsAssets } from '../systems/HrsAssets';
 import { getAvailableObstacleAssets } from '../systems/ObstacleAssets';
 import { SCENE_KEYS } from './sceneKeys';
 
@@ -16,6 +17,10 @@ export class BootScene extends Phaser.Scene {
   preload(): void {
     for (const obstacleAsset of getAvailableObstacleAssets()) {
       this.load.image(obstacleAsset.key, [obstacleAsset.url]);
+    }
+
+    for (const hrsAsset of getAvailableHrsAssets()) {
+      this.load.image(hrsAsset.key, [hrsAsset.url]);
     }
 
     this.load.audio(AUDIO_KEYS.ATTACK, ['assets/sprites/Punch01.mp3']);

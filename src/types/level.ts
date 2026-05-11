@@ -20,6 +20,21 @@ export type LootSpawn = {
   cell: GridCell;
 };
 
+export type HrsZoneType = 'spawn' | 'goal' | 'sanctuary';
+
+export type HrsImageSide = 'left' | 'right' | 'top' | 'bottom';
+
+export type HrsImageDefinition = {
+  id: string;
+  zoneType: HrsZoneType;
+  zoneId?: string;
+  image: string;
+  side: HrsImageSide;
+  offsetX?: number;
+  offsetY?: number;
+  scale?: number;
+};
+
 export type ObstacleDefinition = GridCell & {
   image: string;
 };
@@ -35,5 +50,6 @@ export type LevelData = {
   spawnZones: SpawnZone[];
   goalZones: GoalZone[];
   sanctuaryZone: GridCell[];
+  hrsImages: HrsImageDefinition[];
   lootSpawns: LootSpawn[];
 };

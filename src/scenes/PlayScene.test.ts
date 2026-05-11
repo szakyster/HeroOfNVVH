@@ -219,6 +219,47 @@ describe('PlayScene runtime reset', () => {
     expect(tallTextureSize.height).toBeCloseTo(118.4);
   });
 
+  it('computes shared screen bounds for multi-cell HRS zones and places images outside the grid', () => {
+    const scene = new PlayScene() as unknown as Record<string, unknown>;
+
+    scene.gridSystem = {
+      cellBounds: vi
+        .fn()
+        .mockReturnValueOnce({ x: 100, y: 200, width: 50, height: 40 })
+        .mockReturnValueOnce({ x: 150, y: 210, width: 60, height: 45 }),
+    };
+
+    const zoneBounds = (scene.getGridCellsBounds as (cells: Array<{ x: number; y: number }>) => {
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+    })([
+      { x: 0, y: 0 },
+      { x: 1, y: 0 },
+    ]);
+
+    expect(zoneBounds).toEqual({ x: 100, y: 200, width: 110, height: 55 });
+
+    expect(
+      (scene.getHrsPlacement as (
+        bounds: { x: number; y: number; width: number; height: number },
+        side: 'left' | 'right' | 'top' | 'bottom',
+        offsetX?: number,
+        offsetY?: number,
+      ) => { x: number; y: number; originX: number; originY: number; depthY: number })(zoneBounds, 'left', -12, 6),
+    ).toEqual({ x: 48.4, y: 261, originX: 1, originY: 1, depthY: 255 });
+
+    expect(
+      (scene.getHrsPlacement as (
+        bounds: { x: number; y: number; width: number; height: number },
+        side: 'left' | 'right' | 'top' | 'bottom',
+        offsetX?: number,
+        offsetY?: number,
+      ) => { x: number; y: number; originX: number; originY: number; depthY: number })(zoneBounds, 'bottom', 0, 12),
+    ).toEqual({ x: 155, y: 285.7, originX: 0.5, originY: 0, depthY: 255 });
+  });
+
   it('creates loot hitboxes from center coordinates and checks sanctuary overlap', () => {
     const scene = new PlayScene() as unknown as Record<string, unknown>;
     const intersects = vi.fn()

@@ -16,8 +16,8 @@ describe('ObstacleAssets', () => {
 
   it('builds deterministic keys and ignores invalid paths when creating a registry', () => {
     const registry = createObstacleAssetRegistry({
-      '../../public/assets/obstacles/residental02.png': '/assets/obstacles/residental02.png',
-      '../../public/assets/obstacles/residental01.png': '/assets/obstacles/residental01.png',
+      '../../public/assets/obstacles/residental02.png': '/public/assets/obstacles/residental02.png',
+      '../../public/assets/obstacles/residental01.png': '/public/assets/obstacles/residental01.png',
       '../../public/assets/obstacles/nested/residental03.png': '/assets/obstacles/nested/residental03.png',
     });
 

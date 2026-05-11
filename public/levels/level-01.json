@@ -7,10 +7,10 @@
   },
   "obstacles": [
     { "x": 2, "y": 1, "image": "residental01.png" },
-    { "x": 4, "y": 1, "image": "office01.png" },
+    { "x": 4, "y": 1, "image": "residental01.png" },
     { "x": 3, "y": 2, "image": "tree01.png" },
     { "x": 1, "y": 3, "image": "office01.png" },
-    { "x": 5, "y": 3, "image": "residental01.png" }
+    { "x": 5, "y": 3, "image": "car01.png" }
   ],
   "spawnZones": [
     {
@@ -33,6 +33,36 @@
   "sanctuaryZone": [
     { "x": 2, "y": 5 },
     { "x": 3, "y": 5 }
+  ],
+  "hrsImages": [
+    {
+      "id": "hrs-hatvanpuszta",
+      "zoneType": "spawn",
+      "zoneId": "hatvanpuszta-main",
+      "image": "hatvanpuszta01.png",
+      "side": "left",
+      "offsetX": -12,
+      "offsetY": 6,
+      "scale": 1.12
+    },
+    {
+      "id": "hrs-repter",
+      "zoneType": "goal",
+      "zoneId": "repter-main",
+      "image": "repter01.png",
+      "side": "right",
+      "offsetX": 10,
+      "offsetY": 4,
+      "scale": 1.08
+    },
+    {
+      "id": "hrs-sanctuary",
+      "zoneType": "sanctuary",
+      "image": "sanctuary01.png",
+      "side": "bottom",
+      "offsetY": 12,
+      "scale": 1.05
+    }
   ],
   "lootSpawns": [
     { "id": "loot-1", "type": "wallet", "value": 10, "cell": { "x": 2, "y": 4 } },

@@ -27,6 +27,7 @@ import {
   isLootExpired,
 } from '../systems/LootSystem';
 import { SimpleCollisionProvider } from '../systems/SimpleCollisionProvider';
+import { getHrsAssetKey } from '../systems/HrsAssets';
 import { getObstacleAssetKey, hasObstacleAsset } from '../systems/ObstacleAssets';
 import { SCENE_KEYS } from './sceneKeys';
 
@@ -49,6 +50,14 @@ type ActiveLoot = {
   body: Phaser.GameObjects.Rectangle;
   shadow: Phaser.GameObjects.Ellipse;
   createdAt: number;
+};
+
+type HrsPlacement = {
+  x: number;
+  y: number;
+  originX: number;
+  originY: number;
+  depthY: number;
 };
 
 export class PlayScene extends Phaser.Scene {
@@ -89,6 +98,10 @@ export class PlayScene extends Phaser.Scene {
   private readonly obstacleSpriteMaxWidthScale = 1.2;
 
   private readonly obstacleSpriteMaxHeightScale = 1.6;
+
+  private readonly hrsSpriteMaxWidthScale = 1.95;
+
+  private readonly hrsSpriteMaxHeightScale = 2.3;
 
   private gridSystem?: GridSystem;
 
@@ -261,6 +274,7 @@ export class PlayScene extends Phaser.Scene {
         this.sanctuaryRects = level.sanctuaryZone.map((cell) => this.gridSystem!.cellBounds(cell, 10));
         this.drawObstacleCells(level);
         this.drawSanctuaryZone(level);
+        this.drawHrsImages(level);
         this.spawnPlayer(level);
         this.startEnemyWave(level);
         this.refreshLevelInfo();
@@ -545,8 +559,35 @@ export class PlayScene extends Phaser.Scene {
     bounds: ScreenRect,
     textureSize: { width: number; height: number },
   ): { width: number; height: number } {
-    const maxWidth = bounds.width * this.obstacleSpriteMaxWidthScale;
-    const maxHeight = bounds.height * this.obstacleSpriteMaxHeightScale;
+    return this.getFittedSpriteDisplaySize(
+      bounds,
+      textureSize,
+      this.obstacleSpriteMaxWidthScale,
+      this.obstacleSpriteMaxHeightScale,
+    );
+  }
+
+  private getHrsDisplaySize(
+    bounds: ScreenRect,
+    textureSize: { width: number; height: number },
+    scale = 1,
+  ): { width: number; height: number } {
+    return this.getFittedSpriteDisplaySize(
+      bounds,
+      textureSize,
+      this.hrsSpriteMaxWidthScale * scale,
+      this.hrsSpriteMaxHeightScale * scale,
+    );
+  }
+
+  private getFittedSpriteDisplaySize(
+    bounds: ScreenRect,
+    textureSize: { width: number; height: number },
+    maxWidthScale: number,
+    maxHeightScale: number,
+  ): { width: number; height: number } {
+    const maxWidth = bounds.width * maxWidthScale;
+    const maxHeight = bounds.height * maxHeightScale;
 
     if (textureSize.width <= 0 || textureSize.height <= 0) {
       return { width: maxWidth, height: maxHeight };
@@ -557,6 +598,127 @@ export class PlayScene extends Phaser.Scene {
     return {
       width: textureSize.width * scale,
       height: textureSize.height * scale,
+    };
+  }
+
+  private drawHrsImages(level: LevelData): void {
+    if (level.hrsImages.length === 0) {
+      return;
+    }
+
+    const textureSizes = new Map<string, { width: number; height: number }>();
+
+    for (const hrsImage of level.hrsImages) {
+      const textureKey = getHrsAssetKey(hrsImage.image);
+
+      if (!this.textures.exists(textureKey)) {
+        continue;
+      }
+
+      const zoneCells = this.getHrsZoneCells(level, hrsImage);
+
+      if (zoneCells.length === 0) {
+        continue;
+      }
+
+      let textureSize = textureSizes.get(textureKey);
+
+      if (!textureSize) {
+        const sourceImage = this.textures.get(textureKey).getSourceImage();
+        const textureSource = Array.isArray(sourceImage) ? sourceImage[0] : sourceImage;
+        textureSize = {
+          width: textureSource?.width ?? 1,
+          height: textureSource?.height ?? 1,
+        };
+        textureSizes.set(textureKey, textureSize);
+      }
+
+      const zoneBounds = this.getGridCellsBounds(zoneCells);
+      const placement = this.getHrsPlacement(zoneBounds, hrsImage.side, hrsImage.offsetX, hrsImage.offsetY);
+      const displaySize = this.getHrsDisplaySize(zoneBounds, textureSize, hrsImage.scale);
+
+      this.add
+        .image(placement.x, placement.y, textureKey)
+        .setOrigin(placement.originX, placement.originY)
+        .setDisplaySize(displaySize.width, displaySize.height)
+        .setDepth(this.getGameplayDepth(placement.depthY) - 0.08);
+    }
+  }
+
+  private getHrsZoneCells(level: LevelData, hrsImage: LevelData['hrsImages'][number]): GridCell[] {
+    if (hrsImage.zoneType === 'sanctuary') {
+      return [...level.sanctuaryZone];
+    }
+
+    if (hrsImage.zoneType === 'spawn') {
+      return level.spawnZones.find((zone) => zone.id === hrsImage.zoneId)?.cells ?? [];
+    }
+
+    return level.goalZones.find((zone) => zone.id === hrsImage.zoneId)?.cells ?? [];
+  }
+
+  private getGridCellsBounds(cells: GridCell[]): ScreenRect {
+    const cellBounds = cells.map((cell) => this.gridSystem!.cellBounds(cell, 0));
+    const minX = Math.min(...cellBounds.map((bounds) => bounds.x));
+    const minY = Math.min(...cellBounds.map((bounds) => bounds.y));
+    const maxX = Math.max(...cellBounds.map((bounds) => bounds.x + bounds.width));
+    const maxY = Math.max(...cellBounds.map((bounds) => bounds.y + bounds.height));
+
+    return {
+      x: minX,
+      y: minY,
+      width: maxX - minX,
+      height: maxY - minY,
+    };
+  }
+
+  private getHrsPlacement(
+    zoneBounds: ScreenRect,
+    side: LevelData['hrsImages'][number]['side'],
+    offsetX = 0,
+    offsetY = 0,
+  ): HrsPlacement {
+    const centerX = zoneBounds.x + zoneBounds.width / 2;
+    const horizontalMargin = Math.max(26, zoneBounds.width * 0.36);
+    const verticalMargin = Math.max(18, zoneBounds.height * 0.34);
+    const baseBottomY = zoneBounds.y + zoneBounds.height;
+
+    if (side === 'left') {
+      return {
+        x: zoneBounds.x - horizontalMargin + offsetX,
+        y: baseBottomY + offsetY,
+        originX: 1,
+        originY: 1,
+        depthY: baseBottomY,
+      };
+    }
+
+    if (side === 'right') {
+      return {
+        x: zoneBounds.x + zoneBounds.width + horizontalMargin + offsetX,
+        y: baseBottomY + offsetY,
+        originX: 0,
+        originY: 1,
+        depthY: baseBottomY,
+      };
+    }
+
+    if (side === 'top') {
+      return {
+        x: centerX + offsetX,
+        y: zoneBounds.y - verticalMargin + offsetY,
+        originX: 0.5,
+        originY: 1,
+        depthY: zoneBounds.y,
+      };
+    }
+
+    return {
+      x: centerX + offsetX,
+      y: baseBottomY + verticalMargin + offsetY,
+      originX: 0.5,
+      originY: 0,
+      depthY: baseBottomY,
     };
   }
 
