@@ -241,19 +241,77 @@ describe('PlayScene runtime reset', () => {
     );
   });
 
-  it('maps loot colors and inventory icons consistently', () => {
+  it('maps inventory icons and deposit popup colors consistently', () => {
     const scene = new PlayScene() as unknown as Record<string, unknown>;
 
     scene.inventory = [{ type: 'wallet', value: 10 }, { type: 'bag', value: 50 }, { type: 'phone', value: 20 }];
 
     expect((scene.getInventoryIcons as () => string)()).toBe('■■■□');
-    expect((scene.getLootColor as (type: string) => number)('wallet')).toBe(0x8d6e63);
-    expect((scene.getLootColor as (type: string) => number)('phone')).toBe(0x577590);
-    expect((scene.getLootColor as (type: string) => number)('bag')).toBe(0x6a994e);
-    expect((scene.getLootColor as (type: string) => number)('other')).toBe(0xe9c46a);
     expect((scene.getDepositPopupColor as (value: number) => string)(10)).toBe('#8ecae6');
     expect((scene.getDepositPopupColor as (value: number) => string)(20)).toBe('#80ed99');
     expect((scene.getDepositPopupColor as (value: number) => string)(50)).toBe('#ffd166');
+  });
+
+  it('spawns dropped loot using the image configured on the loot template', () => {
+    const refreshLevelInfo = vi.fn();
+    const updateLootRenderDepth = vi.fn();
+    const shadow = { setDepth: vi.fn().mockReturnThis() };
+    const body = {
+      setDisplaySize: vi.fn().mockReturnThis(),
+      setDepth: vi.fn().mockReturnThis(),
+    };
+    const add = {
+      ellipse: vi.fn(() => shadow),
+      image: vi.fn(() => body),
+    };
+    const scene = new PlayScene() as unknown as Record<string, unknown>;
+
+    scene.currentLevel = {
+      lootSpawns: [{ id: 'loot-1', type: 'wallet', value: 20, image: 'money01.png', cell: { x: 2, y: 4 } }],
+    };
+    scene.add = add;
+    scene.time = { now: 1250 };
+    scene.refreshLevelInfo = refreshLevelInfo;
+    scene.updateLootRenderDepth = updateLootRenderDepth;
+    scene.activeLoots = [];
+    scene.droppedLootCount = 0;
+
+    (scene.spawnLootAtEnemy as (enemy: { body: { x: number; y: number } }) => void)({
+      body: { x: 300, y: 180 },
+    });
+
+    expect(add.image).toHaveBeenCalledWith(300, 184, 'loot:money01.png');
+    expect(body.setDisplaySize).toHaveBeenCalledWith(60, 40);
+    expect(scene.activeLoots).toHaveLength(1);
+    expect(updateLootRenderDepth).toHaveBeenCalledWith(scene.activeLoots[0]);
+    expect(refreshLevelInfo).toHaveBeenCalledTimes(1);
+  });
+
+  it('falls back to the default loot image when no loot image is configured', () => {
+    const body = {
+      setDisplaySize: vi.fn().mockReturnThis(),
+      setDepth: vi.fn().mockReturnThis(),
+    };
+    const scene = new PlayScene() as unknown as Record<string, unknown>;
+
+    scene.currentLevel = {
+      lootSpawns: [{ id: 'loot-1', type: 'wallet', value: 10, cell: { x: 2, y: 4 } }],
+    };
+    scene.add = {
+      ellipse: vi.fn(() => ({ setDepth: vi.fn().mockReturnThis() })),
+      image: vi.fn(() => body),
+    };
+    scene.time = { now: 1250 };
+    scene.refreshLevelInfo = vi.fn();
+    scene.updateLootRenderDepth = vi.fn();
+    scene.activeLoots = [];
+    scene.droppedLootCount = 0;
+
+    (scene.spawnLootAtEnemy as (enemy: { body: { x: number; y: number } }) => void)({
+      body: { x: 300, y: 180 },
+    });
+
+    expect(scene.add.image).toHaveBeenCalledWith(300, 184, 'loot:money01.png');
   });
 
   it('creates deposit popups with Bungee font and larger sizes', () => {
@@ -370,10 +428,10 @@ describe('PlayScene runtime reset', () => {
     scene.collisionProvider = { intersects };
 
     expect((scene.getLootHitbox as (x: number, y: number) => { x: number; y: number; width: number; height: number })(100, 120)).toEqual({
-      x: 86,
-      y: 110,
-      width: 28,
-      height: 20,
+      x: 70,
+      y: 100,
+      width: 60,
+      height: 40,
     });
 
     expect(

@@ -10,7 +10,8 @@
     { "x": 4, "y": 1, "image": "residental01.png" },
     { "x": 3, "y": 2, "image": "tree01.png" },
     { "x": 1, "y": 3, "image": "office01.png" },
-    { "x": 5, "y": 3, "image": "car01.png" }
+    { "x": 5, "y": 3, "image": "car01.png" },
+    { "x": 0, "y": 5, "image": "tree01.png" }
   ],
   "spawnZones": [
     {
@@ -65,8 +66,8 @@
     }
   ],
   "lootSpawns": [
-    { "id": "loot-1", "type": "wallet", "value": 10, "cell": { "x": 2, "y": 4 } },
-    { "id": "loot-2", "type": "phone", "value": 20, "cell": { "x": 4, "y": 2 } },
-    { "id": "loot-3", "type": "bag", "value": 50, "cell": { "x": 6, "y": 1 } }
+    { "id": "loot-1", "type": "wallet", "value": 10, "image": "money01.png", "cell": { "x": 2, "y": 4 } },
+    { "id": "loot-2", "type": "phone", "value": 20, "image": "ferrari01.png", "cell": { "x": 4, "y": 2 } },
+    { "id": "loot-3", "type": "bag", "value": 50, "image": "helicopter01.png", "cell": { "x": 6, "y": 1 } }
   ]
 }

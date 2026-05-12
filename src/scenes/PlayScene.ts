@@ -26,6 +26,7 @@ import {
   isInventoryFull,
   isLootExpired,
 } from '../systems/LootSystem';
+import { DEFAULT_LOOT_IMAGE_NAME, getLootAssetKey } from '../systems/LootAssets';
 import { addSceneBackground } from '../systems/SceneBackgrounds';
 import { SimpleCollisionProvider } from '../systems/SimpleCollisionProvider';
 import { getHrsAssetKey } from '../systems/HrsAssets';
@@ -52,7 +53,7 @@ type ActiveLoot = {
   id: string;
   type: string;
   value: 10 | 20 | 50;
-  body: Phaser.GameObjects.Rectangle;
+  body: Phaser.GameObjects.Image;
   shadow: Phaser.GameObjects.Ellipse;
   createdAt: number;
 };
@@ -96,7 +97,7 @@ export class PlayScene extends Phaser.Scene {
 
   private readonly maxEscapedEnemies = 10;
 
-  private readonly lootSize = { width: 28, height: 20 };
+  private readonly lootSize = { width: 60, height: 40 };
 
   private readonly lootDepositIntervalMs = 400;
 
@@ -1083,13 +1084,14 @@ export class PlayScene extends Phaser.Scene {
 
     const template = this.currentLevel.lootSpawns[this.droppedLootCount % this.currentLevel.lootSpawns.length];
     this.droppedLootCount += 1;
+    const lootTextureKey = getLootAssetKey(template.image ?? DEFAULT_LOOT_IMAGE_NAME);
 
     const shadow = this.add
       .ellipse(enemy.body.x, enemy.body.y + 18, 24, 10, 0x111111, 0.22)
       .setDepth(2.1);
     const body = this.add
-      .rectangle(enemy.body.x, enemy.body.y + 4, this.lootSize.width, this.lootSize.height, this.getLootColor(template.type), 1)
-      .setStrokeStyle(2, 0x1d3557, 0.9)
+      .image(enemy.body.x, enemy.body.y + 4, lootTextureKey)
+      .setDisplaySize(this.lootSize.width, this.lootSize.height)
       .setDepth(2.6);
 
     const loot: ActiveLoot = {
@@ -1440,22 +1442,6 @@ export class PlayScene extends Phaser.Scene {
       width: this.lootSize.width,
       height: this.lootSize.height,
     };
-  }
-
-  private getLootColor(type: string): number {
-    if (type === 'wallet') {
-      return 0x8d6e63;
-    }
-
-    if (type === 'phone') {
-      return 0x577590;
-    }
-
-    if (type === 'bag') {
-      return 0x6a994e;
-    }
-
-    return 0xe9c46a;
   }
 
   private playInventoryError(now: number): void {

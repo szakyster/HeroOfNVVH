@@ -18,7 +18,7 @@ describe('LevelLoader', () => {
         { id: 'hrs-goal', zoneType: 'goal', zoneId: 'goal-1', image: 'repter01.png', side: 'right' },
         { id: 'hrs-sanctuary', zoneType: 'sanctuary', image: 'nvvh01.png', side: 'bottom' },
       ],
-      lootSpawns: [{ id: 'loot-1', type: 'wallet', value: 20, cell: { x: 2, y: 4 } }],
+      lootSpawns: [{ id: 'loot-1', type: 'wallet', value: 20, image: 'money01.png', cell: { x: 2, y: 4 } }],
     });
 
     expect(parsed.id).toBe('level-test');
@@ -28,6 +28,7 @@ describe('LevelLoader', () => {
     expect(parsed.hrsImages).toHaveLength(3);
     expect(parsed.lootSpawns[0].cell.x).toBe(2);
     expect(parsed.lootSpawns[0].value).toBe(20);
+    expect(parsed.lootSpawns[0].image).toBe('money01.png');
   });
 
   it('throws when a cell is outside grid bounds', () => {
@@ -60,6 +61,36 @@ describe('LevelLoader', () => {
         lootSpawns: [{ id: 'loot-1', type: 'wallet', value: 30, cell: { x: 2, y: 4 } }],
       }),
     ).toThrow(/validation error/i);
+  });
+
+  it('throws when loot image points outside the loots root or does not exist', () => {
+    expect(() =>
+      loader.parse({
+        id: 'bad-level',
+        name: 'Bad Level',
+        grid: { width: 7, height: 6 },
+        obstacles: [],
+        spawnZones: [{ id: 'spawn-1', cells: [{ x: 0, y: 0 }] }],
+        goalZones: [{ id: 'goal-1', cells: [{ x: 6, y: 5 }] }],
+        sanctuaryZone: [{ x: 3, y: 5 }],
+        hrsImages: [],
+        lootSpawns: [{ id: 'loot-1', type: 'wallet', value: 20, image: 'nested/money01.png', cell: { x: 2, y: 4 } }],
+      }),
+    ).toThrow(/lootSpawns\[0\]\.image must be a direct filename from the loots folder/i);
+
+    expect(() =>
+      loader.parse({
+        id: 'bad-level',
+        name: 'Bad Level',
+        grid: { width: 7, height: 6 },
+        obstacles: [],
+        spawnZones: [{ id: 'spawn-1', cells: [{ x: 0, y: 0 }] }],
+        goalZones: [{ id: 'goal-1', cells: [{ x: 6, y: 5 }] }],
+        sanctuaryZone: [{ x: 3, y: 5 }],
+        hrsImages: [],
+        lootSpawns: [{ id: 'loot-1', type: 'wallet', value: 20, image: 'missing.png', cell: { x: 2, y: 4 } }],
+      }),
+    ).toThrow(/lootSpawns\[0\]\.image must reference an existing file in the loots folder root/i);
   });
 
   it('throws when obstacle image points outside the obstacles root', () => {
