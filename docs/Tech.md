@@ -283,7 +283,7 @@ Kapcsolódó döntés ID: **D-016**.
 - **Fájlok:**
   - `public/assets/audio/Preparation of hunting.mp3` - menüzene
   - `public/assets/audio/The Hero.mp3` - játékon belüli ambient loop
-  - `public/assets/sprites/Punch01.mp3` - támadás SFX
+  - `public/assets/audio/effect/Punch01.mp3` - támadás SFX
   - `public/assets/audio/effect/death01.mp3` ... `death04.mp3` - halál SFX variációk
 
 Az MVP-ben a rövid effektusokhoz fallback synth hang is tartozhat, ha a betöltött audio nem érhető el.

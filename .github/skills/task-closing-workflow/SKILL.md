@@ -31,6 +31,7 @@ Ez a skill a repo [.github/copilot-instructions.md](../../copilot-instructions.m
 - Coverage parancs: `npm run test:coverage`
 - Task státuszok a [Tasks.json](../../../Tasks.json) fájlban vannak.
 - A repo elvárása szerint merge esetén non-fast-forward merge-et kell használni.
+- A következő task megnyitását a [task-opening-workflow](../task-opening-workflow/SKILL.md) skill végzi.
 - Ha vannak uncommitted változások, a CP lépéshez elsősorban a [CP promptot](../../prompts/cp.prompt.md) használd.
 - A CP jelentése ebben a repóban: `git add` + `git commit` + `git push`.
 
@@ -49,7 +50,7 @@ A tasklezárás csak akkor tekinthető késznek, ha az összes releváns lépés
 7. Ha vannak uncommitted változások, végezz CP-t.
 8. Ha a felhasználó merge-et kér, végezz non-fast-forward merge-et.
 9. Merge után zárd le a taskot a [Tasks.json](../../../Tasks.json) fájlban.
-10. Ha a felhasználó nem mond mást, nyisd meg a következő taskot.
+10. Ha a felhasználó nem mond mást, azonosítsd a következő taskot, majd a megnyitását a [task-opening-workflow](../task-opening-workflow/SKILL.md) skill szerint végezd el.
 
 ## Detailed Rules
 
@@ -118,7 +119,11 @@ A tasklezárás csak akkor tekinthető késznek, ha az összes releváns lépés
 - Ha a felhasználó nem mond mást, nyisd meg a következő taskot.
 - A következő task jellemzően az első logikusan következő, még nem `closed` állapotú feladat.
 - Preferáld a `ready` státuszú következő taskot, ha több nyitott task is van.
-- A felhasználónak jelezd, melyik taskot nyitnád meg következőnek.
+- A következő task tényleges megnyitását a [task-opening-workflow](../task-opening-workflow/SKILL.md) skill szabályai szerint végezd:
+  - állítsd a task státuszát,
+  - hozd létre a branch-et,
+  - állj át a branch-re.
+- A felhasználónak jelezd, melyik taskot nyitottad meg következőnek.
 
 ## Decision Points
 
@@ -162,4 +167,4 @@ A skill végén a válasz tartalmazza:
 - történt-e CP, és mi lett a commit message,
 - történt-e merge,
 - frissült-e a [Tasks.json](../../../Tasks.json),
-- melyik lehet a következő task.
+- melyik task lett megnyitva következőként a [task-opening-workflow](../task-opening-workflow/SKILL.md) alapján.

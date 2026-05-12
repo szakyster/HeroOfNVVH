@@ -35,3 +35,9 @@ Task closing workflow:
 - When merging a completed task branch, use a non-fast-forward merge.
 - After merge, close the task in `Tasks.json`.
 - Unless the user says otherwise, open the next task after closing the current one.
+
+Task opening workflow:
+
+- When opening a task, update the selected task status in `Tasks.json`.
+- Create the task branch using the `feature/<task-name-kebab-case>` convention.
+- Switch to the task branch after creation.
