@@ -18,6 +18,7 @@ export type LootSpawn = {
   type: string;
   value: 10 | 20 | 50;
   cell: GridCell;
+  image?: string;
 };
 
 export type HrsZoneType = 'spawn' | 'goal' | 'sanctuary';

@@ -1,5 +1,6 @@
 import type { HrsImageDefinition, HrsImageSide, HrsZoneType, LevelData } from '../types/level';
 import { hasHrsAsset, isHrsImageNameAllowed } from './HrsAssets';
+import { hasLootAsset, isLootImageNameAllowed } from './LootAssets';
 import { hasObstacleAsset, isObstacleImageNameAllowed } from './ObstacleAssets';
 
 const HRS_IMAGE_SIDES: HrsImageSide[] = ['left', 'right', 'top', 'bottom'];
@@ -204,16 +205,31 @@ export class LevelLoader {
 
     const lootSpawns = lootSpawnData.map((loot: unknown, lootIndex: number) => {
       assert(!!loot && typeof loot === 'object', `lootSpawns[${lootIndex}] must be object`);
-      const candidate = loot as { id?: unknown; type?: unknown; value?: unknown; cell?: unknown };
+      const candidate = loot as { id?: unknown; type?: unknown; value?: unknown; cell?: unknown; image?: unknown };
       assert(typeof candidate.id === 'string' && candidate.id.length > 0, `lootSpawns[${lootIndex}].id is required`);
       assert(typeof candidate.type === 'string' && candidate.type.length > 0, `lootSpawns[${lootIndex}].type is required`);
       assert(candidate.value === 10 || candidate.value === 20 || candidate.value === 50, `lootSpawns[${lootIndex}].value must be one of 10, 20, 50`);
+      assert(
+        candidate.image === undefined || typeof candidate.image === 'string',
+        `lootSpawns[${lootIndex}].image must be a string when provided`,
+      );
+      if (typeof candidate.image === 'string') {
+        assert(
+          isLootImageNameAllowed(candidate.image),
+          `lootSpawns[${lootIndex}].image must be a direct filename from the loots folder`,
+        );
+        assert(
+          hasLootAsset(candidate.image),
+          `lootSpawns[${lootIndex}].image must reference an existing file in the loots folder root`,
+        );
+      }
       const validCell = validateCellInBounds(candidate.cell, `lootSpawns[${lootIndex}].cell`);
 
       return {
         id: candidate.id as string,
         type: candidate.type as string,
         value: candidate.value as 10 | 20 | 50,
+        image: candidate.image as string | undefined,
         cell: {
           x: validCell.x,
           y: validCell.y,
