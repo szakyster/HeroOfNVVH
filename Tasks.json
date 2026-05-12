@@ -99,13 +99,13 @@
       "id": 17,
       "name": "Loot & Interactive Props",
       "description": "Create final visual assets for loot types, pickup/deposit related props, and smaller interactive map elements with clear readability at gameplay scale. Reference: JatekLeiras.md section 5.2 and Vizualitas.md sections 4, 6, 7",
-      "status": "in progress"
+      "status": "closed"
     },
     {
       "id": 18,
       "name": "Hero Character Design",
       "description": "Create the main character's final visual design and gameplay-facing poses for idle, movement, and attack states before animation sheet production. Reference: Vizualitas.md section 8.2",
-      "status": "ready"
+      "status": "in progress"
     },
     {
       "id": 19,
