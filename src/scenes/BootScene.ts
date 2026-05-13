@@ -18,6 +18,8 @@ export class BootScene extends Phaser.Scene {
 
   preload(): void {
     preloadSceneBackgrounds(this);
+    this.load.image('hero-psz01', ['assets/sprites/PSZ01.png']);
+
     for (const obstacleAsset of getAvailableObstacleAssets()) {
       this.load.image(obstacleAsset.key, [obstacleAsset.url]);
     }
