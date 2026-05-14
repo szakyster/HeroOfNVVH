@@ -258,6 +258,12 @@ A főszereplő vizuális követelményei:
 - mozgás közben jól olvasható pózokkal,
 - támadáskor komikus, de nem gyerekes mozdulatok.
 
+A hős state-ek vizuális tervezésénél a következő prioritás érvényes:
+- kötelező state-ek: **várakozik**, **fut**, **támad**,
+- opcionális state-ek: **begyűjt**, **lead**.
+
+Ha nem fér bele minden state a következő iterációba, először a várakozik, fut és támad állapot legyen kidolgozva és egységesen dokumentálva.
+
 Jelenlegi referenciaállapot:
 - a jelenleg preferált főhős-koncepció a `docs/concepts/PSZ/PSZ01.png`
 - a további karaktertervek ezt tekintsék alapnak, és csak kontrollált iterációban térjenek el tőle
@@ -273,6 +279,12 @@ Az ellenségek:
 - ha többféle válfaj van, mindnek egyértelműen más az arckifejezése.
 
 Nem szükséges sok variáció az első koncepthez, de az ellenségnek emberszerűnek, karakteresnek és azonosíthatónak kell lennie.
+
+Az enemy state-ek vizuális tervezésénél a következő prioritás érvényes:
+- kötelező state-ek: **mozog**, **sérül**,
+- opcionális state-ek csökkenő prioritási sorrendben: **spawnolódik**, **meghal**, **eléri a célt**.
+
+Ha nem fér bele minden state a következő iterációba, először a mozog és a sérül állapot legyen kidolgozva és egységesen dokumentálva.
 
 ## 8.4 Méretarány
 Mivel a rács mérete a karakterek alapméretét is meghatározza, a figurák legyenek:

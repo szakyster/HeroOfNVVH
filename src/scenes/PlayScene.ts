@@ -37,9 +37,10 @@ const HEADER_EMPHASIS_COLOR = '#f4e6a2';
 const ESCAPED_WARNING_COLOR = '#ff4d4f';
 const DEPOSIT_POPUP_FONT_FAMILY = 'Bungee, Verdana, sans-serif';
 const HERO_SPRITE_KEY = 'hero-psz01';
+const ENEMY_SPRITE_KEYS = ['enemy-01', 'enemy-02', 'enemy-03', 'enemy-04'] as const;
 
 type ActiveEnemy = {
-  body: Phaser.GameObjects.Ellipse;
+  body: Phaser.GameObjects.Image | Phaser.GameObjects.Ellipse;
   shadow: Phaser.GameObjects.Ellipse;
   path: GridCell[];
   pathIndex: number;
@@ -93,6 +94,8 @@ export class PlayScene extends Phaser.Scene {
   private readonly enemyHitboxSize = { width: 42, height: 26 };
 
   private readonly enemyHitboxOffsetY = 20;
+
+  private readonly enemySpriteDisplayHeight = 98;
 
   private readonly attackCooldownMs = 420;
 
@@ -823,10 +826,8 @@ export class PlayScene extends Phaser.Scene {
 
     const startPoint = this.gridSystem.cellCenter(path[0]);
     const shadow = this.add.ellipse(startPoint.x, startPoint.y + 16, 42, 16, 0x111111, 0.28).setDepth(2);
-    const body = this.add
-      .ellipse(startPoint.x, startPoint.y - 2, 42, 58, 0xe63946, 1)
-      .setStrokeStyle(2, 0x3d0c11, 1)
-      .setDepth(3);
+    const enemySpriteKey = ENEMY_SPRITE_KEYS[this.spawnedEnemies % ENEMY_SPRITE_KEYS.length];
+    const body = this.createEnemyBody(startPoint.x, startPoint.y - 2, enemySpriteKey);
 
     const enemy: ActiveEnemy = {
       body,
@@ -931,6 +932,30 @@ export class PlayScene extends Phaser.Scene {
     return this.add
       .image(0, 0, HERO_SPRITE_KEY)
       .setDisplaySize(displayWidth, this.playerSpriteDisplayHeight)
+      .setDepth(3);
+  }
+
+  private createEnemyBody(
+    x: number,
+    y: number,
+    textureKey: (typeof ENEMY_SPRITE_KEYS)[number],
+  ): Phaser.GameObjects.Image | Phaser.GameObjects.Ellipse {
+    if (!this.textures.exists(textureKey)) {
+      return this.add
+        .ellipse(x, y, 42, 58, 0xe63946, 1)
+        .setStrokeStyle(2, 0x3d0c11, 1)
+        .setDepth(3);
+    }
+
+    const sourceImage = this.textures.get(textureKey).getSourceImage();
+    const textureSource = Array.isArray(sourceImage) ? sourceImage[0] : sourceImage;
+    const textureWidth = textureSource?.width ?? this.enemySpriteDisplayHeight;
+    const textureHeight = textureSource?.height ?? this.enemySpriteDisplayHeight;
+    const displayWidth = textureHeight > 0 ? (this.enemySpriteDisplayHeight * textureWidth) / textureHeight : 42;
+
+    return this.add
+      .image(x, y, textureKey)
+      .setDisplaySize(displayWidth, this.enemySpriteDisplayHeight)
       .setDepth(3);
   }
 
@@ -1064,9 +1089,12 @@ export class PlayScene extends Phaser.Scene {
       }
 
       enemy.speed *= 0.6;
-
-      enemy.body.setFillStyle(0xf77f00, 1);
-      enemy.body.setStrokeStyle(2, 0x6a040f, 1);
+      if ('setTint' in enemy.body && typeof enemy.body.setTint === 'function') {
+        enemy.body.setTint(0xf77f00);
+      } else {
+        enemy.body.setFillStyle(0xf77f00, 1);
+        enemy.body.setStrokeStyle(2, 0x6a040f, 1);
+      }
     }
   }
 
