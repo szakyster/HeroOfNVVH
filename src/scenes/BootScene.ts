@@ -18,6 +18,8 @@ export class BootScene extends Phaser.Scene {
 
   preload(): void {
     preloadSceneBackgrounds(this);
+    this.load.image('hero-psz01', ['assets/sprites/PSZ01.png']);
+
     for (const obstacleAsset of getAvailableObstacleAssets()) {
       this.load.image(obstacleAsset.key, [obstacleAsset.url]);
     }
@@ -30,7 +32,7 @@ export class BootScene extends Phaser.Scene {
       this.load.image(lootAsset.key, [lootAsset.url]);
     }
 
-    this.load.audio(AUDIO_KEYS.ATTACK, ['assets/sprites/Punch01.mp3']);
+    this.load.audio(AUDIO_KEYS.ATTACK, ['assets/audio/effect/Punch01.mp3']);
     this.load.audio(AUDIO_KEYS.DEATH_1, ['assets/audio/effect/death01.mp3']);
     this.load.audio(AUDIO_KEYS.DEATH_2, ['assets/audio/effect/death02.mp3']);
     this.load.audio(AUDIO_KEYS.DEATH_3, ['assets/audio/effect/death03.mp3']);

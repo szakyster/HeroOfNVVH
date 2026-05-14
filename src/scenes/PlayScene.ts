@@ -36,6 +36,7 @@ import { SCENE_KEYS } from './sceneKeys';
 const HEADER_EMPHASIS_COLOR = '#f4e6a2';
 const ESCAPED_WARNING_COLOR = '#ff4d4f';
 const DEPOSIT_POPUP_FONT_FAMILY = 'Bungee, Verdana, sans-serif';
+const HERO_SPRITE_KEY = 'hero-psz01';
 
 type ActiveEnemy = {
   body: Phaser.GameObjects.Ellipse;
@@ -87,6 +88,8 @@ export class PlayScene extends Phaser.Scene {
 
   private readonly playerHitboxOffsetY = 27.1;
 
+  private readonly playerSpriteDisplayHeight = 128;
+
   private readonly enemyHitboxSize = { width: 42, height: 26 };
 
   private readonly enemyHitboxOffsetY = 20;
@@ -117,7 +120,7 @@ export class PlayScene extends Phaser.Scene {
 
   private sanctuaryRects: CollisionRect[] = [];
 
-  private playerBody?: Phaser.GameObjects.Ellipse;
+  private playerBody?: Phaser.GameObjects.Image | Phaser.GameObjects.Ellipse;
 
   private playerShadow?: Phaser.GameObjects.Ellipse;
 
@@ -266,10 +269,7 @@ export class PlayScene extends Phaser.Scene {
     this.createAudioToggleButtons(width);
 
     this.playerShadow = this.add.ellipse(0, 0, 72, 30, 0x111111, 0.35).setDepth(2);
-    this.playerBody = this.add
-      .ellipse(0, 0, 72, 90, 0xf4d35e, 1)
-      .setStrokeStyle(2, 0x102a43, 1)
-      .setDepth(3);
+    this.playerBody = this.createPlayerBody();
     // DEBUG: Keep hitboxes visible during development. Remove before release build.
     this.playerHitboxDebug = this.add.graphics().setDepth(4);
     // DEBUG: Keep hitboxes visible during development. Remove before release build.
@@ -914,6 +914,26 @@ export class PlayScene extends Phaser.Scene {
     return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
   }
 
+  private createPlayerBody(): Phaser.GameObjects.Image | Phaser.GameObjects.Ellipse {
+    if (!this.textures.exists(HERO_SPRITE_KEY)) {
+      return this.add
+        .ellipse(0, 0, 72, 90, 0xf4d35e, 1)
+        .setStrokeStyle(2, 0x102a43, 1)
+        .setDepth(3);
+    }
+
+    const sourceImage = this.textures.get(HERO_SPRITE_KEY).getSourceImage();
+    const textureSource = Array.isArray(sourceImage) ? sourceImage[0] : sourceImage;
+    const textureWidth = textureSource?.width ?? this.playerSpriteDisplayHeight;
+    const textureHeight = textureSource?.height ?? this.playerSpriteDisplayHeight;
+    const displayWidth = textureHeight > 0 ? (this.playerSpriteDisplayHeight * textureWidth) / textureHeight : 72;
+
+    return this.add
+      .image(0, 0, HERO_SPRITE_KEY)
+      .setDisplaySize(displayWidth, this.playerSpriteDisplayHeight)
+      .setDepth(3);
+  }
+
   private cellKey(cell: GridCell): string {
     return `${cell.x},${cell.y}`;
   }
@@ -999,10 +1019,10 @@ export class PlayScene extends Phaser.Scene {
     this.attackVisualUntil = now + this.attackDurationMs;
     this.attackRect = createAttackRect(this.getPlayerHitbox(this.playerBody.x, this.playerBody.y), this.facingDirection);
 
-    this.playerBody.setFillStyle(0xffe08a, 1);
+    this.setPlayerAttackFeedback(true);
     this.time.delayedCall(this.attackDurationMs, () => {
       this.attackRect = null;
-      this.playerBody?.setFillStyle(0xf4d35e, 1);
+      this.setPlayerAttackFeedback(false);
     });
 
     this.checkAttackHits();
@@ -1149,6 +1169,26 @@ export class PlayScene extends Phaser.Scene {
     this.playerHitboxDebug.clear();
     this.playerHitboxDebug.lineStyle(2, 0xff4d6d, 0.95);
     this.playerHitboxDebug.strokeRect(hitbox.x, hitbox.y, hitbox.width, hitbox.height);
+  }
+
+  private setPlayerAttackFeedback(isAttacking: boolean): void {
+    if (!this.playerBody) {
+      return;
+    }
+
+    if ('setTint' in this.playerBody && typeof this.playerBody.setTint === 'function') {
+      if (isAttacking) {
+        this.playerBody.setTint(0xffe08a);
+      } else if (typeof this.playerBody.clearTint === 'function') {
+        this.playerBody.clearTint();
+      }
+
+      return;
+    }
+
+    if ('setFillStyle' in this.playerBody && typeof this.playerBody.setFillStyle === 'function') {
+      this.playerBody.setFillStyle(isAttacking ? 0xffe08a : 0xf4d35e, 1);
+    }
   }
 
   private updateLoots(): void {
