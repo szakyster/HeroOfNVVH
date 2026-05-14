@@ -11,6 +11,13 @@ import { getAvailableLootAssets } from '../systems/LootAssets';
 import { getAvailableObstacleAssets } from '../systems/ObstacleAssets';
 import { SCENE_KEYS } from './sceneKeys';
 
+const ENEMY_SPRITE_ASSETS = [
+  { key: 'enemy-01', url: 'assets/sprites/enemy01.png' },
+  { key: 'enemy-02', url: 'assets/sprites/enemy02.png' },
+  { key: 'enemy-03', url: 'assets/sprites/enemy03.png' },
+  { key: 'enemy-04', url: 'assets/sprites/enemy04.png' },
+];
+
 export class BootScene extends Phaser.Scene {
   constructor() {
     super(SCENE_KEYS.BOOT);
@@ -19,6 +26,10 @@ export class BootScene extends Phaser.Scene {
   preload(): void {
     preloadSceneBackgrounds(this);
     this.load.image('hero-psz01', ['assets/sprites/PSZ01.png']);
+
+    for (const enemySprite of ENEMY_SPRITE_ASSETS) {
+      this.load.image(enemySprite.key, [enemySprite.url]);
+    }
 
     for (const obstacleAsset of getAvailableObstacleAssets()) {
       this.load.image(obstacleAsset.key, [obstacleAsset.url]);
