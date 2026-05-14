@@ -105,13 +105,13 @@
       "id": 18,
       "name": "Hero Character Design",
       "description": "Create the main character's final visual design and gameplay-facing poses for idle, movement, and attack states before animation sheet production. Reference: Vizualitas.md section 8.2",
-      "status": "in progress"
+      "status": "closed"
     },
     {
       "id": 19,
       "name": "Enemy Character Design",
       "description": "Create the enemy visual family with readable silhouettes and gameplay-facing state variations that remain distinct from the hero and the environment. Reference: Vizualitas.md section 8.3 and JatekLeiras.md section 5.1",
-      "status": "ready"
+      "status": "in progress"
     },
     {
       "id": 20,
