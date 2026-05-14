@@ -26,6 +26,10 @@ export class BootScene extends Phaser.Scene {
   preload(): void {
     preloadSceneBackgrounds(this);
     this.load.image('hero-psz01', ['assets/sprites/PSZ01.png']);
+    this.load.spritesheet('hero-psz01-run', 'assets/sprites/PSZ01RunSheet.png', {
+      frameWidth: 128,
+      frameHeight: 128,
+    });
 
     for (const enemySprite of ENEMY_SPRITE_ASSETS) {
       this.load.image(enemySprite.key, [enemySprite.url]);

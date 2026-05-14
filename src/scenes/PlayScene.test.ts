@@ -654,4 +654,63 @@ describe('PlayScene runtime reset', () => {
     expect(playerShadow.setPosition).toHaveBeenCalledWith(220, 294);
     expect(renderPlayerHitbox).toHaveBeenCalledTimes(1);
   });
+
+  it('plays the shared run animation and flips the hero sprite for left movement', () => {
+    const play = vi.fn();
+    const setFlipX = vi.fn();
+    const setDisplaySize = vi.fn();
+    const scene = new PlayScene() as unknown as Record<string, unknown>;
+
+    scene.playerBody = { play, setFlipX, setDisplaySize };
+    scene.anims = { exists: vi.fn(() => true) };
+
+    (scene.updatePlayerMovementVisual as (horizontal: number, isMoving: boolean) => void)(-1, true);
+
+    expect(setDisplaySize).toHaveBeenCalledWith(168, 168);
+    expect(play).toHaveBeenCalledWith('hero-psz01-run-loop', true);
+    expect(setFlipX).toHaveBeenCalledWith(true);
+  });
+
+  it('plays the run animation with default right-facing orientation for vertical-only movement', () => {
+    const play = vi.fn();
+    const setFlipX = vi.fn();
+    const setDisplaySize = vi.fn();
+    const scene = new PlayScene() as unknown as Record<string, unknown>;
+
+    scene.playerBody = { play, setFlipX, setDisplaySize };
+    scene.anims = { exists: vi.fn(() => true) };
+
+    (scene.updatePlayerMovementVisual as (horizontal: number, isMoving: boolean) => void)(0, true);
+
+    expect(setDisplaySize).toHaveBeenCalledWith(168, 168);
+    expect(play).toHaveBeenCalledWith('hero-psz01-run-loop', true);
+    expect(setFlipX).toHaveBeenCalledWith(false);
+  });
+
+  it('restores the idle texture when horizontal movement stops', () => {
+    const play = vi.fn();
+    const stop = vi.fn();
+    const setTexture = vi.fn();
+    const setDisplaySize = vi.fn();
+    const scene = new PlayScene() as unknown as Record<string, unknown>;
+
+    scene.playerBody = {
+      play,
+      stop,
+      setTexture,
+      setDisplaySize,
+      anims: { isPlaying: true },
+    };
+    scene.anims = { exists: vi.fn(() => true) };
+    scene.textures = {
+      exists: vi.fn((key: string) => key === 'hero-psz01'),
+      get: vi.fn(() => ({ getSourceImage: () => ({ width: 352, height: 428 }) })),
+    };
+
+    (scene.updatePlayerMovementVisual as (horizontal: number, isMoving: boolean) => void)(0, false);
+
+    expect(stop).toHaveBeenCalledTimes(1);
+    expect(setTexture).toHaveBeenCalledWith('hero-psz01');
+    expect(setDisplaySize).toHaveBeenCalledWith(expect.any(Number), 128);
+  });
 });

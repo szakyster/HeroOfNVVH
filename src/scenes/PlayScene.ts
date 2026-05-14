@@ -37,6 +37,8 @@ const HEADER_EMPHASIS_COLOR = '#f4e6a2';
 const ESCAPED_WARNING_COLOR = '#ff4d4f';
 const DEPOSIT_POPUP_FONT_FAMILY = 'Bungee, Verdana, sans-serif';
 const HERO_SPRITE_KEY = 'hero-psz01';
+const HERO_RUN_SPRITE_KEY = 'hero-psz01-run';
+const HERO_RUN_ANIMATION_KEY = 'hero-psz01-run-loop';
 const ENEMY_SPRITE_KEYS = ['enemy-01', 'enemy-02', 'enemy-03', 'enemy-04'] as const;
 
 type ActiveEnemy = {
@@ -91,6 +93,8 @@ export class PlayScene extends Phaser.Scene {
 
   private readonly playerSpriteDisplayHeight = 128;
 
+  private readonly playerRunSpriteDisplayHeight = 168;
+
   private readonly enemyHitboxSize = { width: 42, height: 26 };
 
   private readonly enemyHitboxOffsetY = 20;
@@ -123,7 +127,7 @@ export class PlayScene extends Phaser.Scene {
 
   private sanctuaryRects: CollisionRect[] = [];
 
-  private playerBody?: Phaser.GameObjects.Image | Phaser.GameObjects.Ellipse;
+  private playerBody?: Phaser.GameObjects.Sprite | Phaser.GameObjects.Image | Phaser.GameObjects.Ellipse;
 
   private playerShadow?: Phaser.GameObjects.Ellipse;
 
@@ -272,6 +276,7 @@ export class PlayScene extends Phaser.Scene {
     this.createAudioToggleButtons(width);
 
     this.playerShadow = this.add.ellipse(0, 0, 72, 30, 0x111111, 0.35).setDepth(2);
+    this.createHeroAnimations();
     this.playerBody = this.createPlayerBody();
     // DEBUG: Keep hitboxes visible during development. Remove before release build.
     this.playerHitboxDebug = this.add.graphics().setDepth(4);
@@ -521,9 +526,14 @@ export class PlayScene extends Phaser.Scene {
       const direction = new Phaser.Math.Vector2(horizontal, vertical).normalize();
       const distance = (this.playerSpeed * delta) / 1000;
 
+      this.updatePlayerMovementVisual(horizontal, true);
+
       this.tryMovePlayerAlongGrid(direction.x * distance, 0);
       this.tryMovePlayerAlongGrid(0, direction.y * distance);
+      return;
     }
+
+    this.updatePlayerMovementVisual(0, false);
   }
 
   private drawObstacleCells(level: LevelData): void {
@@ -915,24 +925,87 @@ export class PlayScene extends Phaser.Scene {
     return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
   }
 
-  private createPlayerBody(): Phaser.GameObjects.Image | Phaser.GameObjects.Ellipse {
-    if (!this.textures.exists(HERO_SPRITE_KEY)) {
+  private createHeroAnimations(): void {
+    if (!this.textures.exists(HERO_RUN_SPRITE_KEY) || this.anims.exists(HERO_RUN_ANIMATION_KEY)) {
+      return;
+    }
+
+    this.anims.create({
+      key: HERO_RUN_ANIMATION_KEY,
+      frames: this.anims.generateFrameNumbers(HERO_RUN_SPRITE_KEY, { start: 0, end: 15 }),
+      frameRate: 12,
+      repeat: -1,
+    });
+  }
+
+  private createPlayerBody(): Phaser.GameObjects.Sprite | Phaser.GameObjects.Image | Phaser.GameObjects.Ellipse {
+    if (!this.textures.exists(HERO_SPRITE_KEY) && !this.textures.exists(HERO_RUN_SPRITE_KEY)) {
       return this.add
         .ellipse(0, 0, 72, 90, 0xf4d35e, 1)
         .setStrokeStyle(2, 0x102a43, 1)
         .setDepth(3);
     }
 
-    const sourceImage = this.textures.get(HERO_SPRITE_KEY).getSourceImage();
+    const initialTextureKey = this.textures.exists(HERO_SPRITE_KEY) ? HERO_SPRITE_KEY : HERO_RUN_SPRITE_KEY;
+    const displaySize = this.getHeroDisplaySize(initialTextureKey);
+
+    return this.add
+      .sprite(0, 0, initialTextureKey)
+      .setDisplaySize(displaySize.width, displaySize.height)
+      .setDepth(3);
+  }
+
+  private getHeroDisplaySize(textureKey: string): { width: number; height: number } {
+    if (textureKey === HERO_RUN_SPRITE_KEY) {
+      return {
+        width: this.playerRunSpriteDisplayHeight,
+        height: this.playerRunSpriteDisplayHeight,
+      };
+    }
+
+    const sourceImage = this.textures.get(textureKey).getSourceImage();
     const textureSource = Array.isArray(sourceImage) ? sourceImage[0] : sourceImage;
     const textureWidth = textureSource?.width ?? this.playerSpriteDisplayHeight;
     const textureHeight = textureSource?.height ?? this.playerSpriteDisplayHeight;
     const displayWidth = textureHeight > 0 ? (this.playerSpriteDisplayHeight * textureWidth) / textureHeight : 72;
 
-    return this.add
-      .image(0, 0, HERO_SPRITE_KEY)
-      .setDisplaySize(displayWidth, this.playerSpriteDisplayHeight)
-      .setDepth(3);
+    return {
+      width: displayWidth,
+      height: this.playerSpriteDisplayHeight,
+    };
+  }
+
+  private applyHeroDisplaySize(textureKey: string): void {
+    if (!this.playerBody || typeof this.playerBody.setDisplaySize !== 'function') {
+      return;
+    }
+
+    const displaySize = this.getHeroDisplaySize(textureKey);
+    this.playerBody.setDisplaySize(displaySize.width, displaySize.height);
+  }
+
+  private updatePlayerMovementVisual(horizontal: number, isMoving: boolean): void {
+    if (!this.playerBody || !('play' in this.playerBody) || typeof this.playerBody.play !== 'function') {
+      return;
+    }
+
+    if (isMoving && this.anims.exists(HERO_RUN_ANIMATION_KEY)) {
+      this.applyHeroDisplaySize(HERO_RUN_SPRITE_KEY);
+      this.playerBody.play(HERO_RUN_ANIMATION_KEY, true);
+      if (typeof this.playerBody.setFlipX === 'function') {
+        this.playerBody.setFlipX(horizontal < 0);
+      }
+      return;
+    }
+
+    if (this.playerBody.anims?.isPlaying && typeof this.playerBody.stop === 'function') {
+      this.playerBody.stop();
+    }
+
+    if (typeof this.playerBody.setTexture === 'function' && this.textures.exists(HERO_SPRITE_KEY)) {
+      this.playerBody.setTexture(HERO_SPRITE_KEY);
+      this.applyHeroDisplaySize(HERO_SPRITE_KEY);
+    }
   }
 
   private createEnemyBody(
