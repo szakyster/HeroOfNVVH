@@ -114,6 +114,10 @@ A játékos feladatai:
 - loot felvétele,
 - loot leadása.
 
+A játékoshoz kapcsolódó state-prioritás a következő:
+- kötelező: **várakozik**, **fut**, **támad**,
+- opcionális: **begyűjt**, **lead**.
+
 ## 5.2 Ellenségek
 Az ellenségek Hatvanpusztáról indulnak és megpróbálnak eljutni a reptérre.
 
@@ -126,6 +130,10 @@ Tulajdonságaik:
 - két ütés után eltűnnek.
 
 Az ellenségek mozgása egyszerű és jól olvasható kell legyen, nem szükséges fejlett mesterséges intelligencia.
+
+Az ellenségekhez kapcsolódó state-prioritás a következő:
+- kötelező: **mozog**, **sérül**,
+- opcionális, csökkenő valószínűségi vagy megvalósítási prioritási sorrendben: **spawnolódik**, **meghal**, **eléri a célt**.
 
 ## 5.3 Értékek / loot
 A loot reprezentálhat különféle vagyontárgyakat, például:
@@ -192,9 +200,11 @@ A támadás célja, hogy könnyen érthető és megbocsátó legyen.
 Az ellenség 2 találatot bír ki.
 
 Példa állapotok:
-- 0 találat: aktív, menekül,
-- 1 találat: sérült, továbbra is menekülhet,
-- 2 találat: legyőzött, eltűnik.
+- mozog: alap, kötelező gameplay state,
+- sérül: kötelező visszajelzési state első találat után,
+- meghal: opcionális lezáró state a második találat után,
+- eléri a célt: opcionális sikeres megszökés state,
+- spawnolódik: opcionális belépési state az ellenség megjelenésekor.
 
 A második ütés után az ellenség lekerül a pályáról.
 
