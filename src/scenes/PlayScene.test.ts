@@ -252,7 +252,19 @@ describe('PlayScene runtime reset', () => {
 
     scene.inventory = [{ type: 'wallet', value: 10 }, { type: 'bag', value: 50 }, { type: 'phone', value: 20 }];
 
-    expect((scene.getInventoryIcons as () => string)()).toBe('■■■□');
+    scene.registry = { get: vi.fn((key: string) => (key === 'score' || key === 'escapedEnemies' ? 0 : undefined)) };
+    scene.scoreValueText = { setText: vi.fn() };
+    scene.inventoryValueText = { setText: vi.fn() };
+    scene.escapedValueText = { setText: vi.fn(), setColor: vi.fn(), setPosition: vi.fn(), x: 430, y: 63 };
+    scene.escapedValueBaseX = 430;
+    scene.escapedValueBaseY = 63;
+    scene.waveValueText = { setText: vi.fn() };
+    scene.tweens = { add: vi.fn() };
+    scene.waveNumber = 1;
+
+    (scene.refreshHud as () => void)();
+
+    expect((scene.inventoryValueText as { setText: ReturnType<typeof vi.fn> }).setText).toHaveBeenCalledWith('3/4  ■■■□');
     expect((scene.getDepositPopupColor as (value: number) => string)(10)).toBe('#8ecae6');
     expect((scene.getDepositPopupColor as (value: number) => string)(20)).toBe('#80ed99');
     expect((scene.getDepositPopupColor as (value: number) => string)(50)).toBe('#ffd166');
@@ -288,8 +300,8 @@ describe('PlayScene runtime reset', () => {
 
     expect(add.image).toHaveBeenCalledWith(300, 184, 'loot:money01.png');
     expect(body.setDisplaySize).toHaveBeenCalledWith(60, 40);
-    expect(scene.activeLoots).toHaveLength(1);
-    expect(updateLootRenderDepth).toHaveBeenCalledWith(scene.activeLoots[0]);
+    expect(scene.activeLoots as unknown[]).toHaveLength(1);
+    expect(updateLootRenderDepth).toHaveBeenCalledWith((scene.activeLoots as unknown[])[0]);
     expect(refreshLevelInfo).toHaveBeenCalledTimes(1);
   });
 
@@ -317,7 +329,7 @@ describe('PlayScene runtime reset', () => {
       body: { x: 300, y: 180 },
     });
 
-    expect(scene.add.image).toHaveBeenCalledWith(300, 184, 'loot:money01.png');
+    expect((scene.add as { image: ReturnType<typeof vi.fn> }).image).toHaveBeenCalledWith(300, 184, 'loot:money01.png');
   });
 
   it('creates deposit popups with Bungee font and larger sizes', () => {
@@ -585,6 +597,91 @@ describe('PlayScene runtime reset', () => {
     expect(scene.activeLoots).toEqual([]);
   });
 
+  it('starts the full injured animation on hit and keeps the enemy alive until it finishes', () => {
+    const playSfx = vi.fn();
+    const applyEnemyKnockback = vi.fn();
+    const spawnLootAtEnemy = vi.fn();
+    const defeatEnemy = vi.fn();
+    const play = vi.fn();
+    const setFlipX = vi.fn();
+    const scene = new PlayScene() as unknown as Record<string, unknown>;
+    const enemy = {
+      body: { x: 144, y: 188, play, setFlipX },
+      shadow: {},
+      path: [],
+      pathIndex: 0,
+      speed: 88,
+      hitsTaken: 0,
+      lootDropped: false,
+      escaped: false,
+      defeated: false,
+      animationDirection: 'up',
+      animationFlipX: true,
+      injuryAnimationUntil: null,
+    };
+
+    scene.attackRect = { x: 0, y: 0, width: 64, height: 64 };
+    scene.time = { now: 1000 };
+    scene.audioSystem = { playSfx };
+    scene.collisionProvider = { intersects: vi.fn(() => true) };
+    scene.anims = { exists: vi.fn(() => true) };
+    scene.activeEnemies = [enemy];
+    scene.applyEnemyKnockback = applyEnemyKnockback;
+    scene.spawnLootAtEnemy = spawnLootAtEnemy;
+    scene.defeatEnemy = defeatEnemy;
+
+    (scene.checkAttackHits as () => void)();
+
+    expect(playSfx).toHaveBeenCalledWith('sfx-hit');
+    expect(applyEnemyKnockback).toHaveBeenCalledWith(enemy);
+    expect(spawnLootAtEnemy).toHaveBeenCalledWith(enemy);
+    expect(defeatEnemy).not.toHaveBeenCalled();
+    expect(enemy.hitsTaken).toBe(1);
+    expect(enemy.lootDropped).toBe(true);
+    expect(enemy.injuryAnimationUntil).toBeCloseTo(2333.333, 2);
+    expect(play).toHaveBeenCalledWith('enemy-01-injured-up-once', false);
+    expect(setFlipX).toHaveBeenCalledWith(true);
+  });
+
+  it('defeats the enemy immediately when it is hit again during the injured animation', () => {
+    const applyEnemyKnockback = vi.fn();
+    const spawnLootAtEnemy = vi.fn();
+    const defeatEnemy = vi.fn();
+    const play = vi.fn();
+    const scene = new PlayScene() as unknown as Record<string, unknown>;
+    const enemy = {
+      body: { x: 144, y: 188, play },
+      shadow: {},
+      path: [],
+      pathIndex: 0,
+      speed: 88,
+      hitsTaken: 1,
+      lootDropped: true,
+      escaped: false,
+      defeated: false,
+      animationDirection: 'right',
+      animationFlipX: false,
+      injuryAnimationUntil: 1800,
+    };
+
+    scene.attackRect = { x: 0, y: 0, width: 64, height: 64 };
+    scene.time = { now: 1200 };
+    scene.audioSystem = { playSfx: vi.fn() };
+    scene.collisionProvider = { intersects: vi.fn(() => true) };
+    scene.anims = { exists: vi.fn(() => true) };
+    scene.activeEnemies = [enemy];
+    scene.applyEnemyKnockback = applyEnemyKnockback;
+    scene.spawnLootAtEnemy = spawnLootAtEnemy;
+    scene.defeatEnemy = defeatEnemy;
+
+    (scene.checkAttackHits as () => void)();
+
+    expect(defeatEnemy).toHaveBeenCalledWith(enemy);
+    expect(applyEnemyKnockback).not.toHaveBeenCalled();
+    expect(spawnLootAtEnemy).not.toHaveBeenCalled();
+    expect(play).not.toHaveBeenCalled();
+  });
+
   it('spawns the player at sanctuary and updates visibility', () => {
     const playerBody = {
       setPosition: vi.fn().mockReturnThis(),
@@ -673,6 +770,84 @@ describe('PlayScene runtime reset', () => {
     expect(setFlipX).toHaveBeenCalledWith(true);
   });
 
+  it('pauses enemy movement while the injured animation is still running', () => {
+    const setPosition = vi.fn();
+    const shadowSetPosition = vi.fn();
+    const updateEnemyMovementVisual = vi.fn();
+    const updateEnemyRenderDepth = vi.fn();
+    const scene = new PlayScene() as unknown as Record<string, unknown>;
+    const enemy = {
+      body: { x: 120, y: 140, setPosition, destroy: vi.fn() },
+      shadow: { setPosition: shadowSetPosition, destroy: vi.fn() },
+      path: [{ x: 0, y: 0 }, { x: 1, y: 0 }],
+      pathIndex: 0,
+      speed: 88,
+      hitsTaken: 1,
+      lootDropped: true,
+      escaped: false,
+      defeated: false,
+      animationDirection: 'down',
+      animationFlipX: false,
+      injuryAnimationUntil: 1500,
+    };
+
+    scene.gridSystem = {
+      cellCenter: vi.fn(() => ({ x: 240, y: 180 })),
+    };
+    scene.time = { now: 1200 };
+    scene.activeEnemies = [enemy];
+    scene.isGameOver = false;
+    scene.updateEnemyMovementVisual = updateEnemyMovementVisual;
+    scene.updateEnemyRenderDepth = updateEnemyRenderDepth;
+
+    (scene.updateEnemies as (delta: number) => void)(16);
+
+    expect(updateEnemyMovementVisual).not.toHaveBeenCalled();
+    expect(setPosition).not.toHaveBeenCalled();
+    expect(shadowSetPosition).not.toHaveBeenCalled();
+    expect(updateEnemyRenderDepth).not.toHaveBeenCalled();
+    expect(scene.activeEnemies).toEqual([enemy]);
+  });
+
+  it('resumes enemy movement after the injured animation finishes', () => {
+    const setPosition = vi.fn();
+    const shadowSetPosition = vi.fn();
+    const updateEnemyMovementVisual = vi.fn();
+    const updateEnemyRenderDepth = vi.fn();
+    const scene = new PlayScene() as unknown as Record<string, unknown>;
+    const enemy = {
+      body: { x: 120, y: 140, setPosition, destroy: vi.fn() },
+      shadow: { setPosition: shadowSetPosition, destroy: vi.fn() },
+      path: [{ x: 0, y: 0 }, { x: 1, y: 0 }],
+      pathIndex: 0,
+      speed: 88,
+      hitsTaken: 1,
+      lootDropped: true,
+      escaped: false,
+      defeated: false,
+      animationDirection: 'down',
+      animationFlipX: false,
+      injuryAnimationUntil: 1500,
+    };
+
+    scene.gridSystem = {
+      cellCenter: vi.fn(() => ({ x: 240, y: 180 })),
+    };
+    scene.time = { now: 1600 };
+    scene.activeEnemies = [enemy];
+    scene.isGameOver = false;
+    scene.updateEnemyMovementVisual = updateEnemyMovementVisual;
+    scene.updateEnemyRenderDepth = updateEnemyRenderDepth;
+
+    (scene.updateEnemies as (delta: number) => void)(16);
+
+    expect(enemy.injuryAnimationUntil).toBeNull();
+    expect(updateEnemyMovementVisual).toHaveBeenCalledTimes(1);
+    expect(setPosition).toHaveBeenCalledWith(240, 178);
+    expect(shadowSetPosition).toHaveBeenCalledWith(240, 196);
+    expect(updateEnemyRenderDepth).toHaveBeenCalledWith(enemy);
+  });
+
   it('maps vertical movement to the up animation without mirroring', () => {
     const scene = new PlayScene() as unknown as Record<string, unknown>;
 
@@ -739,7 +914,7 @@ describe('PlayScene runtime reset', () => {
     expect(setFlipX).toHaveBeenCalledWith(true);
     expect(setDisplaySize).toHaveBeenCalledWith(168, 168);
     expect(scene.isAttackAnimating).toBe(true);
-    expect(scene.attackAnimationReleaseAt).toBeCloseTo(1583.333, 2);
+    expect(scene.attackAnimationReleaseAt).toBeCloseTo(1500, 2);
     expect(scene.attackAnimationEndAt).toBeCloseTo(2166.667, 2);
     expect(scene.attackVisualUntil).toBeCloseTo(1203.333, 2);
     expect(scene.attackRect).toBeNull();

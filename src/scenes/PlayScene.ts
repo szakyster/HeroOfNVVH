@@ -31,12 +31,32 @@ import { addSceneBackground } from '../systems/SceneBackgrounds';
 import { SimpleCollisionProvider } from '../systems/SimpleCollisionProvider';
 import { getHrsAssetKey } from '../systems/HrsAssets';
 import { getObstacleAssetKey, hasObstacleAsset } from '../systems/ObstacleAssets';
-import { HEADLINE_FONT_FAMILY } from '../utils/typography';
+import {
+  createPlaySceneHud,
+  createPlaySceneStatusTexts,
+  formatEnemyInfoText,
+  formatLevelInfoText,
+  syncAudioToggleTexts,
+  formatPlaySceneHudValues,
+  syncEscapedEnemyWarningState,
+} from './PlaySceneHud';
 import { SCENE_KEYS } from './sceneKeys';
-const HEADER_EMPHASIS_COLOR = '#f4e6a2';
-const ESCAPED_WARNING_COLOR = '#ff4d4f';
 const DEPOSIT_POPUP_FONT_FAMILY = 'Bungee, Verdana, sans-serif';
-const ENEMY_SPRITE_KEYS = ['enemy-01', 'enemy-02', 'enemy-03', 'enemy-04'] as const;
+const ENEMY_ANIMATION_FRAME_RATE = 12;
+const ENEMY_SHEET_FRAME_COUNT = 16;
+const ENEMY_INJURY_ANIMATION_DURATION_MS = (ENEMY_SHEET_FRAME_COUNT / ENEMY_ANIMATION_FRAME_RATE) * 1000;
+const ENEMY_ANIMATION_DIRECTIONS = ['down', 'right', 'up'] as const;
+
+type EnemyAnimationState = 'walk' | 'injured';
+type EnemyAnimationDirection = (typeof ENEMY_ANIMATION_DIRECTIONS)[number];
+
+function getEnemySheetKey(state: EnemyAnimationState, direction: EnemyAnimationDirection): string {
+  return `enemy-01-${state}-${direction}`;
+}
+
+function getEnemyAnimationKey(state: EnemyAnimationState, direction: EnemyAnimationDirection): string {
+  return `${getEnemySheetKey(state, direction)}-${state === 'walk' ? 'loop' : 'once'}`;
+}
 
 const HERO_ANIMATION_FRAME_RATE = 12;
 const HERO_SPRITE_DISPLAY_SIZE = 168;
@@ -45,7 +65,7 @@ const HERO_PUNCH_START_FRAME = 2;
 const HERO_ATTACK_RELEASE_FRAME = 8;
 const HERO_ATTACK_HIT_DELAY_MS = (1 / HERO_ANIMATION_FRAME_RATE) * 1000;
 const HERO_ATTACK_MIN_DURATION_MS =
-  ((HERO_ATTACK_RELEASE_FRAME - HERO_PUNCH_START_FRAME + 1) / HERO_ANIMATION_FRAME_RATE) * 1000;
+  ((HERO_ATTACK_RELEASE_FRAME - HERO_PUNCH_START_FRAME) / HERO_ANIMATION_FRAME_RATE) * 1000;
 const HERO_ATTACK_ANIMATION_DURATION_MS =
   ((HERO_SHEET_FRAME_COUNT - HERO_PUNCH_START_FRAME) / HERO_ANIMATION_FRAME_RATE) * 1000;
 const HERO_LOOP_ANIMATION_STATES = ['idle', 'run'] as const;
@@ -67,7 +87,7 @@ function getHeroAnimationKey(state: HeroAnimationState, direction: HeroAnimation
 }
 
 type ActiveEnemy = {
-  body: Phaser.GameObjects.Image | Phaser.GameObjects.Ellipse;
+  body: Phaser.GameObjects.Sprite | Phaser.GameObjects.Ellipse;
   shadow: Phaser.GameObjects.Ellipse;
   path: GridCell[];
   pathIndex: number;
@@ -76,6 +96,9 @@ type ActiveEnemy = {
   lootDropped: boolean;
   escaped: boolean;
   defeated: boolean;
+  animationDirection: EnemyAnimationDirection;
+  animationFlipX: boolean;
+  injuryAnimationUntil: number | null;
 };
 
 type ActiveLoot = {
@@ -231,7 +254,7 @@ export class PlayScene extends Phaser.Scene {
   private spawnedEnemies = 0;
 
   private get targetEnemyCount(): number {
-    return Math.min(Math.floor(this.waveNumber * 0.75 + 1), 8);
+    return Math.min(Math.floor(this.waveNumber * 0.4 + 1), 8);
   }
 
   constructor() {
@@ -267,6 +290,26 @@ export class PlayScene extends Phaser.Scene {
     this.createHud(width, height);
     this.refreshHud();
 
+    const statusRefs = createPlaySceneStatusTexts(this, width, height, {
+      onMusicToggle: () => {
+        const nextValue = !Boolean(this.registry.get(AUDIO_SETTINGS_KEYS.MUSIC_MUTED));
+        this.registry.set(AUDIO_SETTINGS_KEYS.MUSIC_MUTED, nextValue);
+        this.audioSystem?.setMusicMuted(nextValue);
+        this.refreshAudioToggleTexts();
+      },
+      onSfxToggle: () => {
+        const nextValue = !Boolean(this.registry.get(AUDIO_SETTINGS_KEYS.SFX_MUTED));
+        this.registry.set(AUDIO_SETTINGS_KEYS.SFX_MUTED, nextValue);
+        this.audioSystem?.setSfxMuted(nextValue);
+        this.refreshAudioToggleTexts();
+      },
+    });
+    this.levelInfoText = statusRefs.levelInfoText;
+    this.enemyInfoText = statusRefs.enemyInfoText;
+    this.musicToggleText = statusRefs.musicToggleText;
+    this.sfxToggleText = statusRefs.sfxToggleText;
+    this.refreshAudioToggleTexts();
+
     const graphics = this.add.graphics();
     graphics.setDepth(1);
 
@@ -284,28 +327,9 @@ export class PlayScene extends Phaser.Scene {
       graphics.strokePath();
     }
 
-    this.levelInfoText = this.add
-      .text(24, height - 58, 'Pályabetöltés: folyamatban...', {
-        fontFamily: 'Verdana',
-        fontSize: '17px',
-        color: '#f1faee',
-      })
-      .setOrigin(0, 0.5)
-      .setDepth(7);
-
-    this.enemyInfoText = this.add
-      .text(24, height - 28, 'Ellenségállapot: inicializálás...', {
-        fontFamily: 'Verdana',
-        fontSize: '17px',
-        color: '#ffd166',
-      })
-      .setOrigin(0, 0.5)
-      .setDepth(7);
-
-    this.createAudioToggleButtons(width);
-
     this.playerShadow = this.add.ellipse(0, 0, 72, 30, 0x111111, 0.35).setDepth(2);
     this.createHeroAnimations();
+    this.createEnemyAnimations();
     this.playerBody = this.createPlayerBody();
     // DEBUG: Keep hitboxes visible during development. Remove before release build.
     this.enemyHitboxDebug = this.add.graphics().setDepth(4);
@@ -393,118 +417,26 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private createHud(width: number, _height: number): void {
-    const panelLeft = 18;
-    const panelWidth = width - 36;
-    const contentLeft = panelLeft + 28;
-    const contentWidth = panelWidth - 56;
-    const hudTop = 13;
+    const hudRefs = createPlaySceneHud(this, width);
 
-    const panel = this.add.graphics();
-    panel.setDepth(6);
-    panel.fillStyle(0x102a43, 0.38);
-    panel.fillRoundedRect(panelLeft, hudTop, panelWidth, 92, 24);
-    panel.lineStyle(2, 0xf4d35e, 0.45);
-    panel.strokeRoundedRect(panelLeft, hudTop, panelWidth, 92, 24);
-
-    const metricY = 31;
-    const valueY = 63;
-    const columns = [0, 0.24, 0.52, 0.8].map((ratio) => contentLeft + contentWidth * ratio);
-
-    this.addHudLabel(columns[0], metricY, 'Pont');
-    this.scoreValueText = this.addHudValue(columns[0], valueY);
-
-    this.addHudLabel(columns[1], metricY, 'Hátizsák');
-    this.inventoryValueText = this.addHudValue(columns[1], valueY);
-
-    this.addHudLabel(columns[2], metricY, 'Reptérre érkeztek');
-    this.escapedValueText = this.addHudValue(columns[2], valueY);
-    this.escapedValueBaseX = columns[2];
-    this.escapedValueBaseY = valueY;
-
-    this.addHudLabel(columns[3], metricY, 'Hullám');
-    this.waveValueText = this.addHudValue(columns[3], valueY);
-  }
-
-  private addHudLabel(x: number, y: number, text: string): void {
-    this.add
-      .text(x, y, text, {
-        fontFamily: 'Verdana',
-        fontSize: '15px',
-        color: '#a8dadc',
-      })
-      .setDepth(7);
-  }
-
-  private addHudValue(x: number, y: number): Phaser.GameObjects.Text {
-    return this.add
-      .text(x, y, '', {
-        fontFamily: HEADLINE_FONT_FAMILY,
-        fontSize: '24px',
-        color: HEADER_EMPHASIS_COLOR,
-        fontStyle: 'bold',
-      })
-      .setDepth(7);
-  }
-
-  private createAudioToggleButtons(width: number): void {
-    this.musicToggleText = this.add
-      .text(width - 18, 122, '', {
-        fontFamily: 'Verdana',
-        fontSize: '15px',
-        color: '#f4f1de',
-        backgroundColor: '#223247',
-        padding: { x: 10, y: 6 },
-      })
-      .setOrigin(1, 0)
-      .setDepth(6)
-      .setInteractive({ useHandCursor: true });
-
-    this.musicToggleText.setData('ui-button', true);
-    this.musicToggleText.on('pointerdown', () => {
-      const nextValue = !Boolean(this.registry.get(AUDIO_SETTINGS_KEYS.MUSIC_MUTED));
-      this.registry.set(AUDIO_SETTINGS_KEYS.MUSIC_MUTED, nextValue);
-      this.audioSystem?.setMusicMuted(nextValue);
-      this.refreshAudioToggleTexts();
-    });
-
-    this.sfxToggleText = this.add
-      .text(width - 18, 160, '', {
-        fontFamily: 'Verdana',
-        fontSize: '15px',
-        color: '#f4f1de',
-        backgroundColor: '#223247',
-        padding: { x: 10, y: 6 },
-      })
-      .setOrigin(1, 0)
-      .setDepth(6)
-      .setInteractive({ useHandCursor: true });
-
-    this.sfxToggleText.setData('ui-button', true);
-    this.sfxToggleText.on('pointerdown', () => {
-      const nextValue = !Boolean(this.registry.get(AUDIO_SETTINGS_KEYS.SFX_MUTED));
-      this.registry.set(AUDIO_SETTINGS_KEYS.SFX_MUTED, nextValue);
-      this.audioSystem?.setSfxMuted(nextValue);
-      this.refreshAudioToggleTexts();
-    });
-
-    for (const button of [this.musicToggleText, this.sfxToggleText]) {
-      button.on('pointerover', () => {
-        button.setStyle({ backgroundColor: '#314863' });
-      });
-      button.on('pointerout', () => {
-        button.setStyle({ backgroundColor: '#223247' });
-      });
-    }
-
-    this.refreshAudioToggleTexts();
+    this.scoreValueText = hudRefs.scoreValueText;
+    this.inventoryValueText = hudRefs.inventoryValueText;
+    this.escapedValueText = hudRefs.escapedValueText;
+    this.escapedValueBaseX = hudRefs.escapedValueBaseX;
+    this.escapedValueBaseY = hudRefs.escapedValueBaseY;
+    this.waveValueText = hudRefs.waveValueText;
   }
 
   private refreshAudioToggleTexts(): void {
-    this.musicToggleText?.setText(
-      `Zene némít: ${this.registry.get(AUDIO_SETTINGS_KEYS.MUSIC_MUTED) ? 'Be' : 'Ki'}`,
-    );
-    this.sfxToggleText?.setText(
-      `Hangeffekt némít: ${this.registry.get(AUDIO_SETTINGS_KEYS.SFX_MUTED) ? 'Be' : 'Ki'}`,
+    syncAudioToggleTexts(
+      {
+        musicToggleText: this.musicToggleText,
+        sfxToggleText: this.sfxToggleText,
+      },
+      {
+        musicMuted: Boolean(this.registry.get(AUDIO_SETTINGS_KEYS.MUSIC_MUTED)),
+        sfxMuted: Boolean(this.registry.get(AUDIO_SETTINGS_KEYS.SFX_MUTED)),
+      },
     );
   }
 
@@ -857,7 +789,7 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private startEnemyWave(level: LevelData): void {
-    const waveWindow = 10_000;
+    const waveWindow = 12_000;
     const count = this.targetEnemyCount;
 
     this.spawnedEnemies = 0;
@@ -901,8 +833,7 @@ export class PlayScene extends Phaser.Scene {
 
     const startPoint = this.gridSystem.cellCenter(path[0]);
     const shadow = this.add.ellipse(startPoint.x, startPoint.y + 16, 42, 16, 0x111111, 0.28).setDepth(2);
-    const enemySpriteKey = ENEMY_SPRITE_KEYS[this.spawnedEnemies % ENEMY_SPRITE_KEYS.length];
-    const body = this.createEnemyBody(startPoint.x, startPoint.y - 2, enemySpriteKey);
+    const body = this.createEnemyBody(startPoint.x, startPoint.y - 2);
 
     const enemy: ActiveEnemy = {
       body,
@@ -914,6 +845,9 @@ export class PlayScene extends Phaser.Scene {
       lootDropped: false,
       escaped: false,
       defeated: false,
+      animationDirection: 'down',
+      animationFlipX: false,
+      injuryAnimationUntil: null,
     };
 
     this.activeEnemies.push(enemy);
@@ -1002,6 +936,26 @@ export class PlayScene extends Phaser.Scene {
     }
   }
 
+  private createEnemyAnimations(): void {
+    for (const direction of ENEMY_ANIMATION_DIRECTIONS) {
+      for (const animationState of ['walk', 'injured'] as const) {
+        const sheetKey = getEnemySheetKey(animationState, direction);
+        const animationKey = getEnemyAnimationKey(animationState, direction);
+
+        if (!this.textures.exists(sheetKey) || this.anims.exists(animationKey)) {
+          continue;
+        }
+
+        this.anims.create({
+          key: animationKey,
+          frames: this.anims.generateFrameNumbers(sheetKey, { start: 0, end: ENEMY_SHEET_FRAME_COUNT - 1 }),
+          frameRate: ENEMY_ANIMATION_FRAME_RATE,
+          repeat: animationState === 'walk' ? -1 : 0,
+        });
+      }
+    }
+  }
+
   private createPlayerBody(): Phaser.GameObjects.Sprite | Phaser.GameObjects.Ellipse {
     const initialTextureKey = getHeroSheetKey('idle', 'down');
 
@@ -1081,28 +1035,76 @@ export class PlayScene extends Phaser.Scene {
     this.playHeroAnimation(state, this.heroAnimationDirection, this.heroAnimationFlipX, true);
   }
 
-  private createEnemyBody(
-    x: number,
-    y: number,
-    textureKey: (typeof ENEMY_SPRITE_KEYS)[number],
-  ): Phaser.GameObjects.Image | Phaser.GameObjects.Ellipse {
-    if (!this.textures.exists(textureKey)) {
+  private createEnemyBody(x: number, y: number): Phaser.GameObjects.Sprite | Phaser.GameObjects.Ellipse {
+    const initialTextureKey = getEnemySheetKey('walk', 'down');
+
+    if (!this.textures.exists(initialTextureKey)) {
       return this.add
         .ellipse(x, y, 42, 58, 0xe63946, 1)
         .setStrokeStyle(2, 0x3d0c11, 1)
         .setDepth(3);
     }
 
-    const sourceImage = this.textures.get(textureKey).getSourceImage();
+    const sourceImage = this.textures.get(initialTextureKey).getSourceImage();
     const textureSource = Array.isArray(sourceImage) ? sourceImage[0] : sourceImage;
-    const textureWidth = textureSource?.width ?? this.enemySpriteDisplayHeight;
-    const textureHeight = textureSource?.height ?? this.enemySpriteDisplayHeight;
+    const textureWidth = textureSource?.width ? textureSource.width / 4 : this.enemySpriteDisplayHeight;
+    const textureHeight = textureSource?.height ? textureSource.height / 4 : this.enemySpriteDisplayHeight;
     const displayWidth = textureHeight > 0 ? (this.enemySpriteDisplayHeight * textureWidth) / textureHeight : 42;
 
     return this.add
-      .image(x, y, textureKey)
+      .sprite(x, y, initialTextureKey)
       .setDisplaySize(displayWidth, this.enemySpriteDisplayHeight)
       .setDepth(3);
+  }
+
+  private updateEnemyMovementVisual(enemy: ActiveEnemy, deltaX: number, deltaY: number): void {
+    let direction: EnemyAnimationDirection = 'down';
+    let flipX = false;
+
+    if (Math.abs(deltaX) >= Math.abs(deltaY)) {
+      direction = 'right';
+      flipX = deltaX < 0;
+    } else if (deltaY < 0) {
+      direction = 'up';
+    }
+
+    enemy.animationDirection = direction;
+    enemy.animationFlipX = flipX;
+    this.playEnemyAnimation(enemy, 'walk', true);
+  }
+
+  private playEnemyAnimation(enemy: ActiveEnemy, animationState: EnemyAnimationState, ignoreIfPlaying: boolean): void {
+    if (!('play' in enemy.body) || typeof enemy.body.play !== 'function') {
+      return;
+    }
+
+    const animationKey = getEnemyAnimationKey(animationState, enemy.animationDirection);
+    if (!this.anims.exists(animationKey)) {
+      return;
+    }
+
+    enemy.body.play(animationKey, ignoreIfPlaying);
+    if (typeof enemy.body.setFlipX === 'function') {
+      enemy.body.setFlipX(enemy.animationFlipX);
+    }
+  }
+
+  private startEnemyInjuryAnimation(enemy: ActiveEnemy): void {
+    enemy.injuryAnimationUntil = (this.time?.now ?? 0) + ENEMY_INJURY_ANIMATION_DURATION_MS;
+    this.playEnemyAnimation(enemy, 'injured', false);
+  }
+
+  private isEnemyInjuryActive(enemy: ActiveEnemy, now: number): boolean {
+    if (enemy.injuryAnimationUntil === null) {
+      return false;
+    }
+
+    if (now < enemy.injuryAnimationUntil) {
+      return true;
+    }
+
+    enemy.injuryAnimationUntil = null;
+    return false;
   }
 
   private cellKey(cell: GridCell): string {
@@ -1286,6 +1288,7 @@ export class PlayScene extends Phaser.Scene {
       return;
     }
 
+    const now = this.time?.now ?? 0;
     let hitAny = false;
 
     for (const enemy of this.activeEnemies) {
@@ -1303,6 +1306,11 @@ export class PlayScene extends Phaser.Scene {
         hitAny = true;
       }
 
+      if (this.isEnemyInjuryActive(enemy, now)) {
+        this.defeatEnemy(enemy);
+        continue;
+      }
+
       enemy.hitsTaken += 1;
       this.applyEnemyKnockback(enemy);
 
@@ -1311,23 +1319,7 @@ export class PlayScene extends Phaser.Scene {
         enemy.lootDropped = true;
       }
 
-      if (enemy.hitsTaken >= 2) {
-        this.defeatEnemy(enemy);
-        continue;
-      }
-
-      enemy.speed *= 0.6;
-      if ('setTint' in enemy.body && typeof enemy.body.setTint === 'function') {
-        enemy.body.setTint(0xf77f00);
-      } else if (
-        'setFillStyle' in enemy.body &&
-        typeof enemy.body.setFillStyle === 'function' &&
-        'setStrokeStyle' in enemy.body &&
-        typeof enemy.body.setStrokeStyle === 'function'
-      ) {
-        enemy.body.setFillStyle(0xf77f00, 1);
-        enemy.body.setStrokeStyle(2, 0x6a040f, 1);
-      }
+      this.startEnemyInjuryAnimation(enemy);
     }
   }
 
@@ -1578,8 +1570,14 @@ export class PlayScene extends Phaser.Scene {
       return;
     }
 
+    const now = this.time?.now ?? 0;
+
     for (const enemy of this.activeEnemies) {
       if (enemy.escaped || enemy.defeated) {
+        continue;
+      }
+
+      if (this.isEnemyInjuryActive(enemy, now)) {
         continue;
       }
 
@@ -1598,6 +1596,7 @@ export class PlayScene extends Phaser.Scene {
       const targetX = target.x;
       const targetY = target.y - 2;
       const vector = new Phaser.Math.Vector2(targetX - enemy.body.x, targetY - enemy.body.y);
+      this.updateEnemyMovementVisual(enemy, vector.x, vector.y);
 
       if (vector.length() <= deltaDistance) {
         enemy.body.setPosition(targetX, targetY);
@@ -1652,68 +1651,54 @@ export class PlayScene extends Phaser.Scene {
 
   private refreshEnemyInfo(count: number = this.targetEnemyCount): void {
     this.enemyInfoText?.setText(
-      `Aktív ellenfelek: ${this.activeEnemies.length} | Spawn ebben a hullámban: ${this.spawnedEnemies}/${count}`,
+      formatEnemyInfoText({
+        activeEnemyCount: this.activeEnemies.length,
+        spawnedEnemies: this.spawnedEnemies,
+        targetEnemyCount: count,
+      }),
     );
     this.refreshHud();
   }
 
   private refreshLevelInfo(): void {
     this.levelInfoText?.setText(
-      `Pálya: ${this.currentLevel?.name ?? 'betöltés alatt'} | Földön: ${this.activeLoots.length} tárgy | Leadási sáv: ${this.inventory.length > 0 ? 'aktív' : 'üres'}`,
+      formatLevelInfoText({
+        level: this.currentLevel,
+        activeLootCount: this.activeLoots.length,
+        inventoryCount: this.inventory.length,
+      }),
     );
     this.refreshHud();
   }
 
   private refreshHud(): void {
+    const score = this.registry.get('score') ?? 0;
     const escapedEnemies = this.registry.get('escapedEnemies') ?? 0;
+    const hudValues = formatPlaySceneHudValues({
+      score,
+      inventoryCount: this.inventory.length,
+      escapedEnemies,
+      maxEscapedEnemies: this.maxEscapedEnemies,
+      waveNumber: this.waveNumber,
+      maxInventory: DEFAULT_LOOT_CONFIG.maxInventory,
+    });
 
-    this.scoreValueText?.setText(`${this.registry.get('score') ?? 0} M Ft`);
-    this.inventoryValueText?.setText(`${this.inventory.length}/${DEFAULT_LOOT_CONFIG.maxInventory}  ${this.getInventoryIcons()}`);
-    this.escapedValueText?.setText(`${escapedEnemies}/${this.maxEscapedEnemies}`);
+    this.scoreValueText?.setText(hudValues.scoreText);
+    this.inventoryValueText?.setText(hudValues.inventoryText);
+    this.escapedValueText?.setText(hudValues.escapedText);
     this.updateEscapedEnemyWarningState(escapedEnemies);
-    this.waveValueText?.setText(`${this.waveNumber}. hullám`);
+    this.waveValueText?.setText(hudValues.waveText);
   }
 
   private updateEscapedEnemyWarningState(escapedEnemies: number): void {
-    if (!this.escapedValueText) {
-      return;
-    }
-
-    const setColor = 'setColor' in this.escapedValueText ? this.escapedValueText.setColor?.bind(this.escapedValueText) : undefined;
-    const setPosition =
-      'setPosition' in this.escapedValueText ? this.escapedValueText.setPosition?.bind(this.escapedValueText) : undefined;
-
-    if (escapedEnemies >= 8) {
-      setColor?.(ESCAPED_WARNING_COLOR);
-
-      if (!this.escapedValueWarningTween) {
-        this.escapedValueWarningTween = this.tweens.add({
-          targets: this.escapedValueText,
-          x: (this.escapedValueBaseX ?? this.escapedValueText.x) + 4,
-          duration: 55,
-          ease: 'Sine.easeInOut',
-          yoyo: true,
-          repeat: -1,
-        });
-      }
-
-      return;
-    }
-
-    setColor?.(HEADER_EMPHASIS_COLOR);
-    this.escapedValueWarningTween?.stop();
-    this.escapedValueWarningTween = undefined;
-
-    if (this.escapedValueBaseX !== undefined && this.escapedValueBaseY !== undefined) {
-      setPosition?.(this.escapedValueBaseX, this.escapedValueBaseY);
-    }
-  }
-
-  private getInventoryIcons(): string {
-    const filledSlots = '■'.repeat(this.inventory.length);
-    const emptySlots = '□'.repeat(Math.max(0, DEFAULT_LOOT_CONFIG.maxInventory - this.inventory.length));
-
-    return `${filledSlots}${emptySlots}`;
+    this.escapedValueWarningTween = syncEscapedEnemyWarningState({
+      escapedEnemies,
+      escapedValueText: this.escapedValueText,
+      escapedValueWarningTween: this.escapedValueWarningTween,
+      escapedValueBaseX: this.escapedValueBaseX,
+      escapedValueBaseY: this.escapedValueBaseY,
+      tweens: this.tweens,
+    }) as Phaser.Tweens.Tween | undefined;
   }
 
   private isPlayerInsideSanctuary(playerHitbox: CollisionRect): boolean {
