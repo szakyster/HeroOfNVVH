@@ -36,10 +36,23 @@ import { SCENE_KEYS } from './sceneKeys';
 const HEADER_EMPHASIS_COLOR = '#f4e6a2';
 const ESCAPED_WARNING_COLOR = '#ff4d4f';
 const DEPOSIT_POPUP_FONT_FAMILY = 'Bungee, Verdana, sans-serif';
-const HERO_SPRITE_KEY = 'hero-psz01';
-const HERO_RUN_SPRITE_KEY = 'hero-psz01-run';
-const HERO_RUN_ANIMATION_KEY = 'hero-psz01-run-loop';
 const ENEMY_SPRITE_KEYS = ['enemy-01', 'enemy-02', 'enemy-03', 'enemy-04'] as const;
+
+const HERO_ANIMATION_FRAME_RATE = 12;
+const HERO_SPRITE_DISPLAY_SIZE = 168;
+const HERO_ANIMATION_STATES = ['idle', 'run'] as const;
+const HERO_ANIMATION_DIRECTIONS = ['down', 'northeast', 'right', 'southeast', 'up'] as const;
+
+type HeroAnimationState = (typeof HERO_ANIMATION_STATES)[number];
+type HeroAnimationDirection = (typeof HERO_ANIMATION_DIRECTIONS)[number];
+
+function getHeroSheetKey(state: HeroAnimationState, direction: HeroAnimationDirection): string {
+  return `hero-psz01-${state}-${direction}`;
+}
+
+function getHeroAnimationKey(state: HeroAnimationState, direction: HeroAnimationDirection): string {
+  return `${getHeroSheetKey(state, direction)}-loop`;
+}
 
 type ActiveEnemy = {
   body: Phaser.GameObjects.Image | Phaser.GameObjects.Ellipse;
@@ -91,9 +104,7 @@ export class PlayScene extends Phaser.Scene {
 
   private readonly playerHitboxOffsetY = 27.1;
 
-  private readonly playerSpriteDisplayHeight = 128;
-
-  private readonly playerRunSpriteDisplayHeight = 168;
+  private readonly playerSpriteDisplaySize = HERO_SPRITE_DISPLAY_SIZE;
 
   private readonly enemyHitboxSize = { width: 42, height: 26 };
 
@@ -127,7 +138,7 @@ export class PlayScene extends Phaser.Scene {
 
   private sanctuaryRects: CollisionRect[] = [];
 
-  private playerBody?: Phaser.GameObjects.Sprite | Phaser.GameObjects.Image | Phaser.GameObjects.Ellipse;
+  private playerBody?: Phaser.GameObjects.Sprite | Phaser.GameObjects.Ellipse;
 
   private playerShadow?: Phaser.GameObjects.Ellipse;
 
@@ -188,6 +199,10 @@ export class PlayScene extends Phaser.Scene {
   private audioSystem?: AudioSystem;
 
   private facingDirection: FacingDirection = 'down';
+
+  private heroAnimationDirection: HeroAnimationDirection = 'down';
+
+  private heroAnimationFlipX = false;
 
   private attackRect: CollisionRect | null = null;
 
@@ -340,6 +355,8 @@ export class PlayScene extends Phaser.Scene {
     this.nextLootDepositAt = null;
     this.lastInventoryErrorAt = Number.NEGATIVE_INFINITY;
     this.facingDirection = 'down';
+    this.heroAnimationDirection = 'down';
+    this.heroAnimationFlipX = false;
     this.attackRect = null;
     this.attackVisualUntil = 0;
     this.lastAttackAt = Number.NEGATIVE_INFINITY;
@@ -526,14 +543,15 @@ export class PlayScene extends Phaser.Scene {
       const direction = new Phaser.Math.Vector2(horizontal, vertical).normalize();
       const distance = (this.playerSpeed * delta) / 1000;
 
-      this.updatePlayerMovementVisual(horizontal, true);
+      this.updateHeroAnimationDirection(horizontal, vertical);
+      this.updatePlayerMovementVisual(true);
 
       this.tryMovePlayerAlongGrid(direction.x * distance, 0);
       this.tryMovePlayerAlongGrid(0, direction.y * distance);
       return;
     }
 
-    this.updatePlayerMovementVisual(0, false);
+    this.updatePlayerMovementVisual(false);
   }
 
   private drawObstacleCells(level: LevelData): void {
@@ -926,85 +944,112 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private createHeroAnimations(): void {
-    if (!this.textures.exists(HERO_RUN_SPRITE_KEY) || this.anims.exists(HERO_RUN_ANIMATION_KEY)) {
-      return;
-    }
+    for (const state of HERO_ANIMATION_STATES) {
+      for (const direction of HERO_ANIMATION_DIRECTIONS) {
+        const sheetKey = getHeroSheetKey(state, direction);
+        const animationKey = getHeroAnimationKey(state, direction);
 
-    this.anims.create({
-      key: HERO_RUN_ANIMATION_KEY,
-      frames: this.anims.generateFrameNumbers(HERO_RUN_SPRITE_KEY, { start: 0, end: 15 }),
-      frameRate: 12,
-      repeat: -1,
-    });
+        if (!this.textures.exists(sheetKey) || this.anims.exists(animationKey)) {
+          continue;
+        }
+
+        this.anims.create({
+          key: animationKey,
+          frames: this.anims.generateFrameNumbers(sheetKey, { start: 0, end: 15 }),
+          frameRate: HERO_ANIMATION_FRAME_RATE,
+          repeat: -1,
+        });
+      }
+    }
   }
 
-  private createPlayerBody(): Phaser.GameObjects.Sprite | Phaser.GameObjects.Image | Phaser.GameObjects.Ellipse {
-    if (!this.textures.exists(HERO_SPRITE_KEY) && !this.textures.exists(HERO_RUN_SPRITE_KEY)) {
+  private createPlayerBody(): Phaser.GameObjects.Sprite | Phaser.GameObjects.Ellipse {
+    const initialTextureKey = getHeroSheetKey('idle', 'down');
+
+    if (!this.textures.exists(initialTextureKey)) {
       return this.add
         .ellipse(0, 0, 72, 90, 0xf4d35e, 1)
         .setStrokeStyle(2, 0x102a43, 1)
         .setDepth(3);
     }
 
-    const initialTextureKey = this.textures.exists(HERO_SPRITE_KEY) ? HERO_SPRITE_KEY : HERO_RUN_SPRITE_KEY;
-    const displaySize = this.getHeroDisplaySize(initialTextureKey);
-
     return this.add
       .sprite(0, 0, initialTextureKey)
-      .setDisplaySize(displaySize.width, displaySize.height)
+      .setDisplaySize(this.playerSpriteDisplaySize, this.playerSpriteDisplaySize)
       .setDepth(3);
   }
 
-  private getHeroDisplaySize(textureKey: string): { width: number; height: number } {
-    if (textureKey === HERO_RUN_SPRITE_KEY) {
-      return {
-        width: this.playerRunSpriteDisplayHeight,
-        height: this.playerRunSpriteDisplayHeight,
-      };
-    }
-
-    const sourceImage = this.textures.get(textureKey).getSourceImage();
-    const textureSource = Array.isArray(sourceImage) ? sourceImage[0] : sourceImage;
-    const textureWidth = textureSource?.width ?? this.playerSpriteDisplayHeight;
-    const textureHeight = textureSource?.height ?? this.playerSpriteDisplayHeight;
-    const displayWidth = textureHeight > 0 ? (this.playerSpriteDisplayHeight * textureWidth) / textureHeight : 72;
-
-    return {
-      width: displayWidth,
-      height: this.playerSpriteDisplayHeight,
-    };
-  }
-
-  private applyHeroDisplaySize(textureKey: string): void {
+  private applyHeroDisplaySize(): void {
     if (!this.playerBody || typeof this.playerBody.setDisplaySize !== 'function') {
       return;
     }
 
-    const displaySize = this.getHeroDisplaySize(textureKey);
-    this.playerBody.setDisplaySize(displaySize.width, displaySize.height);
+    this.playerBody.setDisplaySize(this.playerSpriteDisplaySize, this.playerSpriteDisplaySize);
   }
 
-  private updatePlayerMovementVisual(horizontal: number, isMoving: boolean): void {
+  private updateHeroAnimationDirection(horizontal: number, vertical: number): void {
+    if (horizontal < 0 && vertical < 0) {
+      this.heroAnimationDirection = 'northeast';
+      this.heroAnimationFlipX = true;
+      return;
+    }
+
+    if (horizontal > 0 && vertical < 0) {
+      this.heroAnimationDirection = 'northeast';
+      this.heroAnimationFlipX = false;
+      return;
+    }
+
+    if (horizontal < 0 && vertical > 0) {
+      this.heroAnimationDirection = 'southeast';
+      this.heroAnimationFlipX = true;
+      return;
+    }
+
+    if (horizontal > 0 && vertical > 0) {
+      this.heroAnimationDirection = 'southeast';
+      this.heroAnimationFlipX = false;
+      return;
+    }
+
+    if (horizontal < 0) {
+      this.heroAnimationDirection = 'right';
+      this.heroAnimationFlipX = true;
+      return;
+    }
+
+    if (horizontal > 0) {
+      this.heroAnimationDirection = 'right';
+      this.heroAnimationFlipX = false;
+      return;
+    }
+
+    if (vertical < 0) {
+      this.heroAnimationDirection = 'up';
+      this.heroAnimationFlipX = false;
+      return;
+    }
+
+    if (vertical > 0) {
+      this.heroAnimationDirection = 'down';
+      this.heroAnimationFlipX = false;
+    }
+  }
+
+  private updatePlayerMovementVisual(isMoving: boolean): void {
     if (!this.playerBody || !('play' in this.playerBody) || typeof this.playerBody.play !== 'function') {
       return;
     }
 
-    if (isMoving && this.anims.exists(HERO_RUN_ANIMATION_KEY)) {
-      this.applyHeroDisplaySize(HERO_RUN_SPRITE_KEY);
-      this.playerBody.play(HERO_RUN_ANIMATION_KEY, true);
+    const state: HeroAnimationState = isMoving ? 'run' : 'idle';
+    const animationKey = getHeroAnimationKey(state, this.heroAnimationDirection);
+
+    if (this.anims.exists(animationKey)) {
+      this.applyHeroDisplaySize();
+      this.playerBody.play(animationKey, true);
       if (typeof this.playerBody.setFlipX === 'function') {
-        this.playerBody.setFlipX(horizontal < 0);
+        this.playerBody.setFlipX(this.heroAnimationFlipX);
       }
-      return;
-    }
-
-    if (this.playerBody.anims?.isPlaying && typeof this.playerBody.stop === 'function') {
-      this.playerBody.stop();
-    }
-
-    if (typeof this.playerBody.setTexture === 'function' && this.textures.exists(HERO_SPRITE_KEY)) {
-      this.playerBody.setTexture(HERO_SPRITE_KEY);
-      this.applyHeroDisplaySize(HERO_SPRITE_KEY);
     }
   }
 
@@ -1164,7 +1209,12 @@ export class PlayScene extends Phaser.Scene {
       enemy.speed *= 0.6;
       if ('setTint' in enemy.body && typeof enemy.body.setTint === 'function') {
         enemy.body.setTint(0xf77f00);
-      } else {
+      } else if (
+        'setFillStyle' in enemy.body &&
+        typeof enemy.body.setFillStyle === 'function' &&
+        'setStrokeStyle' in enemy.body &&
+        typeof enemy.body.setStrokeStyle === 'function'
+      ) {
         enemy.body.setFillStyle(0xf77f00, 1);
         enemy.body.setStrokeStyle(2, 0x6a040f, 1);
       }

@@ -11,6 +11,19 @@ import { getAvailableLootAssets } from '../systems/LootAssets';
 import { getAvailableObstacleAssets } from '../systems/ObstacleAssets';
 import { SCENE_KEYS } from './sceneKeys';
 
+const HERO_SPRITE_SHEETS = [
+  { key: 'hero-psz01-idle-down', url: 'assets/sprites/PSZ01/idle_down.png' },
+  { key: 'hero-psz01-idle-northeast', url: 'assets/sprites/PSZ01/idle_northeast.png' },
+  { key: 'hero-psz01-idle-right', url: 'assets/sprites/PSZ01/idle_right.png' },
+  { key: 'hero-psz01-idle-southeast', url: 'assets/sprites/PSZ01/idle_southeast.png' },
+  { key: 'hero-psz01-idle-up', url: 'assets/sprites/PSZ01/idle_up.png' },
+  { key: 'hero-psz01-run-down', url: 'assets/sprites/PSZ01/run_down.png' },
+  { key: 'hero-psz01-run-northeast', url: 'assets/sprites/PSZ01/run_northeast.png' },
+  { key: 'hero-psz01-run-right', url: 'assets/sprites/PSZ01/run_right.png' },
+  { key: 'hero-psz01-run-southeast', url: 'assets/sprites/PSZ01/run_southeast.png' },
+  { key: 'hero-psz01-run-up', url: 'assets/sprites/PSZ01/run_up.png' },
+];
+
 const ENEMY_SPRITE_ASSETS = [
   { key: 'enemy-01', url: 'assets/sprites/enemy01.png' },
   { key: 'enemy-02', url: 'assets/sprites/enemy02.png' },
@@ -25,11 +38,13 @@ export class BootScene extends Phaser.Scene {
 
   preload(): void {
     preloadSceneBackgrounds(this);
-    this.load.image('hero-psz01', ['assets/sprites/PSZ01.png']);
-    this.load.spritesheet('hero-psz01-run', 'assets/sprites/PSZ01RunSheet.png', {
-      frameWidth: 128,
-      frameHeight: 128,
-    });
+
+    for (const heroSheet of HERO_SPRITE_SHEETS) {
+      this.load.spritesheet(heroSheet.key, heroSheet.url, {
+        frameWidth: 128,
+        frameHeight: 128,
+      });
+    }
 
     for (const enemySprite of ENEMY_SPRITE_ASSETS) {
       this.load.image(enemySprite.key, [enemySprite.url]);

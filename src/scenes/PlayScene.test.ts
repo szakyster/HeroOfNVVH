@@ -661,56 +661,52 @@ describe('PlayScene runtime reset', () => {
     const setDisplaySize = vi.fn();
     const scene = new PlayScene() as unknown as Record<string, unknown>;
 
+    scene.heroAnimationDirection = 'right';
+    scene.heroAnimationFlipX = true;
     scene.playerBody = { play, setFlipX, setDisplaySize };
     scene.anims = { exists: vi.fn(() => true) };
 
-    (scene.updatePlayerMovementVisual as (horizontal: number, isMoving: boolean) => void)(-1, true);
+    (scene.updatePlayerMovementVisual as (isMoving: boolean) => void)(true);
 
     expect(setDisplaySize).toHaveBeenCalledWith(168, 168);
-    expect(play).toHaveBeenCalledWith('hero-psz01-run-loop', true);
+    expect(play).toHaveBeenCalledWith('hero-psz01-run-right-loop', true);
     expect(setFlipX).toHaveBeenCalledWith(true);
   });
 
-  it('plays the run animation with default right-facing orientation for vertical-only movement', () => {
-    const play = vi.fn();
-    const setFlipX = vi.fn();
-    const setDisplaySize = vi.fn();
+  it('maps vertical movement to the up animation without mirroring', () => {
     const scene = new PlayScene() as unknown as Record<string, unknown>;
 
-    scene.playerBody = { play, setFlipX, setDisplaySize };
-    scene.anims = { exists: vi.fn(() => true) };
+    (scene.updateHeroAnimationDirection as (horizontal: number, vertical: number) => void)(0, -1);
 
-    (scene.updatePlayerMovementVisual as (horizontal: number, isMoving: boolean) => void)(0, true);
-
-    expect(setDisplaySize).toHaveBeenCalledWith(168, 168);
-    expect(play).toHaveBeenCalledWith('hero-psz01-run-loop', true);
-    expect(setFlipX).toHaveBeenCalledWith(false);
+    expect(scene.heroAnimationDirection).toBe('up');
+    expect(scene.heroAnimationFlipX).toBe(false);
   });
 
-  it('restores the idle texture when horizontal movement stops', () => {
+  it('maps upper-left movement to the mirrored northeast animation', () => {
+    const scene = new PlayScene() as unknown as Record<string, unknown>;
+
+    (scene.updateHeroAnimationDirection as (horizontal: number, vertical: number) => void)(-1, -1);
+
+    expect(scene.heroAnimationDirection).toBe('northeast');
+    expect(scene.heroAnimationFlipX).toBe(true);
+  });
+
+  it('plays the matching idle animation when movement stops', () => {
     const play = vi.fn();
-    const stop = vi.fn();
-    const setTexture = vi.fn();
     const setDisplaySize = vi.fn();
     const scene = new PlayScene() as unknown as Record<string, unknown>;
 
+    scene.heroAnimationDirection = 'southeast';
+    scene.heroAnimationFlipX = true;
     scene.playerBody = {
       play,
-      stop,
-      setTexture,
       setDisplaySize,
-      anims: { isPlaying: true },
     };
     scene.anims = { exists: vi.fn(() => true) };
-    scene.textures = {
-      exists: vi.fn((key: string) => key === 'hero-psz01'),
-      get: vi.fn(() => ({ getSourceImage: () => ({ width: 352, height: 428 }) })),
-    };
+    
+    (scene.updatePlayerMovementVisual as (isMoving: boolean) => void)(false);
 
-    (scene.updatePlayerMovementVisual as (horizontal: number, isMoving: boolean) => void)(0, false);
-
-    expect(stop).toHaveBeenCalledTimes(1);
-    expect(setTexture).toHaveBeenCalledWith('hero-psz01');
-    expect(setDisplaySize).toHaveBeenCalledWith(expect.any(Number), 128);
+    expect(play).toHaveBeenCalledWith('hero-psz01-idle-southeast-loop', true);
+    expect(setDisplaySize).toHaveBeenCalledWith(168, 168);
   });
 });
