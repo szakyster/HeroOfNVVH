@@ -62,9 +62,7 @@ describe('PlayScene runtime reset', () => {
     scene.sanctuaryRects = [{ x: 5, y: 6, width: 7, height: 8 }];
     scene.playerBody = { visible: true };
     scene.playerShadow = { visible: true };
-    scene.playerHitboxDebug = { clear: () => undefined };
     scene.enemyHitboxDebug = { clear: () => undefined };
-    scene.attackDebug = { clear: () => undefined };
     scene.scoreValueText = { setText: () => undefined };
     scene.inventoryValueText = { setText: () => undefined };
     scene.escapedValueText = { setText: () => undefined };
@@ -80,6 +78,11 @@ describe('PlayScene runtime reset', () => {
     scene.nextLootDepositAt = 1200;
     scene.lastInventoryErrorAt = 400;
     scene.facingDirection = 'left';
+    scene.heroAnimationDirection = 'right';
+    scene.heroAnimationFlipX = true;
+    scene.isAttackAnimating = true;
+    scene.attackAnimationReleaseAt = 900;
+    scene.attackAnimationEndAt = 1400;
     scene.attackRect = { x: 10, y: 10, width: 20, height: 20 };
     scene.attackVisualUntil = 700;
     scene.lastAttackAt = 650;
@@ -94,9 +97,7 @@ describe('PlayScene runtime reset', () => {
     expect(scene.sanctuaryRects).toEqual([]);
     expect(scene.playerBody).toBeUndefined();
     expect(scene.playerShadow).toBeUndefined();
-    expect(scene.playerHitboxDebug).toBeUndefined();
     expect(scene.enemyHitboxDebug).toBeUndefined();
-    expect(scene.attackDebug).toBeUndefined();
     expect(scene.scoreValueText).toBeUndefined();
     expect(scene.inventoryValueText).toBeUndefined();
     expect(scene.escapedValueText).toBeUndefined();
@@ -112,6 +113,11 @@ describe('PlayScene runtime reset', () => {
     expect(scene.nextLootDepositAt).toBeNull();
     expect(scene.lastInventoryErrorAt).toBe(Number.NEGATIVE_INFINITY);
     expect(scene.facingDirection).toBe('down');
+    expect(scene.heroAnimationDirection).toBe('down');
+    expect(scene.heroAnimationFlipX).toBe(false);
+    expect(scene.isAttackAnimating).toBe(false);
+    expect(scene.attackAnimationReleaseAt).toBe(0);
+    expect(scene.attackAnimationEndAt).toBe(0);
     expect(scene.attackRect).toBeNull();
     expect(scene.attackVisualUntil).toBe(0);
     expect(scene.lastAttackAt).toBe(Number.NEGATIVE_INFINITY);
@@ -579,8 +585,7 @@ describe('PlayScene runtime reset', () => {
     expect(scene.activeLoots).toEqual([]);
   });
 
-  it('spawns the player at sanctuary and updates visibility and hitbox rendering', () => {
-    const renderPlayerHitbox = vi.fn();
+  it('spawns the player at sanctuary and updates visibility', () => {
     const playerBody = {
       setPosition: vi.fn().mockReturnThis(),
       setVisible: vi.fn().mockReturnThis(),
@@ -596,7 +601,6 @@ describe('PlayScene runtime reset', () => {
     scene.gridSystem = {
       cellCenter: vi.fn(() => ({ x: 320, y: 240 })),
     };
-    scene.renderPlayerHitbox = renderPlayerHitbox;
 
     (scene.spawnPlayer as (level: Record<string, unknown>) => void)({
       sanctuaryZone: [{ x: 3, y: 4 }],
@@ -607,11 +611,9 @@ describe('PlayScene runtime reset', () => {
     expect(playerBody.setVisible).toHaveBeenCalledWith(true);
     expect(playerShadow.setPosition).toHaveBeenCalledWith(320, 270);
     expect(playerShadow.setVisible).toHaveBeenCalledWith(true);
-    expect(renderPlayerHitbox).toHaveBeenCalledTimes(1);
   });
 
   it('moves the player along the grid only when the next position is valid and unobstructed', () => {
-    const renderPlayerHitbox = vi.fn();
     const playerBody = {
       x: 100,
       y: 120,
@@ -639,7 +641,6 @@ describe('PlayScene runtime reset', () => {
     scene.gridSystem = { moveAlongSurface };
     scene.collisionProvider = { collidesWithAny };
     scene.isInsidePlayArea = isInsidePlayArea;
-    scene.renderPlayerHitbox = renderPlayerHitbox;
     scene.obstacleRects = [{ x: 0, y: 0, width: 10, height: 10 }];
 
     (scene.tryMovePlayerAlongGrid as (dx: number, dy: number) => void)(10, 0);
@@ -652,7 +653,6 @@ describe('PlayScene runtime reset', () => {
     expect(playerBody.setPosition).toHaveBeenCalledTimes(1);
     expect(playerBody.setPosition).toHaveBeenCalledWith(220, 240);
     expect(playerShadow.setPosition).toHaveBeenCalledWith(220, 294);
-    expect(renderPlayerHitbox).toHaveBeenCalledTimes(1);
   });
 
   it('plays the shared run animation and flips the hero sprite for left movement', () => {
@@ -708,5 +708,141 @@ describe('PlayScene runtime reset', () => {
 
     expect(play).toHaveBeenCalledWith('hero-psz01-idle-southeast-loop', true);
     expect(setDisplaySize).toHaveBeenCalledWith(168, 168);
+  });
+
+  it('starts the punch animation with mirrored right frames for left attacks', () => {
+    const play = vi.fn();
+    const setFlipX = vi.fn();
+    const setDisplaySize = vi.fn();
+    const playSfx = vi.fn();
+    let delayedImpact: (() => void) | undefined;
+    const scene = new PlayScene() as unknown as Record<string, unknown>;
+
+    scene.playerBody = { x: 320, y: 216, play, setFlipX, setDisplaySize };
+    scene.playerShadow = { x: 320, y: 270 };
+    scene.time = {
+      now: 1000,
+      delayedCall: vi.fn((delay: number, callback: () => void) => {
+        expect(delay).toBeCloseTo(83.333, 2);
+        delayedImpact = callback;
+      }),
+    };
+    scene.audioSystem = { playSfx };
+    scene.facingDirection = 'left';
+    scene.anims = { exists: vi.fn(() => true) };
+    scene.activeEnemies = [];
+
+    (scene.performAttack as () => void)();
+
+    expect(playSfx).toHaveBeenCalledWith('sfx-attack');
+    expect(play).toHaveBeenCalledWith('hero-psz01-punch-right-loop', false);
+    expect(setFlipX).toHaveBeenCalledWith(true);
+    expect(setDisplaySize).toHaveBeenCalledWith(168, 168);
+    expect(scene.isAttackAnimating).toBe(true);
+    expect(scene.attackAnimationReleaseAt).toBeCloseTo(1583.333, 2);
+    expect(scene.attackAnimationEndAt).toBeCloseTo(2166.667, 2);
+    expect(scene.attackVisualUntil).toBeCloseTo(1203.333, 2);
+    expect(scene.attackRect).toBeNull();
+
+    delayedImpact?.();
+
+    expect(scene.attackRect).not.toBeNull();
+  });
+
+  it('blocks movement while the punch animation is still locked', () => {
+    const scene = new PlayScene() as unknown as Record<string, unknown>;
+
+    scene.isGameOver = false;
+    scene.playerBody = { visible: true, x: 320, y: 216 };
+    scene.playerShadow = { x: 320, y: 270 };
+    scene.gridSystem = {};
+    scene.playerHitboxDebug = {};
+    scene.renderPlayerHitbox = vi.fn();
+    scene.updateEnemies = vi.fn();
+    scene.updateLoots = vi.fn();
+    scene.renderEnemyHitboxes = vi.fn();
+    scene.renderAttackEffect = vi.fn();
+    scene.tryMovePlayerAlongGrid = vi.fn();
+    scene.updatePlayerMovementVisual = vi.fn();
+    scene.cursors = {
+      left: { isDown: true },
+      right: { isDown: false },
+      up: { isDown: false },
+      down: { isDown: false },
+    };
+    scene.time = { now: 1200 };
+    scene.isAttackAnimating = true;
+    scene.attackAnimationReleaseAt = 1300;
+    scene.attackAnimationEndAt = 2000;
+
+    (scene.update as (_time: number, delta: number) => void)(0, 16);
+
+    expect(scene.tryMovePlayerAlongGrid).not.toHaveBeenCalled();
+    expect(scene.updatePlayerMovementVisual).not.toHaveBeenCalled();
+  });
+
+  it('switches from punch to run after the release frame when movement is held', () => {
+    const scene = new PlayScene() as unknown as Record<string, unknown>;
+
+    scene.isGameOver = false;
+    scene.playerBody = { visible: true, x: 320, y: 216 };
+    scene.playerShadow = { x: 320, y: 270 };
+    scene.gridSystem = {};
+    scene.playerHitboxDebug = {};
+    scene.renderPlayerHitbox = vi.fn();
+    scene.updateEnemies = vi.fn();
+    scene.updateLoots = vi.fn();
+    scene.renderEnemyHitboxes = vi.fn();
+    scene.renderAttackEffect = vi.fn();
+    scene.tryMovePlayerAlongGrid = vi.fn();
+    scene.updatePlayerMovementVisual = vi.fn();
+    scene.cursors = {
+      left: { isDown: true },
+      right: { isDown: false },
+      up: { isDown: false },
+      down: { isDown: false },
+    };
+    scene.time = { now: 1400 };
+    scene.isAttackAnimating = true;
+    scene.attackAnimationReleaseAt = 1300;
+    scene.attackAnimationEndAt = 2000;
+
+    (scene.update as (_time: number, delta: number) => void)(0, 100);
+
+    expect(scene.isAttackAnimating).toBe(false);
+    expect(scene.updatePlayerMovementVisual).toHaveBeenCalledWith(true);
+    expect(scene.tryMovePlayerAlongGrid).toHaveBeenNthCalledWith(1, -22, 0);
+    expect(scene.tryMovePlayerAlongGrid).toHaveBeenNthCalledWith(2, 0, 0);
+  });
+
+  it('returns to idle when the punch animation ends without follow-up input', () => {
+    const scene = new PlayScene() as unknown as Record<string, unknown>;
+
+    scene.isGameOver = false;
+    scene.playerBody = { visible: true, x: 320, y: 216 };
+    scene.playerShadow = { x: 320, y: 270 };
+    scene.gridSystem = {};
+    scene.playerHitboxDebug = {};
+    scene.renderPlayerHitbox = vi.fn();
+    scene.updateEnemies = vi.fn();
+    scene.updateLoots = vi.fn();
+    scene.renderEnemyHitboxes = vi.fn();
+    scene.renderAttackEffect = vi.fn();
+    scene.updatePlayerMovementVisual = vi.fn();
+    scene.cursors = {
+      left: { isDown: false },
+      right: { isDown: false },
+      up: { isDown: false },
+      down: { isDown: false },
+    };
+    scene.time = { now: 2400 };
+    scene.isAttackAnimating = true;
+    scene.attackAnimationReleaseAt = 1300;
+    scene.attackAnimationEndAt = 2000;
+
+    (scene.update as (_time: number, delta: number) => void)(0, 16);
+
+    expect(scene.isAttackAnimating).toBe(false);
+    expect(scene.updatePlayerMovementVisual).toHaveBeenCalledWith(false);
   });
 });

@@ -40,11 +40,23 @@ const ENEMY_SPRITE_KEYS = ['enemy-01', 'enemy-02', 'enemy-03', 'enemy-04'] as co
 
 const HERO_ANIMATION_FRAME_RATE = 12;
 const HERO_SPRITE_DISPLAY_SIZE = 168;
-const HERO_ANIMATION_STATES = ['idle', 'run'] as const;
-const HERO_ANIMATION_DIRECTIONS = ['down', 'northeast', 'right', 'southeast', 'up'] as const;
+const HERO_SHEET_FRAME_COUNT = 16;
+const HERO_PUNCH_START_FRAME = 2;
+const HERO_ATTACK_RELEASE_FRAME = 8;
+const HERO_ATTACK_HIT_DELAY_MS = (1 / HERO_ANIMATION_FRAME_RATE) * 1000;
+const HERO_ATTACK_MIN_DURATION_MS =
+  ((HERO_ATTACK_RELEASE_FRAME - HERO_PUNCH_START_FRAME + 1) / HERO_ANIMATION_FRAME_RATE) * 1000;
+const HERO_ATTACK_ANIMATION_DURATION_MS =
+  ((HERO_SHEET_FRAME_COUNT - HERO_PUNCH_START_FRAME) / HERO_ANIMATION_FRAME_RATE) * 1000;
+const HERO_LOOP_ANIMATION_STATES = ['idle', 'run'] as const;
+const HERO_LOOP_ANIMATION_DIRECTIONS = ['down', 'northeast', 'right', 'southeast', 'up'] as const;
+const HERO_PUNCH_ANIMATION_DIRECTIONS = ['down', 'right', 'up'] as const;
 
-type HeroAnimationState = (typeof HERO_ANIMATION_STATES)[number];
-type HeroAnimationDirection = (typeof HERO_ANIMATION_DIRECTIONS)[number];
+type HeroLoopAnimationState = (typeof HERO_LOOP_ANIMATION_STATES)[number];
+type HeroLoopAnimationDirection = (typeof HERO_LOOP_ANIMATION_DIRECTIONS)[number];
+type HeroPunchAnimationDirection = (typeof HERO_PUNCH_ANIMATION_DIRECTIONS)[number];
+type HeroAnimationState = HeroLoopAnimationState | 'punch';
+type HeroAnimationDirection = HeroLoopAnimationDirection | HeroPunchAnimationDirection;
 
 function getHeroSheetKey(state: HeroAnimationState, direction: HeroAnimationDirection): string {
   return `hero-psz01-${state}-${direction}`;
@@ -142,11 +154,7 @@ export class PlayScene extends Phaser.Scene {
 
   private playerShadow?: Phaser.GameObjects.Ellipse;
 
-  private playerHitboxDebug?: Phaser.GameObjects.Graphics;
-
   private enemyHitboxDebug?: Phaser.GameObjects.Graphics;
-
-  private attackDebug?: Phaser.GameObjects.Graphics;
 
   private scoreValueText?: Phaser.GameObjects.Text;
 
@@ -200,9 +208,15 @@ export class PlayScene extends Phaser.Scene {
 
   private facingDirection: FacingDirection = 'down';
 
-  private heroAnimationDirection: HeroAnimationDirection = 'down';
+  private heroAnimationDirection: HeroLoopAnimationDirection = 'down';
 
   private heroAnimationFlipX = false;
+
+  private isAttackAnimating = false;
+
+  private attackAnimationReleaseAt = 0;
+
+  private attackAnimationEndAt = 0;
 
   private attackRect: CollisionRect | null = null;
 
@@ -294,10 +308,7 @@ export class PlayScene extends Phaser.Scene {
     this.createHeroAnimations();
     this.playerBody = this.createPlayerBody();
     // DEBUG: Keep hitboxes visible during development. Remove before release build.
-    this.playerHitboxDebug = this.add.graphics().setDepth(4);
-    // DEBUG: Keep hitboxes visible during development. Remove before release build.
     this.enemyHitboxDebug = this.add.graphics().setDepth(4);
-    this.attackDebug = this.add.graphics().setDepth(4.5);
     this.playerShadow.setVisible(false);
     this.playerBody.setVisible(false);
 
@@ -333,9 +344,7 @@ export class PlayScene extends Phaser.Scene {
     this.sanctuaryRects = [];
     this.playerBody = undefined;
     this.playerShadow = undefined;
-    this.playerHitboxDebug = undefined;
     this.enemyHitboxDebug = undefined;
-    this.attackDebug = undefined;
     this.scoreValueText = undefined;
     this.inventoryValueText = undefined;
     this.escapedValueText = undefined;
@@ -357,6 +366,9 @@ export class PlayScene extends Phaser.Scene {
     this.facingDirection = 'down';
     this.heroAnimationDirection = 'down';
     this.heroAnimationFlipX = false;
+    this.isAttackAnimating = false;
+    this.attackAnimationReleaseAt = 0;
+    this.attackAnimationEndAt = 0;
     this.attackRect = null;
     this.attackVisualUntil = 0;
     this.lastAttackAt = Number.NEGATIVE_INFINITY;
@@ -501,7 +513,7 @@ export class PlayScene extends Phaser.Scene {
       return;
     }
 
-    if (!this.playerBody || !this.playerShadow || !this.gridSystem || !this.playerHitboxDebug) {
+    if (!this.playerBody || !this.playerShadow || !this.gridSystem) {
       return;
     }
 
@@ -509,15 +521,12 @@ export class PlayScene extends Phaser.Scene {
       return;
     }
 
-    this.renderPlayerHitbox();
+    const now = this.time.now;
+
     this.updateEnemies(delta);
     this.updateLoots();
     this.renderEnemyHitboxes();
-    this.renderAttackEffect();
-
-    if (this.keySpace && Phaser.Input.Keyboard.JustDown(this.keySpace)) {
-      this.performAttack();
-    }
+    this.updateAttackState(now);
 
     let horizontal = 0;
     let vertical = 0;
@@ -539,7 +548,46 @@ export class PlayScene extends Phaser.Scene {
       this.facingDirection = 'down';
     }
 
-    if (horizontal !== 0 || vertical !== 0) {
+    const wantsToMove = horizontal !== 0 || vertical !== 0;
+    const wantsToAttack = Boolean(this.keySpace && Phaser.Input.Keyboard.JustDown(this.keySpace));
+
+    if (this.isAttackAnimating) {
+      if (wantsToAttack && this.canInterruptAttackAnimation(now)) {
+        this.performAttack();
+        return;
+      }
+
+      if (!this.canInterruptAttackAnimation(now)) {
+        return;
+      }
+
+      if (wantsToMove) {
+        const direction = new Phaser.Math.Vector2(horizontal, vertical).normalize();
+        const distance = (this.playerSpeed * delta) / 1000;
+
+        this.stopAttackAnimation();
+        this.updateHeroAnimationDirection(horizontal, vertical);
+        this.updatePlayerMovementVisual(true);
+
+        this.tryMovePlayerAlongGrid(direction.x * distance, 0);
+        this.tryMovePlayerAlongGrid(0, direction.y * distance);
+        return;
+      }
+
+      if (now >= this.attackAnimationEndAt) {
+        this.stopAttackAnimation();
+        this.updatePlayerMovementVisual(false);
+      }
+
+      return;
+    }
+
+    if (wantsToAttack) {
+      this.performAttack();
+      return;
+    }
+
+    if (wantsToMove) {
       const direction = new Phaser.Math.Vector2(horizontal, vertical).normalize();
       const distance = (this.playerSpeed * delta) / 1000;
 
@@ -806,7 +854,6 @@ export class PlayScene extends Phaser.Scene {
     this.playerBody.setPosition(center.x, center.y - 24).setVisible(true);
     this.playerShadow.setPosition(center.x, center.y + 30).setVisible(true);
     this.updatePlayerRenderDepth();
-    this.renderPlayerHitbox();
   }
 
   private startEnemyWave(level: LevelData): void {
@@ -944,22 +991,14 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private createHeroAnimations(): void {
-    for (const state of HERO_ANIMATION_STATES) {
-      for (const direction of HERO_ANIMATION_DIRECTIONS) {
-        const sheetKey = getHeroSheetKey(state, direction);
-        const animationKey = getHeroAnimationKey(state, direction);
-
-        if (!this.textures.exists(sheetKey) || this.anims.exists(animationKey)) {
-          continue;
-        }
-
-        this.anims.create({
-          key: animationKey,
-          frames: this.anims.generateFrameNumbers(sheetKey, { start: 0, end: 15 }),
-          frameRate: HERO_ANIMATION_FRAME_RATE,
-          repeat: -1,
-        });
+    for (const state of HERO_LOOP_ANIMATION_STATES) {
+      for (const direction of HERO_LOOP_ANIMATION_DIRECTIONS) {
+        this.createHeroAnimation(state, direction, -1);
       }
+    }
+
+    for (const direction of HERO_PUNCH_ANIMATION_DIRECTIONS) {
+      this.createHeroAnimation('punch', direction, 0);
     }
   }
 
@@ -1037,20 +1076,9 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private updatePlayerMovementVisual(isMoving: boolean): void {
-    if (!this.playerBody || !('play' in this.playerBody) || typeof this.playerBody.play !== 'function') {
-      return;
-    }
+    const state: HeroLoopAnimationState = isMoving ? 'run' : 'idle';
 
-    const state: HeroAnimationState = isMoving ? 'run' : 'idle';
-    const animationKey = getHeroAnimationKey(state, this.heroAnimationDirection);
-
-    if (this.anims.exists(animationKey)) {
-      this.applyHeroDisplaySize();
-      this.playerBody.play(animationKey, true);
-      if (typeof this.playerBody.setFlipX === 'function') {
-        this.playerBody.setFlipX(this.heroAnimationFlipX);
-      }
-    }
+    this.playHeroAnimation(state, this.heroAnimationDirection, this.heroAnimationFlipX, true);
   }
 
   private createEnemyBody(
@@ -1109,7 +1137,6 @@ export class PlayScene extends Phaser.Scene {
     this.playerBody.setPosition(nextPosition.x, nextPosition.y);
     this.playerShadow.setPosition(nextPosition.x, nextPosition.y + 54);
     this.updatePlayerRenderDepth();
-    this.renderPlayerHitbox();
   }
 
   private getGameplayDepth(worldY: number): number {
@@ -1147,6 +1174,82 @@ export class PlayScene extends Phaser.Scene {
     }
   }
 
+  private createHeroAnimation(state: HeroAnimationState, direction: HeroAnimationDirection, repeat: number): void {
+    const sheetKey = getHeroSheetKey(state, direction);
+    const animationKey = getHeroAnimationKey(state, direction);
+
+    if (!this.textures.exists(sheetKey) || this.anims.exists(animationKey)) {
+      return;
+    }
+
+    this.anims.create({
+      key: animationKey,
+      frames: this.anims.generateFrameNumbers(sheetKey, {
+        start: state === 'punch' ? HERO_PUNCH_START_FRAME : 0,
+        end: HERO_SHEET_FRAME_COUNT - 1,
+      }),
+      frameRate: HERO_ANIMATION_FRAME_RATE,
+      repeat,
+    });
+  }
+
+  private playHeroAnimation(
+    state: HeroAnimationState,
+    direction: HeroAnimationDirection,
+    flipX: boolean,
+    ignoreIfPlaying: boolean,
+  ): void {
+    if (!this.playerBody || !('play' in this.playerBody) || typeof this.playerBody.play !== 'function') {
+      return;
+    }
+
+    const animationKey = getHeroAnimationKey(state, direction);
+    if (!this.anims.exists(animationKey)) {
+      return;
+    }
+
+    this.applyHeroDisplaySize();
+    this.playerBody.play(animationKey, ignoreIfPlaying);
+    if (typeof this.playerBody.setFlipX === 'function') {
+      this.playerBody.setFlipX(flipX);
+    }
+  }
+
+  private getHeroPunchAnimationDirection(): { direction: HeroPunchAnimationDirection; flipX: boolean } {
+    if (this.facingDirection === 'left') {
+      this.heroAnimationDirection = 'right';
+      this.heroAnimationFlipX = true;
+      return { direction: 'right', flipX: true };
+    }
+
+    if (this.facingDirection === 'right') {
+      this.heroAnimationDirection = 'right';
+      this.heroAnimationFlipX = false;
+      return { direction: 'right', flipX: false };
+    }
+
+    if (this.facingDirection === 'up') {
+      this.heroAnimationDirection = 'up';
+      this.heroAnimationFlipX = false;
+      return { direction: 'up', flipX: false };
+    }
+
+    this.heroAnimationDirection = 'down';
+    this.heroAnimationFlipX = false;
+    return { direction: 'down', flipX: false };
+  }
+
+  private canInterruptAttackAnimation(now: number): boolean {
+    return !this.isAttackAnimating || now >= this.attackAnimationReleaseAt;
+  }
+
+  private stopAttackAnimation(): void {
+    this.isAttackAnimating = false;
+    this.attackAnimationReleaseAt = 0;
+    this.attackAnimationEndAt = 0;
+    this.setPlayerAttackFeedback(false);
+  }
+
   private performAttack(): void {
     if (!this.playerBody || !this.playerShadow) {
       return;
@@ -1159,16 +1262,23 @@ export class PlayScene extends Phaser.Scene {
 
     this.audioSystem?.playSfx(AUDIO_KEYS.ATTACK);
     this.lastAttackAt = now;
-    this.attackVisualUntil = now + this.attackDurationMs;
-    this.attackRect = createAttackRect(this.getPlayerHitbox(this.playerBody.x, this.playerBody.y), this.facingDirection);
+    this.isAttackAnimating = true;
+    this.attackAnimationReleaseAt = now + HERO_ATTACK_MIN_DURATION_MS;
+    this.attackAnimationEndAt = now + HERO_ATTACK_ANIMATION_DURATION_MS;
+    this.attackRect = null;
+    this.attackVisualUntil = now + HERO_ATTACK_HIT_DELAY_MS + this.attackDurationMs;
 
+    const punchAnimation = this.getHeroPunchAnimationDirection();
+    this.playHeroAnimation('punch', punchAnimation.direction, punchAnimation.flipX, false);
     this.setPlayerAttackFeedback(true);
-    this.time.delayedCall(this.attackDurationMs, () => {
-      this.attackRect = null;
-      this.setPlayerAttackFeedback(false);
-    });
 
-    this.checkAttackHits();
+    const attackHitbox = this.getPlayerHitbox(this.playerBody.x, this.playerBody.y);
+    const attackDirection = this.facingDirection;
+
+    this.time.delayedCall(HERO_ATTACK_HIT_DELAY_MS, () => {
+      this.attackRect = createAttackRect(attackHitbox, attackDirection);
+      this.checkAttackHits();
+    });
   }
 
   private checkAttackHits(): void {
@@ -1310,20 +1420,12 @@ export class PlayScene extends Phaser.Scene {
     ].every((corner) => this.gridSystem!.containsPoint(corner));
   }
 
-  private renderPlayerHitbox(): void {
-    if (!this.playerBody || !this.playerHitboxDebug) {
+  private setPlayerAttackFeedback(isAttacking: boolean): void {
+    if (!this.playerBody) {
       return;
     }
 
-    // DEBUG: Temporary hitbox overlay for gameplay tuning. Remove before release.
-    const hitbox = this.getPlayerHitbox(this.playerBody.x, this.playerBody.y);
-    this.playerHitboxDebug.clear();
-    this.playerHitboxDebug.lineStyle(2, 0xff4d6d, 0.95);
-    this.playerHitboxDebug.strokeRect(hitbox.x, hitbox.y, hitbox.width, hitbox.height);
-  }
-
-  private setPlayerAttackFeedback(isAttacking: boolean): void {
-    if (!this.playerBody) {
+    if ('play' in this.playerBody && typeof this.playerBody.play === 'function') {
       return;
     }
 
@@ -1528,21 +1630,13 @@ export class PlayScene extends Phaser.Scene {
     }
   }
 
-  private renderAttackEffect(): void {
-    if (!this.attackDebug) {
+  private updateAttackState(now: number): void {
+    if (now <= this.attackVisualUntil) {
       return;
     }
 
-    this.attackDebug.clear();
-
-    if (!this.attackRect || this.time.now > this.attackVisualUntil) {
-      return;
-    }
-
-    this.attackDebug.fillStyle(0xffbe0b, 0.2);
-    this.attackDebug.lineStyle(2, 0xffbe0b, 0.85);
-    this.attackDebug.fillRect(this.attackRect.x, this.attackRect.y, this.attackRect.width, this.attackRect.height);
-    this.attackDebug.strokeRect(this.attackRect.x, this.attackRect.y, this.attackRect.width, this.attackRect.height);
+    this.attackRect = null;
+    this.setPlayerAttackFeedback(false);
   }
 
   private handleEnemyEscaped(): void {
