@@ -1,6 +1,5 @@
 import Phaser from 'phaser';
 import type { LevelData } from '../types/level';
-import type { GridCell } from '../types/level';
 import { GridSystem } from '../systems/GridSystem';
 import type { CollisionRect } from '../systems/ICollisionProvider';
 import { AStarPathfinder } from '../systems/AStarPathfinder';
@@ -38,6 +37,20 @@ import {
   syncEscapedEnemyWarningState,
 } from './PlaySceneHud';
 import {
+  ActiveEnemy,
+  buildEnemyPath,
+  ENEMY_ANIMATION_DIRECTIONS,
+  ENEMY_ANIMATION_FRAME_RATE,
+  ENEMY_SHEET_FRAME_COUNT,
+  getEnemyAnimationKey,
+  getEnemyMovementVisualState,
+  getEnemySheetKey,
+  isEnemyInjuryActive,
+  startEnemyInjuryAnimation,
+  updateActiveEnemies,
+  type EnemyAnimationState,
+} from './PlaySceneEnemies';
+import {
   drawHrsImages,
   drawObstacleCells,
   drawSanctuaryZone,
@@ -45,22 +58,6 @@ import {
 } from './PlaySceneWorld';
 import { SCENE_KEYS } from './sceneKeys';
 const DEPOSIT_POPUP_FONT_FAMILY = 'Bungee, Verdana, sans-serif';
-const ENEMY_ANIMATION_FRAME_RATE = 12;
-const ENEMY_SHEET_FRAME_COUNT = 16;
-const ENEMY_INJURY_ANIMATION_DURATION_MS = (ENEMY_SHEET_FRAME_COUNT / ENEMY_ANIMATION_FRAME_RATE) * 1000;
-const ENEMY_ANIMATION_DIRECTIONS = ['down', 'right', 'up'] as const;
-
-type EnemyAnimationState = 'walk' | 'injured';
-type EnemyAnimationDirection = (typeof ENEMY_ANIMATION_DIRECTIONS)[number];
-
-function getEnemySheetKey(state: EnemyAnimationState, direction: EnemyAnimationDirection): string {
-  return `enemy-01-${state}-${direction}`;
-}
-
-function getEnemyAnimationKey(state: EnemyAnimationState, direction: EnemyAnimationDirection): string {
-  return `${getEnemySheetKey(state, direction)}-${state === 'walk' ? 'loop' : 'once'}`;
-}
-
 const HERO_ANIMATION_FRAME_RATE = 12;
 const HERO_SPRITE_DISPLAY_SIZE = 168;
 const HERO_SHEET_FRAME_COUNT = 16;
@@ -88,21 +85,6 @@ function getHeroSheetKey(state: HeroAnimationState, direction: HeroAnimationDire
 function getHeroAnimationKey(state: HeroAnimationState, direction: HeroAnimationDirection): string {
   return `${getHeroSheetKey(state, direction)}-loop`;
 }
-
-type ActiveEnemy = {
-  body: Phaser.GameObjects.Sprite | Phaser.GameObjects.Ellipse;
-  shadow: Phaser.GameObjects.Ellipse;
-  path: GridCell[];
-  pathIndex: number;
-  speed: number;
-  hitsTaken: number;
-  lootDropped: boolean;
-  escaped: boolean;
-  defeated: boolean;
-  animationDirection: EnemyAnimationDirection;
-  animationFlipX: boolean;
-  injuryAnimationUntil: number | null;
-};
 
 type ActiveLoot = {
   id: string;
@@ -592,7 +574,13 @@ export class PlayScene extends Phaser.Scene {
       return false;
     }
 
-    const path = this.buildEnemyPath(level, spawnCell, goalCell);
+    const path = buildEnemyPath({
+      level,
+      spawnCell,
+      goalCell,
+      gridSystem: this.gridSystem,
+      pathfinder: this.pathfinder,
+    });
 
     if (!path || path.length === 0) {
       return false;
@@ -621,74 +609,6 @@ export class PlayScene extends Phaser.Scene {
     this.updateEnemyRenderDepth(enemy);
 
     return true;
-  }
-
-  private buildEnemyPath(level: LevelData, spawnCell: GridCell, goalCell: GridCell): GridCell[] | null {
-    const waypoint = this.pickEnemyWaypoint(level, spawnCell, goalCell);
-
-    if (waypoint) {
-      const obstacleCells = getLevelObstacleCells(level);
-      const waypointPath = this.pathfinder.findPathViaWaypoint(
-        level.grid.width,
-        level.grid.height,
-        spawnCell,
-        waypoint,
-        goalCell,
-        obstacleCells,
-      );
-
-      if (waypointPath && waypointPath.length > 0) {
-        return waypointPath;
-      }
-    }
-    return this.pathfinder.findPath(level.grid.width, level.grid.height, spawnCell, goalCell, getLevelObstacleCells(level));
-  }
-
-  private pickEnemyWaypoint(level: LevelData, spawnCell: GridCell, goalCell: GridCell): GridCell | null {
-    const obstacleCells = getLevelObstacleCells(level);
-    const blockedKeys = new Set(obstacleCells.map((cell) => this.cellKey(cell)));
-    const candidates = this.gridSystem
-      ?.allCells()
-      .filter((cell) => {
-        const candidateKey = this.cellKey(cell);
-
-        if (blockedKeys.has(candidateKey)) {
-          return false;
-        }
-
-        if (candidateKey === this.cellKey(spawnCell) || candidateKey === this.cellKey(goalCell)) {
-          return false;
-        }
-
-        return this.manhattanDistance(cell, spawnCell) >= 2 && this.manhattanDistance(cell, goalCell) >= 2;
-      });
-
-    if (!candidates || candidates.length === 0) {
-      return null;
-    }
-
-    const shuffledCandidates = Phaser.Utils.Array.Shuffle([...candidates]);
-
-    for (const candidate of shuffledCandidates) {
-      const waypointPath = this.pathfinder.findPathViaWaypoint(
-        level.grid.width,
-        level.grid.height,
-        spawnCell,
-        candidate,
-        goalCell,
-        obstacleCells,
-      );
-
-      if (waypointPath && waypointPath.length > 0) {
-        return candidate;
-      }
-    }
-
-    return null;
-  }
-
-  private manhattanDistance(a: GridCell, b: GridCell): number {
-    return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
   }
 
   private createHeroAnimations(): void {
@@ -825,18 +745,9 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private updateEnemyMovementVisual(enemy: ActiveEnemy, deltaX: number, deltaY: number): void {
-    let direction: EnemyAnimationDirection = 'down';
-    let flipX = false;
-
-    if (Math.abs(deltaX) >= Math.abs(deltaY)) {
-      direction = 'right';
-      flipX = deltaX < 0;
-    } else if (deltaY < 0) {
-      direction = 'up';
-    }
-
-    enemy.animationDirection = direction;
-    enemy.animationFlipX = flipX;
+    const nextVisualState = getEnemyMovementVisualState(deltaX, deltaY);
+    enemy.animationDirection = nextVisualState.direction;
+    enemy.animationFlipX = nextVisualState.flipX;
     this.playEnemyAnimation(enemy, 'walk', true);
   }
 
@@ -854,28 +765,6 @@ export class PlayScene extends Phaser.Scene {
     if (typeof enemy.body.setFlipX === 'function') {
       enemy.body.setFlipX(enemy.animationFlipX);
     }
-  }
-
-  private startEnemyInjuryAnimation(enemy: ActiveEnemy): void {
-    enemy.injuryAnimationUntil = (this.time?.now ?? 0) + ENEMY_INJURY_ANIMATION_DURATION_MS;
-    this.playEnemyAnimation(enemy, 'injured', false);
-  }
-
-  private isEnemyInjuryActive(enemy: ActiveEnemy, now: number): boolean {
-    if (enemy.injuryAnimationUntil === null) {
-      return false;
-    }
-
-    if (now < enemy.injuryAnimationUntil) {
-      return true;
-    }
-
-    enemy.injuryAnimationUntil = null;
-    return false;
-  }
-
-  private cellKey(cell: GridCell): string {
-    return `${cell.x},${cell.y}`;
   }
 
   private tryMovePlayerAlongGrid(deltaX: number, deltaY: number): void {
@@ -1073,7 +962,7 @@ export class PlayScene extends Phaser.Scene {
         hitAny = true;
       }
 
-      if (this.isEnemyInjuryActive(enemy, now)) {
+      if (isEnemyInjuryActive(enemy, now)) {
         this.defeatEnemy(enemy);
         continue;
       }
@@ -1086,7 +975,8 @@ export class PlayScene extends Phaser.Scene {
         enemy.lootDropped = true;
       }
 
-      this.startEnemyInjuryAnimation(enemy);
+      startEnemyInjuryAnimation(enemy, now);
+      this.playEnemyAnimation(enemy, 'injured', false);
     }
   }
 
@@ -1333,52 +1223,16 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private updateEnemies(delta: number): void {
-    if (!this.gridSystem || this.activeEnemies.length === 0 || this.isGameOver) {
-      return;
-    }
-
-    const now = this.time?.now ?? 0;
-
-    for (const enemy of this.activeEnemies) {
-      if (enemy.escaped || enemy.defeated) {
-        continue;
-      }
-
-      if (this.isEnemyInjuryActive(enemy, now)) {
-        continue;
-      }
-
-      const deltaDistance = (delta / 1000) * enemy.speed;
-
-      const nextGridCell = enemy.path[enemy.pathIndex + 1];
-      if (!nextGridCell) {
-        enemy.escaped = true;
-        enemy.body.destroy();
-        enemy.shadow.destroy();
-        this.handleEnemyEscaped();
-        continue;
-      }
-
-      const target = this.gridSystem.cellCenter(nextGridCell);
-      const targetX = target.x;
-      const targetY = target.y - 2;
-      const vector = new Phaser.Math.Vector2(targetX - enemy.body.x, targetY - enemy.body.y);
-      this.updateEnemyMovementVisual(enemy, vector.x, vector.y);
-
-      if (vector.length() <= deltaDistance) {
-        enemy.body.setPosition(targetX, targetY);
-        enemy.shadow.setPosition(target.x, target.y + 16);
-        enemy.pathIndex += 1;
-      } else {
-        vector.normalize().scale(deltaDistance);
-        enemy.body.setPosition(enemy.body.x + vector.x, enemy.body.y + vector.y);
-        enemy.shadow.setPosition(enemy.body.x, enemy.body.y + 18);
-      }
-
-      this.updateEnemyRenderDepth(enemy);
-    }
-
-    this.activeEnemies = this.activeEnemies.filter((enemy) => !enemy.escaped && !enemy.defeated);
+    this.activeEnemies = updateActiveEnemies({
+      activeEnemies: this.activeEnemies,
+      delta,
+      now: this.time?.now ?? 0,
+      isGameOver: this.isGameOver,
+      gridSystem: this.gridSystem,
+      onEnemyEscaped: () => this.handleEnemyEscaped(),
+      updateEnemyMovementVisual: (enemy, deltaX, deltaY) => this.updateEnemyMovementVisual(enemy, deltaX, deltaY),
+      updateEnemyRenderDepth: (enemy) => this.updateEnemyRenderDepth(enemy),
+    });
   }
 
   private renderEnemyHitboxes(): void {
