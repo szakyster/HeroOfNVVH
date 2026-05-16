@@ -1,5 +1,19 @@
 import type { LevelData, GridCell } from '../../types/level';
-import type { ActiveEnemy } from './PlaySceneEnemies';
+import type { ActiveEnemy, EnemySpriteVariant } from './PlaySceneEnemies';
+
+export function getEnemySpriteVariant(spawnedEnemies: number): EnemySpriteVariant {
+  if (spawnedEnemies % 2 === 1) {
+    return {
+      walkPrefix: 'enemy-02',
+      injuredPrefix: 'enemy-02',
+    };
+  }
+
+  return {
+    walkPrefix: 'enemy-01',
+    injuredPrefix: 'enemy-01',
+  };
+}
 
 export function getPlayerSpawnCell(level: LevelData): GridCell | null {
   return level.sanctuaryZone[0] ?? level.spawnZones[0]?.cells[0] ?? null;
@@ -51,15 +65,17 @@ type CreateActiveEnemyArgs = {
   path: GridCell[];
   enemySpeed: number;
   speedRoll: number;
+  spriteVariant: EnemySpriteVariant;
 };
 
-export function createActiveEnemy({ body, shadow, path, enemySpeed, speedRoll }: CreateActiveEnemyArgs): ActiveEnemy {
+export function createActiveEnemy({ body, shadow, path, enemySpeed, speedRoll, spriteVariant }: CreateActiveEnemyArgs): ActiveEnemy {
   return {
     body,
     shadow,
     path,
     pathIndex: 0,
     speed: enemySpeed * speedRoll,
+    spriteVariant,
     health: 2,
     lootDropped: false,
     escaped: false,

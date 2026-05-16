@@ -4,6 +4,7 @@ import {
   createActiveEnemy,
   getEnemySpawnCells,
   getEnemySpriteDisplayWidth,
+  getEnemySpriteVariant,
   getEnemyWaveSpawnDelays,
   getPlayerSpawnCell,
 } from './PlaySceneSpawning';
@@ -49,9 +50,15 @@ describe('PlaySceneSpawning helpers', () => {
     expect(getEnemySpriteDisplayWidth(undefined, 98)).toBe(98);
   });
 
+  it('alternates the enemy sprite variant across both walk and injured sheets', () => {
+    expect(getEnemySpriteVariant(0)).toEqual({ walkPrefix: 'enemy-01', injuredPrefix: 'enemy-01' });
+    expect(getEnemySpriteVariant(1)).toEqual({ walkPrefix: 'enemy-02', injuredPrefix: 'enemy-02' });
+  });
+
   it('creates a fresh active enemy state with default flags', () => {
     const body = { x: 100, y: 120 } as never;
     const shadow = { x: 100, y: 136 } as never;
+    const spriteVariant = { walkPrefix: 'enemy-02', injuredPrefix: 'enemy-02' };
 
     expect(
       createActiveEnemy({
@@ -60,12 +67,14 @@ describe('PlaySceneSpawning helpers', () => {
         path: [{ x: 0, y: 0 }, { x: 1, y: 0 }],
         enemySpeed: 88,
         speedRoll: 1.25,
+        spriteVariant,
       }),
     ).toMatchObject({
       body,
       shadow,
       pathIndex: 0,
       speed: 110,
+      spriteVariant,
       health: 2,
       lootDropped: false,
       escaped: false,

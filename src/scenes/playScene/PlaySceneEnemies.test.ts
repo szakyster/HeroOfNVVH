@@ -89,6 +89,7 @@ function createEnemyFixture(overrides: Partial<ActiveEnemy> = {}): ActiveEnemy {
     path: [{ x: 0, y: 0 }, { x: 1, y: 0 }],
     pathIndex: 0,
     speed: 88,
+    spriteVariant: { walkPrefix: 'enemy-01', injuredPrefix: 'enemy-01' },
     health: 2,
     lootDropped: false,
     escaped: false,
@@ -104,6 +105,12 @@ describe('PlaySceneEnemies helpers', () => {
   it('builds enemy animation keys consistently', () => {
     expect(getEnemySheetKey('walk', 'down')).toBe('enemy-01-walk-down');
     expect(getEnemyAnimationKey('injured', 'up')).toBe('enemy-01-injured-up-once');
+    expect(getEnemySheetKey('walk', 'right', { walkPrefix: 'enemy-02', injuredPrefix: 'enemy-02' })).toBe(
+      'enemy-02-walk-right',
+    );
+    expect(getEnemyAnimationKey('injured', 'up', { walkPrefix: 'enemy-02', injuredPrefix: 'enemy-02' })).toBe(
+      'enemy-02-injured-up-once',
+    );
   });
 
   it('derives enemy movement direction and flip from velocity', () => {

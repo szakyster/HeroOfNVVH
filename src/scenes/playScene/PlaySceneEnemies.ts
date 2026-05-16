@@ -8,9 +8,17 @@ export const ENEMY_ANIMATION_FRAME_RATE = 12;
 export const ENEMY_SHEET_FRAME_COUNT = 16;
 export const ENEMY_INJURY_ANIMATION_DURATION_MS = (ENEMY_SHEET_FRAME_COUNT / ENEMY_ANIMATION_FRAME_RATE) * 1000;
 export const ENEMY_ANIMATION_DIRECTIONS = ['down', 'right', 'up'] as const;
+export const DEFAULT_ENEMY_SPRITE_VARIANT = {
+  walkPrefix: 'enemy-01',
+  injuredPrefix: 'enemy-01',
+} as const;
 
 export type EnemyAnimationState = 'walk' | 'injured';
 export type EnemyAnimationDirection = (typeof ENEMY_ANIMATION_DIRECTIONS)[number];
+export type EnemySpriteVariant = {
+  walkPrefix: string;
+  injuredPrefix: string;
+};
 
 export type ActiveEnemy = {
   body: Phaser.GameObjects.Sprite | Phaser.GameObjects.Ellipse;
@@ -18,6 +26,7 @@ export type ActiveEnemy = {
   path: GridCell[];
   pathIndex: number;
   speed: number;
+  spriteVariant: EnemySpriteVariant;
   health: number;
   lootDropped: boolean;
   escaped: boolean;
@@ -53,12 +62,22 @@ type UpdateActiveEnemiesArgs = {
   updateEnemyRenderDepth: (enemy: ActiveEnemy) => void;
 };
 
-export function getEnemySheetKey(state: EnemyAnimationState, direction: EnemyAnimationDirection): string {
-  return `enemy-01-${state}-${direction}`;
+export function getEnemySheetKey(
+  state: EnemyAnimationState,
+  direction: EnemyAnimationDirection,
+  spriteVariant: EnemySpriteVariant = DEFAULT_ENEMY_SPRITE_VARIANT,
+): string {
+  const prefix = state === 'walk' ? spriteVariant.walkPrefix : spriteVariant.injuredPrefix;
+
+  return `${prefix}-${state}-${direction}`;
 }
 
-export function getEnemyAnimationKey(state: EnemyAnimationState, direction: EnemyAnimationDirection): string {
-  return `${getEnemySheetKey(state, direction)}-${state === 'walk' ? 'loop' : 'once'}`;
+export function getEnemyAnimationKey(
+  state: EnemyAnimationState,
+  direction: EnemyAnimationDirection,
+  spriteVariant: EnemySpriteVariant = DEFAULT_ENEMY_SPRITE_VARIANT,
+): string {
+  return `${getEnemySheetKey(state, direction, spriteVariant)}-${state === 'walk' ? 'loop' : 'once'}`;
 }
 
 export function getEnemyMovementVisualState(deltaX: number, deltaY: number): MovementVisualState {
