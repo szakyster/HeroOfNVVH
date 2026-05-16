@@ -27,11 +27,13 @@ const HERO_SPRITE_SHEETS = [
   { key: 'hero-psz01-run-up', url: 'assets/sprites/PSZ01/run_up.png' },
 ];
 
-const ENEMY_SPRITE_ASSETS = [
-  { key: 'enemy-01', url: 'assets/sprites/enemy01.png' },
-  { key: 'enemy-02', url: 'assets/sprites/enemy02.png' },
-  { key: 'enemy-03', url: 'assets/sprites/enemy03.png' },
-  { key: 'enemy-04', url: 'assets/sprites/enemy04.png' },
+const ENEMY_SPRITE_SHEETS = [
+  { key: 'enemy-01-walk-down', url: 'assets/sprites/enemy01/walk_down.png' },
+  { key: 'enemy-01-walk-right', url: 'assets/sprites/enemy01/walk_right.png' },
+  { key: 'enemy-01-walk-up', url: 'assets/sprites/enemy01/walk_up.png' },
+  { key: 'enemy-01-injured-down', url: 'assets/sprites/enemy01/injured_down.png' },
+  { key: 'enemy-01-injured-right', url: 'assets/sprites/enemy01/injured_right.png' },
+  { key: 'enemy-01-injured-up', url: 'assets/sprites/enemy01/injured_up.png' },
 ];
 
 export class BootScene extends Phaser.Scene {
@@ -49,8 +51,11 @@ export class BootScene extends Phaser.Scene {
       });
     }
 
-    for (const enemySprite of ENEMY_SPRITE_ASSETS) {
-      this.load.image(enemySprite.key, [enemySprite.url]);
+    for (const enemySheet of ENEMY_SPRITE_SHEETS) {
+      this.load.spritesheet(enemySheet.key, enemySheet.url, {
+        frameWidth: 128,
+        frameHeight: 128,
+      });
     }
 
     for (const obstacleAsset of getAvailableObstacleAssets()) {
