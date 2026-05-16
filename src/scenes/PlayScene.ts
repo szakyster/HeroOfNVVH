@@ -35,7 +35,7 @@ import {
   syncAudioToggleTexts,
   formatPlaySceneHudValues,
   syncEscapedEnemyWarningState,
-} from './PlaySceneHud';
+} from './playScene/PlaySceneHud';
 import {
   ActiveEnemy,
   buildEnemyPath,
@@ -49,7 +49,7 @@ import {
   startEnemyInjuryAnimation,
   updateActiveEnemies,
   type EnemyAnimationState,
-} from './PlaySceneEnemies';
+} from './playScene/PlaySceneEnemies';
 import {
   type ActiveLoot,
   getDepositPopupColor,
@@ -58,13 +58,13 @@ import {
   processInventoryDeposit,
   shouldPlayInventoryError,
   type InventoryItem,
-} from './PlaySceneLoot';
+} from './playScene/PlaySceneLoot';
 import {
   drawHrsImages,
   drawObstacleCells,
   drawSanctuaryZone,
   getLevelObstacleCells,
-} from './PlaySceneWorld';
+} from './playScene/PlaySceneWorld';
 import { SCENE_KEYS } from './sceneKeys';
 const DEPOSIT_POPUP_FONT_FAMILY = 'Bungee, Verdana, sans-serif';
 const HERO_ANIMATION_FRAME_RATE = 12;

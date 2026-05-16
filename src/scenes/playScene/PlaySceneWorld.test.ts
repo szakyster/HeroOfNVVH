@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { GridSystem } from '../systems/GridSystem';
-import type { LevelData } from '../types/level';
+import { GridSystem } from '../../systems/GridSystem';
+import type { LevelData } from '../../types/level';
 import {
   getFittedSpriteDisplaySize,
   getGridCellsBounds,

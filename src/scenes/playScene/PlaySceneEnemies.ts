@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
-import type { LevelData, GridCell } from '../types/level';
-import type { GridSystem } from '../systems/GridSystem';
-import type { AStarPathfinder } from '../systems/AStarPathfinder';
+import type { LevelData, GridCell } from '../../types/level';
+import type { GridSystem } from '../../systems/GridSystem';
+import type { AStarPathfinder } from '../../systems/AStarPathfinder';
 import { getLevelObstacleCells } from './PlaySceneWorld';
 
 export const ENEMY_ANIMATION_FRAME_RATE = 12;

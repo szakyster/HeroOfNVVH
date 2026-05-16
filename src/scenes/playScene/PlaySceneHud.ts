@@ -1,7 +1,7 @@
 import type Phaser from 'phaser';
-import type { LevelData } from '../types/level';
-import { DEFAULT_LOOT_CONFIG } from '../systems/LootSystem';
-import { HEADLINE_FONT_FAMILY } from '../utils/typography';
+import type { LevelData } from '../../types/level';
+import { DEFAULT_LOOT_CONFIG } from '../../systems/LootSystem';
+import { HEADLINE_FONT_FAMILY } from '../../utils/typography';
 
 export const HEADER_EMPHASIS_COLOR = '#f4e6a2';
 export const ESCAPED_WARNING_COLOR = '#ff4d4f';

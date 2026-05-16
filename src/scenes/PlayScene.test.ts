@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
-import { getGridCellsBounds, getHrsPlacement, getObstacleDisplaySize } from './PlaySceneWorld';
-import { getDepositPopupColor, getLootHitbox, isPlayerInsideSanctuary } from './PlaySceneLoot';
+import { getGridCellsBounds, getHrsPlacement, getObstacleDisplaySize } from './playScene/PlaySceneWorld';
+import { getDepositPopupColor, getLootHitbox, isPlayerInsideSanctuary } from './playScene/PlaySceneLoot';
 
 vi.mock('phaser', () => {
   class MockScene {

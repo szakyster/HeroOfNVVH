@@ -1,7 +1,7 @@
-import type { LevelData, GridCell, HrsImageSide } from '../types/level';
-import { GridSystem, type ScreenRect } from '../systems/GridSystem';
-import { getHrsAssetKey } from '../systems/HrsAssets';
-import { getObstacleAssetKey, hasObstacleAsset } from '../systems/ObstacleAssets';
+import type { LevelData, GridCell, HrsImageSide } from '../../types/level';
+import { GridSystem, type ScreenRect } from '../../systems/GridSystem';
+import { getHrsAssetKey } from '../../systems/HrsAssets';
+import { getObstacleAssetKey, hasObstacleAsset } from '../../systems/ObstacleAssets';
 
 type TextureSourceLike = {
   width?: number;

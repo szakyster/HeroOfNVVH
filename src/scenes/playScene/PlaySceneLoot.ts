@@ -1,5 +1,5 @@
 import type Phaser from 'phaser';
-import type { CollisionRect } from '../systems/ICollisionProvider';
+import type { CollisionRect } from '../../systems/ICollisionProvider';
 
 export type LootValue = 10 | 20 | 50;
 

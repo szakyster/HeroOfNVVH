@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
-import type { LevelData } from '../types/level';
+import type { LevelData } from '../../types/level';
 
 vi.mock('phaser', () => {
   class Vector2 {
