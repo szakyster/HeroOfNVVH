@@ -23,7 +23,6 @@ import {
   isInventoryFull,
   isLootExpired,
 } from '../systems/LootSystem';
-import { DEFAULT_LOOT_IMAGE_NAME, getLootAssetKey } from '../systems/LootAssets';
 import { addSceneBackground } from '../systems/SceneBackgrounds';
 import { SimpleCollisionProvider } from '../systems/SimpleCollisionProvider';
 import {
@@ -87,13 +86,18 @@ import {
   getPlayerSpawnCell,
 } from './playScene/PlaySceneSpawning';
 import {
+  destroyEnemyVisuals,
+  destroyLootAndFilter,
+  showDepositPopup,
+  spawnDroppedLoot,
+} from './playScene/PlaySceneEffects';
+import {
   drawHrsImages,
   drawObstacleCells,
   drawSanctuaryZone,
   getLevelObstacleCells,
 } from './playScene/PlaySceneWorld';
 import { SCENE_KEYS } from './sceneKeys';
-const DEPOSIT_POPUP_FONT_FAMILY = 'Bungee, Verdana, sans-serif';
 const HERO_ANIMATION_FRAME_RATE = 12;
 const HERO_SPRITE_DISPLAY_SIZE = 168;
 const HERO_SHEET_FRAME_COUNT = 16;
@@ -941,8 +945,7 @@ export class PlayScene extends Phaser.Scene {
   private defeatEnemy(enemy: ActiveEnemy): void {
     enemy.defeated = true;
     this.audioSystem?.playSfx(Phaser.Utils.Array.GetRandom([...DEATH_AUDIO_KEYS]));
-    enemy.body.destroy();
-    enemy.shadow.destroy();
+    destroyEnemyVisuals(enemy);
     this.refreshLevelInfo();
   }
 
@@ -953,24 +956,14 @@ export class PlayScene extends Phaser.Scene {
 
     const template = this.currentLevel.lootSpawns[this.droppedLootCount % this.currentLevel.lootSpawns.length];
     this.droppedLootCount += 1;
-    const lootTextureKey = getLootAssetKey(template.image ?? DEFAULT_LOOT_IMAGE_NAME);
-
-    const shadow = this.add
-      .ellipse(enemy.body.x, enemy.body.y + 18, 24, 10, 0x111111, 0.22)
-      .setDepth(2.1);
-    const body = this.add
-      .image(enemy.body.x, enemy.body.y + 4, lootTextureKey)
-      .setDisplaySize(this.lootSize.width, this.lootSize.height)
-      .setDepth(2.6);
-
-    const loot: ActiveLoot = {
-      id: `${template.id}-${this.droppedLootCount}`,
-      type: template.type,
-      value: template.value,
-      body,
-      shadow,
+    const loot: ActiveLoot = spawnDroppedLoot({
+      add: this.add as never,
+      template,
+      droppedLootCount: this.droppedLootCount,
+      enemyPosition: { x: enemy.body.x, y: enemy.body.y },
+      lootSize: this.lootSize,
       createdAt: this.time.now,
-    };
+    });
 
     this.activeLoots.push(loot);
     this.updateLootRenderDepth(loot);
@@ -1086,40 +1079,17 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private showDepositValuePopup(value: number): void {
-    if (value <= 0 || !this.playerBody) {
-      return;
-    }
-
-    const fontSize = value >= 50 ? '39px' : value >= 20 ? '34px' : '29px';
-    const color = getDepositPopupColor(value);
-    const popup = this.add
-      .text(this.playerBody.x, this.playerBody.y - 78, `+${value} M Ft`, {
-        fontFamily: DEPOSIT_POPUP_FONT_FAMILY,
-        fontSize,
-        color,
-        fontStyle: 'bold',
-        stroke: '#102a43',
-        strokeThickness: 5,
-      })
-      .setOrigin(0.5)
-      .setDepth(8);
-
-    this.tweens.add({
-      targets: popup,
-      y: popup.y - 54,
-      alpha: 0,
-      duration: 975,
-      ease: 'Cubic.easeOut',
-      onComplete: () => {
-        popup.destroy();
-      },
+    showDepositPopup({
+      add: this.add as never,
+      tweens: this.tweens as never,
+      playerPosition: this.playerBody ? { x: this.playerBody.x, y: this.playerBody.y } : undefined,
+      value,
+      fontFamily: 'Bungee, Verdana, sans-serif',
     });
   }
 
   private destroyLoot(loot: ActiveLoot, refreshInfo = true): void {
-    loot.body.destroy();
-    loot.shadow.destroy();
-    this.activeLoots = this.activeLoots.filter((activeLoot) => activeLoot.id !== loot.id);
+    this.activeLoots = destroyLootAndFilter(this.activeLoots, loot);
 
     if (refreshInfo) {
       this.refreshLevelInfo();
