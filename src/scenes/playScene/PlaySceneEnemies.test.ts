@@ -111,6 +111,12 @@ describe('PlaySceneEnemies helpers', () => {
     expect(getEnemyAnimationKey('injured', 'up', { walkPrefix: 'enemy-02', injuredPrefix: 'enemy-02' })).toBe(
       'enemy-02-injured-up-once',
     );
+    expect(getEnemySheetKey('walk', 'down', { walkPrefix: 'enemy-03', injuredPrefix: 'enemy-03' })).toBe(
+      'enemy-03-walk-down',
+    );
+    expect(getEnemyAnimationKey('injured', 'right', { walkPrefix: 'enemy-03', injuredPrefix: 'enemy-03' })).toBe(
+      'enemy-03-injured-right-once',
+    );
   });
 
   it('derives enemy movement direction and flip from velocity', () => {

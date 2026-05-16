@@ -2,17 +2,13 @@ import type { LevelData, GridCell } from '../../types/level';
 import type { ActiveEnemy, EnemySpriteVariant } from './PlaySceneEnemies';
 
 export function getEnemySpriteVariant(spawnedEnemies: number): EnemySpriteVariant {
-  if (spawnedEnemies % 2 === 1) {
-    return {
-      walkPrefix: 'enemy-02',
-      injuredPrefix: 'enemy-02',
-    };
-  }
+  const spriteVariants: EnemySpriteVariant[] = [
+    { walkPrefix: 'enemy-01', injuredPrefix: 'enemy-01' },
+    { walkPrefix: 'enemy-02', injuredPrefix: 'enemy-02' },
+    { walkPrefix: 'enemy-03', injuredPrefix: 'enemy-03' },
+  ];
 
-  return {
-    walkPrefix: 'enemy-01',
-    injuredPrefix: 'enemy-01',
-  };
+  return spriteVariants[spawnedEnemies % spriteVariants.length] ?? spriteVariants[0];
 }
 
 export function getPlayerSpawnCell(level: LevelData): GridCell | null {

@@ -50,9 +50,11 @@ describe('PlaySceneSpawning helpers', () => {
     expect(getEnemySpriteDisplayWidth(undefined, 98)).toBe(98);
   });
 
-  it('alternates the enemy sprite variant across both walk and injured sheets', () => {
+  it('cycles enemy sprite variants across all available enemy sheets', () => {
     expect(getEnemySpriteVariant(0)).toEqual({ walkPrefix: 'enemy-01', injuredPrefix: 'enemy-01' });
     expect(getEnemySpriteVariant(1)).toEqual({ walkPrefix: 'enemy-02', injuredPrefix: 'enemy-02' });
+    expect(getEnemySpriteVariant(2)).toEqual({ walkPrefix: 'enemy-03', injuredPrefix: 'enemy-03' });
+    expect(getEnemySpriteVariant(3)).toEqual({ walkPrefix: 'enemy-01', injuredPrefix: 'enemy-01' });
   });
 
   it('creates a fresh active enemy state with default flags', () => {

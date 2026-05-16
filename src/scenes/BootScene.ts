@@ -34,12 +34,18 @@ const ENEMY_SPRITE_SHEETS = [
   { key: 'enemy-02-walk-down', url: 'assets/sprites/enemy02/walk_down.png' },
   { key: 'enemy-02-walk-right', url: 'assets/sprites/enemy02/walk_right.png' },
   { key: 'enemy-02-walk-up', url: 'assets/sprites/enemy02/walk_up.png' },
+  { key: 'enemy-03-walk-down', url: 'assets/sprites/enemy03/walk_down.png' },
+  { key: 'enemy-03-walk-right', url: 'assets/sprites/enemy03/walk_right.png' },
+  { key: 'enemy-03-walk-up', url: 'assets/sprites/enemy03/walk_up.png' },
   { key: 'enemy-01-injured-down', url: 'assets/sprites/enemy01/injured_down.png' },
   { key: 'enemy-01-injured-right', url: 'assets/sprites/enemy01/injured_right.png' },
   { key: 'enemy-01-injured-up', url: 'assets/sprites/enemy01/injured_up.png' },
   { key: 'enemy-02-injured-down', url: 'assets/sprites/enemy02/injured_down.png' },
   { key: 'enemy-02-injured-right', url: 'assets/sprites/enemy02/injured_right.png' },
   { key: 'enemy-02-injured-up', url: 'assets/sprites/enemy02/injured_up.png' },
+  { key: 'enemy-03-injured-down', url: 'assets/sprites/enemy03/injured_down.png' },
+  { key: 'enemy-03-injured-right', url: 'assets/sprites/enemy03/injured_right.png' },
+  { key: 'enemy-03-injured-up', url: 'assets/sprites/enemy03/injured_up.png' },
 ];
 
 export class BootScene extends Phaser.Scene {
