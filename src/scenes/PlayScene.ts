@@ -72,6 +72,13 @@ import {
   shouldFinishAttackAnimation,
 } from './playScene/PlayScenePlayer';
 import {
+  createActiveEnemy,
+  getEnemySpawnCells,
+  getEnemySpriteDisplayWidth,
+  getEnemyWaveSpawnDelays,
+  getPlayerSpawnCell,
+} from './playScene/PlaySceneSpawning';
+import {
   drawHrsImages,
   drawObstacleCells,
   drawSanctuaryZone,
@@ -538,7 +545,7 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private spawnPlayer(level: LevelData): void {
-    const startCell = level.sanctuaryZone[0] ?? level.spawnZones[0]?.cells[0];
+    const startCell = getPlayerSpawnCell(level);
     if (!startCell || !this.playerBody || !this.playerShadow) {
       return;
     }
@@ -556,10 +563,8 @@ export class PlayScene extends Phaser.Scene {
     this.spawnedEnemies = 0;
     this.refreshEnemyInfo(count);
 
-    for (let i = 0; i < count; i++) {
-      const baseDelay = (i / count) * (waveWindow-1500);
-      const randomExtra = Math.random() * 1000;
-      this.time.delayedCall(baseDelay + randomExtra, () => {
+    for (const delay of getEnemyWaveSpawnDelays(count, waveWindow, () => Math.random() * 1000)) {
+      this.time.delayedCall(delay, () => {
         const spawned = this.spawnEnemy(level);
         if (spawned) {
           this.spawnedEnemies += 1;
@@ -579,12 +584,13 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private spawnEnemy(level: LevelData): boolean {
-    const spawnCell = level.spawnZones[0]?.cells[this.spawnedEnemies % (level.spawnZones[0]?.cells.length ?? 1)];
-    const goalCell = level.goalZones[0]?.cells[0];
+    const spawnCells = getEnemySpawnCells(level, this.spawnedEnemies);
 
-    if (!spawnCell || !goalCell || !this.gridSystem) {
+    if (!spawnCells || !this.gridSystem) {
       return false;
     }
+
+    const { spawnCell, goalCell } = spawnCells;
 
     const path = buildEnemyPath({
       level,
@@ -602,20 +608,13 @@ export class PlayScene extends Phaser.Scene {
     const shadow = this.add.ellipse(startPoint.x, startPoint.y + 16, 42, 16, 0x111111, 0.28).setDepth(2);
     const body = this.createEnemyBody(startPoint.x, startPoint.y - 2);
 
-    const enemy: ActiveEnemy = {
+    const enemy: ActiveEnemy = createActiveEnemy({
       body,
       shadow,
       path,
-      pathIndex: 0,
-      speed: this.enemySpeed * Phaser.Math.FloatBetween(0.75, 1.25),
-      hitsTaken: 0,
-      lootDropped: false,
-      escaped: false,
-      defeated: false,
-      animationDirection: 'down',
-      animationFlipX: false,
-      injuryAnimationUntil: null,
-    };
+      enemySpeed: this.enemySpeed,
+      speedRoll: Phaser.Math.FloatBetween(0.75, 1.25),
+    });
 
     this.activeEnemies.push(enemy);
     this.updateEnemyRenderDepth(enemy);
@@ -746,9 +745,7 @@ export class PlayScene extends Phaser.Scene {
 
     const sourceImage = this.textures.get(initialTextureKey).getSourceImage();
     const textureSource = Array.isArray(sourceImage) ? sourceImage[0] : sourceImage;
-    const textureWidth = textureSource?.width ? textureSource.width / 4 : this.enemySpriteDisplayHeight;
-    const textureHeight = textureSource?.height ? textureSource.height / 4 : this.enemySpriteDisplayHeight;
-    const displayWidth = textureHeight > 0 ? (this.enemySpriteDisplayHeight * textureWidth) / textureHeight : 42;
+    const displayWidth = getEnemySpriteDisplayWidth(textureSource, this.enemySpriteDisplayHeight);
 
     return this.add
       .sprite(x, y, initialTextureKey)
