@@ -123,7 +123,7 @@
       "id": 21,
       "name": "UI Graphic Skin",
       "description": "Replace placeholder UI visuals with final graphic elements for HUD panels, backpack display, menu buttons, leaderboard panels, and other interface chrome. Reference: Vizualitas.md section 10 and JatekLeiras.md section 12",
-      "status": "ready"
+      "status": "in progress"
     },
     {
       "id": 22,
