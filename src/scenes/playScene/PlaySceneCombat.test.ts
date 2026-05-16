@@ -20,7 +20,7 @@ function createEnemyFixture(overrides: Partial<ActiveEnemy> = {}): ActiveEnemy {
     path: [],
     pathIndex: 0,
     speed: 88,
-    hitsTaken: 0,
+    health: 2,
     lootDropped: false,
     escaped: false,
     defeated: false,
@@ -111,13 +111,15 @@ describe('PlaySceneCombat helpers', () => {
     expect(onEnemyKnockback).toHaveBeenCalledWith(enemy);
     expect(onEnemyLootDrop).toHaveBeenCalledWith(enemy);
     expect(onEnemyInjured).toHaveBeenCalledWith(enemy, 1000);
-    expect(enemy.hitsTaken).toBe(1);
+    expect(enemy.health).toBe(1);
     expect(enemy.lootDropped).toBe(true);
   });
 
-  it('resolves a hit during injury as an immediate defeat', () => {
-    const enemy = createEnemyFixture({ hitsTaken: 1, lootDropped: true, injuryAnimationUntil: 1800 });
+  it('defeats the enemy when its health reaches zero even during injury', () => {
+    const enemy = createEnemyFixture({ health: 1, lootDropped: true, injuryAnimationUntil: 1800 });
     const onEnemyDefeated = vi.fn();
+    const onEnemyKnockback = vi.fn();
+    const onEnemyInjured = vi.fn();
 
     resolveAttackHits({
       attackRect: { x: 0, y: 0, width: 64, height: 64 },
@@ -128,11 +130,39 @@ describe('PlaySceneCombat helpers', () => {
       isEnemyInjuryActive: () => true,
       onFirstHit: vi.fn(),
       onEnemyDefeated,
-      onEnemyKnockback: vi.fn(),
+      onEnemyKnockback,
       onEnemyLootDrop: vi.fn(),
-      onEnemyInjured: vi.fn(),
+      onEnemyInjured,
     });
 
     expect(onEnemyDefeated).toHaveBeenCalledWith(enemy);
+    expect(enemy.health).toBe(0);
+    expect(onEnemyKnockback).not.toHaveBeenCalled();
+    expect(onEnemyInjured).not.toHaveBeenCalled();
+  });
+
+  it('restarts the injured animation when a surviving enemy is hit mid-injury', () => {
+    const enemy = createEnemyFixture({ health: 3, lootDropped: true, injuryAnimationUntil: 1800 });
+    const onEnemyKnockback = vi.fn();
+    const onEnemyInjured = vi.fn();
+
+    resolveAttackHits({
+      attackRect: { x: 0, y: 0, width: 64, height: 64 },
+      activeEnemies: [enemy],
+      now: 1200,
+      collisionProvider: { intersects: vi.fn(() => true) },
+      getEnemyHitbox: () => ({ x: 0, y: 0, width: 42, height: 26 }),
+      isEnemyInjuryActive: () => true,
+      onFirstHit: vi.fn(),
+      onEnemyDefeated: vi.fn(),
+      onEnemyKnockback,
+      onEnemyLootDrop: vi.fn(),
+      onEnemyInjured,
+    });
+
+    expect(enemy.health).toBe(2);
+    expect(enemy.injuryAnimationUntil).toBeNull();
+    expect(onEnemyKnockback).toHaveBeenCalledWith(enemy);
+    expect(onEnemyInjured).toHaveBeenCalledWith(enemy, 1200);
   });
 });

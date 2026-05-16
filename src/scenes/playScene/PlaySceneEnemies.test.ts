@@ -89,7 +89,7 @@ function createEnemyFixture(overrides: Partial<ActiveEnemy> = {}): ActiveEnemy {
     path: [{ x: 0, y: 0 }, { x: 1, y: 0 }],
     pathIndex: 0,
     speed: 88,
-    hitsTaken: 0,
+    health: 2,
     lootDropped: false,
     escaped: false,
     defeated: false,

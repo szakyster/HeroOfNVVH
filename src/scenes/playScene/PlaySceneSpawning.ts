@@ -30,7 +30,7 @@ export function getEnemyWaveSpawnDelays(
   }
 
   return Array.from({ length: count }, (_, index) => {
-    const baseDelay = (index / count) * (waveWindow - 1500);
+    const baseDelay = (index / count) * (waveWindow - 2500);
     return baseDelay + randomExtraMs();
   });
 }
@@ -60,7 +60,7 @@ export function createActiveEnemy({ body, shadow, path, enemySpeed, speedRoll }:
     path,
     pathIndex: 0,
     speed: enemySpeed * speedRoll,
-    hitsTaken: 0,
+    health: 2,
     lootDropped: false,
     escaped: false,
     defeated: false,

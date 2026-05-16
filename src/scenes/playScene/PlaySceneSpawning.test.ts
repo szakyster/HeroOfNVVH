@@ -41,7 +41,7 @@ describe('PlaySceneSpawning helpers', () => {
     const values = [250, 500, 750];
     let index = 0;
 
-    expect(getEnemyWaveSpawnDelays(3, 12000, () => values[index++])).toEqual([250, 4000, 7750]);
+    expect(getEnemyWaveSpawnDelays(3, 12000, () => values[index++])).toEqual([250, 3666.6666666666665, 7083.333333333333]);
   });
 
   it('computes the enemy sprite display width from the source texture ratio', () => {
@@ -66,7 +66,7 @@ describe('PlaySceneSpawning helpers', () => {
       shadow,
       pathIndex: 0,
       speed: 110,
-      hitsTaken: 0,
+      health: 2,
       lootDropped: false,
       escaped: false,
       defeated: false,

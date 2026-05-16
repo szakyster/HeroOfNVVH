@@ -18,7 +18,7 @@ export type ActiveEnemy = {
   path: GridCell[];
   pathIndex: number;
   speed: number;
-  hitsTaken: number;
+  health: number;
   lootDropped: boolean;
   escaped: boolean;
   defeated: boolean;
