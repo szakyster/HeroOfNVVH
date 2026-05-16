@@ -27,13 +27,14 @@ Ez a skill a repo [.github/copilot-instructions.md](../../copilot-instructions.m
 ## Project Facts
 
 - Build parancs: `npm run build`
-- Alap tesztparancs: `npm test`
+- Alap tesztparancs egyszeri futásra: `npm run test:run`
 - Coverage parancs: `npm run test:coverage`
 - Task státuszok a [Tasks.json](../../../Tasks.json) fájlban vannak.
 - A repo elvárása szerint merge esetén non-fast-forward merge-et kell használni.
 - A következő task megnyitását a [task-opening-workflow](../task-opening-workflow/SKILL.md) skill végzi.
 - Ha vannak uncommitted változások, a CP lépéshez elsősorban a [CP promptot](../../prompts/cp.prompt.md) használd.
 - A CP jelentése ebben a repóban: `git add` + `git commit` + `git push`.
+- A tasklezárás végén ellenőrizni kell, hogy van-e 1500 sornál hosszabb, nem teszt jellegű kódfájl.
 
 ## Required Outcome
 
@@ -46,11 +47,12 @@ A tasklezárás csak akkor tekinthető késznek, ha az összes releváns lépés
 3. Futtasd a buildet.
 4. Futtasd a releváns teszteket.
 5. Ha kell, futtasd a coverage-et és ellenőrizd, hogy van-e releváns 25% alatti lefedettség.
-6. Ha build vagy teszt elbukik, állj meg, elemezd a hibát, és csak jelentsd vissza részletesen.
-7. Ha vannak uncommitted változások, végezz CP-t.
-8. Ha a felhasználó merge-et kér, végezz non-fast-forward merge-et.
-9. Merge után zárd le a taskot a [Tasks.json](../../../Tasks.json) fájlban.
-10. Ha a felhasználó nem mond mást, azonosítsd a következő taskot, majd a megnyitását a [task-opening-workflow](../task-opening-workflow/SKILL.md) skill szerint végezd el.
+6. A tasklezárás végén ellenőrizd, van-e 1500 sornál hosszabb, nem teszt jellegű kódfájl.
+7. Ha build vagy teszt elbukik, állj meg, elemezd a hibát, és csak jelentsd vissza részletesen.
+8. Ha vannak uncommitted változások, végezz CP-t.
+9. Ha a felhasználó merge-et kér, végezz non-fast-forward merge-et.
+10. Merge után zárd le a taskot a [Tasks.json](../../../Tasks.json) fájlban.
+11. Ha a felhasználó nem mond mást, azonosítsd a következő taskot, majd a megnyitását a [task-opening-workflow](../task-opening-workflow/SKILL.md) skill szerint végezd el.
 
 ## Detailed Rules
 
@@ -78,7 +80,7 @@ A tasklezárás csak akkor tekinthető késznek, ha az összes releváns lépés
 
 - Futtasd a releváns teszteket.
 - Ha a feladat egyértelműen leszűkíthető néhány tesztfájlra, futtasd azokat célzottan.
-- Ha ez nem egyértelmű, használd a teljes projekt tesztparancsát.
+- Ha ez nem egyértelmű, használd a teljes projekt egyszeri tesztparancsát: `npm run test:run`.
 - Ha a teszt hibás, a workflow itt megáll.
 - A hibát részletezd, de ne kezdj nem kapcsolódó javításba külön kérés nélkül.
 
@@ -102,19 +104,26 @@ A tasklezárás csak akkor tekinthető késznek, ha az összes releváns lépés
 - A commit message legyen konkrét, a változtatás tartalmához illeszkedő.
 - Ne használj semmitmondó commit message-et.
 
-### 7. Merge Rule
+### 7. File Length Check
+
+- A tasklezárás legvégén nézd meg a releváns, nem teszt jellegű kódfájlokat.
+- Ha bármely ilyen fájl 1500 sornál hosszabb, ezt kötelezően jelezd a felhasználónak.
+- A jelzésben nevezd meg az érintett fájlt, és adj rövid, konkrét refaktorjavaslatot.
+- Ez önmagában nem feltétlenül blokkoló, de explicit riportálandó.
+
+### 8. Merge Rule
 
 - Ha a felhasználó merge-et kér, non-fast-forward merge-et használj.
 - Merge előtt ellenőrizd, hogy a branch naprakész és pusholt állapotban van-e.
 - Merge után ellenőrizd, hogy a merge sikeres volt.
 
-### 8. Tasks.json Update
+### 9. Tasks.json Update
 
 - Merge után zárd le a megfelelő taskot a [Tasks.json](../../../Tasks.json) fájlban.
 - A lezárt task státusza legyen `closed`, hacsak a projektfájl meglévő konvenciója mást nem indokol.
 - Csak a megfelelő task bejegyzést módosítsd.
 
-### 9. Open Next Task
+### 10. Open Next Task
 
 - Ha a felhasználó nem mond mást, nyisd meg a következő taskot.
 - A következő task jellemzően az első logikusan következő, még nem `closed` állapotú feladat.
@@ -150,8 +159,9 @@ Menj végig a teljes folyamaton kérdés nélkül, ha:
 
 - Git állapot: `git branch --show-current`, `git status --short`, `git rev-parse --abbrev-ref --symbolic-full-name "@{u}"`
 - Build: `npm run build`
-- Teljes teszt: `npm test`
+- Teljes teszt: `npm run test:run`
 - Coverage: `npm run test:coverage`
+- LOC ellenőrzés: számold meg a releváns nem teszt kódfájlok sorait, és keresd az 1500 feletti fájlokat.
 - CP: `git add -A`, `git commit -m "..."`, `git push`
 - Non-FF merge: `git merge --no-ff <branch>`
 
@@ -164,6 +174,7 @@ A skill végén a válasz tartalmazza:
 - sikerült-e a tasklezárás,
 - milyen build és teszt parancsok futottak,
 - volt-e 25% alatti releváns coverage,
+- volt-e 1500 sornál hosszabb releváns kódfájl, és ha igen, mi rá a refaktorjavaslat,
 - történt-e CP, és mi lett a commit message,
 - történt-e merge,
 - frissült-e a [Tasks.json](../../../Tasks.json),
