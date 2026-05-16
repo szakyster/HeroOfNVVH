@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { getGridCellsBounds, getHrsPlacement, getObstacleDisplaySize } from './PlaySceneWorld';
+import { getDepositPopupColor, getLootHitbox, isPlayerInsideSanctuary } from './PlaySceneLoot';
 
 vi.mock('phaser', () => {
   class MockScene {
@@ -266,9 +267,9 @@ describe('PlayScene runtime reset', () => {
     (scene.refreshHud as () => void)();
 
     expect((scene.inventoryValueText as { setText: ReturnType<typeof vi.fn> }).setText).toHaveBeenCalledWith('3/4  ■■■□');
-    expect((scene.getDepositPopupColor as (value: number) => string)(10)).toBe('#8ecae6');
-    expect((scene.getDepositPopupColor as (value: number) => string)(20)).toBe('#80ed99');
-    expect((scene.getDepositPopupColor as (value: number) => string)(50)).toBe('#ffd166');
+    expect(getDepositPopupColor(10)).toBe('#8ecae6');
+    expect(getDepositPopupColor(20)).toBe('#80ed99');
+    expect(getDepositPopupColor(50)).toBe('#ffd166');
   });
 
   it('spawns dropped loot using the image configured on the loot template', () => {
@@ -436,7 +437,7 @@ describe('PlayScene runtime reset', () => {
     ];
     scene.collisionProvider = { intersects };
 
-    expect((scene.getLootHitbox as (x: number, y: number) => { x: number; y: number; width: number; height: number })(100, 120)).toEqual({
+    expect(getLootHitbox(100, 120, { width: 60, height: 40 })).toEqual({
       x: 70,
       y: 100,
       width: 60,
@@ -444,12 +445,16 @@ describe('PlayScene runtime reset', () => {
     });
 
     expect(
-      (scene.isPlayerInsideSanctuary as (hitbox: { x: number; y: number; width: number; height: number }) => boolean)({
-        x: 24,
-        y: 24,
-        width: 8,
-        height: 8,
-      }),
+      isPlayerInsideSanctuary(
+        {
+          x: 24,
+          y: 24,
+          width: 8,
+          height: 8,
+        },
+        scene.sanctuaryRects,
+        scene.collisionProvider as never,
+      ),
     ).toBe(true);
     expect(intersects).toHaveBeenCalledTimes(2);
   });

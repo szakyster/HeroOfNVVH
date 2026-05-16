@@ -51,6 +51,15 @@ import {
   type EnemyAnimationState,
 } from './PlaySceneEnemies';
 import {
+  type ActiveLoot,
+  getDepositPopupColor,
+  getLootHitbox,
+  isPlayerInsideSanctuary,
+  processInventoryDeposit,
+  shouldPlayInventoryError,
+  type InventoryItem,
+} from './PlaySceneLoot';
+import {
   drawHrsImages,
   drawObstacleCells,
   drawSanctuaryZone,
@@ -85,15 +94,6 @@ function getHeroSheetKey(state: HeroAnimationState, direction: HeroAnimationDire
 function getHeroAnimationKey(state: HeroAnimationState, direction: HeroAnimationDirection): string {
   return `${getHeroSheetKey(state, direction)}-loop`;
 }
-
-type ActiveLoot = {
-  id: string;
-  type: string;
-  value: 10 | 20 | 50;
-  body: Phaser.GameObjects.Image;
-  shadow: Phaser.GameObjects.Ellipse;
-  createdAt: number;
-};
 
 export class PlayScene extends Phaser.Scene {
   private readonly levelPath = `${import.meta.env.BASE_URL}levels/level-01.json`;
@@ -194,7 +194,7 @@ export class PlayScene extends Phaser.Scene {
 
   private activeLoots: ActiveLoot[] = [];
 
-  private inventory: Array<{ type: string; value: 10 | 20 | 50 }> = [];
+  private inventory: InventoryItem[] = [];
 
   private droppedLootCount = 0;
 
@@ -1112,19 +1112,19 @@ export class PlayScene extends Phaser.Scene {
       loot.shadow.setAlpha(Math.max(0.1, alpha * 0.45));
 
       if (!isInventoryFull(this.inventory.length)) {
-        const lootHitbox = this.getLootHitbox(loot.body.x, loot.body.y);
+        const lootHitbox = getLootHitbox(loot.body.x, loot.body.y, this.lootSize);
         if (this.collisionProvider.intersects(playerHitbox, lootHitbox)) {
           this.pickUpLoot(loot);
         }
       } else {
-        const lootHitbox = this.getLootHitbox(loot.body.x, loot.body.y);
+        const lootHitbox = getLootHitbox(loot.body.x, loot.body.y, this.lootSize);
         if (this.collisionProvider.intersects(playerHitbox, lootHitbox)) {
           this.playInventoryError(now);
         }
       }
     }
 
-    const isInsideSanctuary = this.isPlayerInsideSanctuary(playerHitbox);
+    const isInsideSanctuary = isPlayerInsideSanctuary(playerHitbox, this.sanctuaryRects, this.collisionProvider);
 
     if (this.inventory.length > 0 && isInsideSanctuary) {
       this.depositInventory(now);
@@ -1141,30 +1141,25 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private depositInventory(now: number): void {
-    if (this.inventory.length === 0) {
+    const currentScore = this.registry.get('score') ?? 0;
+    const depositResult = processInventoryDeposit({
+      inventory: this.inventory,
+      now,
+      nextLootDepositAt: this.nextLootDepositAt,
+      lootDepositIntervalMs: this.lootDepositIntervalMs,
+      score: currentScore,
+    });
+
+    this.inventory = depositResult.inventory;
+    this.nextLootDepositAt = depositResult.nextLootDepositAt;
+
+    if (depositResult.depositedValue === null) {
       return;
     }
 
-    if (this.nextLootDepositAt === null) {
-      this.nextLootDepositAt = now + this.lootDepositIntervalMs;
-      return;
-    }
-
-    if (now < this.nextLootDepositAt) {
-      return;
-    }
-
-    const depositedLoot = this.inventory.shift();
-    const depositedValue = depositedLoot?.value ?? 0;
-
-    this.registry.set('score', (this.registry.get('score') ?? 0) + depositedValue);
+    this.registry.set('score', depositResult.score);
     this.audioSystem?.playSfx(AUDIO_KEYS.DEPOSIT);
-    this.showDepositValuePopup(depositedValue);
-    this.nextLootDepositAt += this.lootDepositIntervalMs;
-
-    if (this.inventory.length === 0) {
-      this.nextLootDepositAt = null;
-    }
+    this.showDepositValuePopup(depositResult.depositedValue);
 
     this.refreshLevelInfo();
   }
@@ -1175,7 +1170,7 @@ export class PlayScene extends Phaser.Scene {
     }
 
     const fontSize = value >= 50 ? '39px' : value >= 20 ? '34px' : '29px';
-    const color = this.getDepositPopupColor(value);
+    const color = getDepositPopupColor(value);
     const popup = this.add
       .text(this.playerBody.x, this.playerBody.y - 78, `+${value} M Ft`, {
         fontFamily: DEPOSIT_POPUP_FONT_FAMILY,
@@ -1198,18 +1193,6 @@ export class PlayScene extends Phaser.Scene {
         popup.destroy();
       },
     });
-  }
-
-  private getDepositPopupColor(value: number): string {
-    if (value >= 50) {
-      return '#ffd166';
-    }
-
-    if (value >= 20) {
-      return '#80ed99';
-    }
-
-    return '#8ecae6';
   }
 
   private destroyLoot(loot: ActiveLoot, refreshInfo = true): void {
@@ -1322,21 +1305,8 @@ export class PlayScene extends Phaser.Scene {
     }) as Phaser.Tweens.Tween | undefined;
   }
 
-  private isPlayerInsideSanctuary(playerHitbox: CollisionRect): boolean {
-    return this.sanctuaryRects.some((rect) => this.collisionProvider.intersects(playerHitbox, rect));
-  }
-
-  private getLootHitbox(centerX: number, centerY: number): CollisionRect {
-    return {
-      x: centerX - this.lootSize.width / 2,
-      y: centerY - this.lootSize.height / 2,
-      width: this.lootSize.width,
-      height: this.lootSize.height,
-    };
-  }
-
   private playInventoryError(now: number): void {
-    if (now - this.lastInventoryErrorAt < this.inventoryErrorCooldownMs) {
+    if (!shouldPlayInventoryError(now, this.lastInventoryErrorAt, this.inventoryErrorCooldownMs)) {
       return;
     }
 
