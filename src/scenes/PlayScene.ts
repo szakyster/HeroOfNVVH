@@ -6,7 +6,6 @@ import { AStarPathfinder } from '../systems/AStarPathfinder';
 import {
   createAttackRect,
   DEFAULT_ATTACK_CONFIG,
-  getKnockbackDelta,
   type FacingDirection,
 } from '../systems/AttackSystem';
 import {
@@ -59,6 +58,12 @@ import {
   shouldPlayInventoryError,
   type InventoryItem,
 } from './playScene/PlaySceneLoot';
+import {
+  getEnemyHitbox,
+  getEnemyKnockbackTarget,
+  isRectInsidePlayArea,
+  resolveAttackHits,
+} from './playScene/PlaySceneCombat';
 import {
   drawHrsImages,
   drawObstacleCells,
@@ -944,58 +949,43 @@ export class PlayScene extends Phaser.Scene {
       return;
     }
 
-    const now = this.time?.now ?? 0;
-    let hitAny = false;
-
-    for (const enemy of this.activeEnemies) {
-      if (enemy.escaped || enemy.defeated) {
-        continue;
-      }
-
-      const enemyHitbox = this.getEnemyHitbox(enemy.body.x, enemy.body.y);
-      if (!this.collisionProvider.intersects(this.attackRect, enemyHitbox)) {
-        continue;
-      }
-
-      if (!hitAny) {
-        this.audioSystem?.playSfx(AUDIO_KEYS.HIT);
-        hitAny = true;
-      }
-
-      if (isEnemyInjuryActive(enemy, now)) {
-        this.defeatEnemy(enemy);
-        continue;
-      }
-
-      enemy.hitsTaken += 1;
-      this.applyEnemyKnockback(enemy);
-
-      if (enemy.hitsTaken === 1 && !enemy.lootDropped) {
-        this.spawnLootAtEnemy(enemy);
-        enemy.lootDropped = true;
-      }
-
-      startEnemyInjuryAnimation(enemy, now);
-      this.playEnemyAnimation(enemy, 'injured', false);
-    }
+    resolveAttackHits({
+      attackRect: this.attackRect,
+      activeEnemies: this.activeEnemies,
+      now: this.time?.now ?? 0,
+      collisionProvider: this.collisionProvider,
+      getEnemyHitbox: (centerX, centerY) =>
+        getEnemyHitbox(centerX, centerY, this.enemyHitboxSize, this.enemyHitboxOffsetY),
+      isEnemyInjuryActive: (enemy, now) => isEnemyInjuryActive(enemy, now),
+      onFirstHit: () => this.audioSystem?.playSfx(AUDIO_KEYS.HIT),
+      onEnemyDefeated: (enemy) => this.defeatEnemy(enemy),
+      onEnemyKnockback: (enemy) => this.applyEnemyKnockback(enemy),
+      onEnemyLootDrop: (enemy) => this.spawnLootAtEnemy(enemy),
+      onEnemyInjured: (enemy, now) => {
+        startEnemyInjuryAnimation(enemy, now);
+        this.playEnemyAnimation(enemy, 'injured', false);
+      },
+    });
   }
 
   private applyEnemyKnockback(enemy: ActiveEnemy): void {
-    const knockback = getKnockbackDelta(this.facingDirection, DEFAULT_ATTACK_CONFIG.knockbackDistance);
-    const nextX = enemy.body.x + knockback.x;
-    const nextY = enemy.body.y + knockback.y;
-    const nextHitbox = this.getEnemyHitbox(nextX, nextY);
+    const nextPosition = getEnemyKnockbackTarget({
+      enemy,
+      facingDirection: this.facingDirection,
+      knockbackDistance: DEFAULT_ATTACK_CONFIG.knockbackDistance,
+      enemyHitboxSize: this.enemyHitboxSize,
+      enemyHitboxOffsetY: this.enemyHitboxOffsetY,
+      collisionProvider: this.collisionProvider,
+      obstacleRects: this.obstacleRects,
+      containsPoint: (point) => this.gridSystem?.containsPoint(point) ?? false,
+    });
 
-    if (!this.isInsidePlayArea(nextHitbox)) {
+    if (!nextPosition) {
       return;
     }
 
-    if (this.collisionProvider.collidesWithAny(nextHitbox, this.obstacleRects)) {
-      return;
-    }
-
-    enemy.body.setPosition(nextX, nextY);
-    enemy.shadow.setPosition(nextX, nextY + 18);
+    enemy.body.setPosition(nextPosition.x, nextPosition.y);
+    enemy.shadow.setPosition(nextPosition.x, nextPosition.y + 18);
     this.updateEnemyRenderDepth(enemy);
   }
 
@@ -1047,26 +1037,8 @@ export class PlayScene extends Phaser.Scene {
     };
   }
 
-  private getEnemyHitbox(centerX: number, centerY: number): CollisionRect {
-    return {
-      x: centerX - this.enemyHitboxSize.width / 2,
-      y: centerY - this.enemyHitboxSize.height / 2 + this.enemyHitboxOffsetY,
-      width: this.enemyHitboxSize.width,
-      height: this.enemyHitboxSize.height,
-    };
-  }
-
   private isInsidePlayArea(rect: CollisionRect): boolean {
-    if (!this.gridSystem) {
-      return false;
-    }
-
-    return [
-      { x: rect.x, y: rect.y },
-      { x: rect.x + rect.width, y: rect.y },
-      { x: rect.x + rect.width, y: rect.y + rect.height },
-      { x: rect.x, y: rect.y + rect.height },
-    ].every((corner) => this.gridSystem!.containsPoint(corner));
+    return isRectInsidePlayArea(rect, (point) => this.gridSystem?.containsPoint(point) ?? false);
   }
 
   private setPlayerAttackFeedback(isAttacking: boolean): void {
@@ -1228,7 +1200,7 @@ export class PlayScene extends Phaser.Scene {
 
     for (const enemy of this.activeEnemies) {
       // DEBUG: Temporary enemy hitbox overlay for gameplay tuning. Remove before release.
-      const hitbox = this.getEnemyHitbox(enemy.body.x, enemy.body.y);
+      const hitbox = getEnemyHitbox(enemy.body.x, enemy.body.y, this.enemyHitboxSize, this.enemyHitboxOffsetY);
       this.enemyHitboxDebug.strokeRect(hitbox.x, hitbox.y, hitbox.width, hitbox.height);
     }
   }
