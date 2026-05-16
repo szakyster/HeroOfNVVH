@@ -28,9 +28,10 @@ When working in this project:
 Task closing workflow:
 
 - Before closing a task, run the build.
-- Before closing a task, run the relevant tests.
+- Before closing a task, run the relevant tests. Prefer `npm run test:run` when a full one-shot test run is needed.
 - If the build or tests fail, investigate and give detailed information about the failure. Do not try to solve the issue and stop the process.
 - Before closing a task, if any relevant file's code coverage is below 25%, report that back to the user.
+- Before closing a task, check whether any relevant non-test code file exceeds 1500 LOC; if yes, report it and suggest a refactor.
 - If there are uncommitted changes, perform `CP` (git add + commit + push).
 - When merging a completed task branch, use a non-fast-forward merge.
 - After merge, close the task in `Tasks.json`.
