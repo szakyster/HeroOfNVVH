@@ -65,6 +65,13 @@ import {
   resolveAttackHits,
 } from './playScene/PlaySceneCombat';
 import {
+  canInterruptAttackAnimation,
+  createAttackState,
+  getHeroPunchAnimationState,
+  shouldClearAttackEffect,
+  shouldFinishAttackAnimation,
+} from './playScene/PlayScenePlayer';
+import {
   drawHrsImages,
   drawObstacleCells,
   drawSanctuaryZone,
@@ -480,12 +487,12 @@ export class PlayScene extends Phaser.Scene {
     const wantsToAttack = Boolean(this.keySpace && Phaser.Input.Keyboard.JustDown(this.keySpace));
 
     if (this.isAttackAnimating) {
-      if (wantsToAttack && this.canInterruptAttackAnimation(now)) {
+      if (wantsToAttack && canInterruptAttackAnimation(this.isAttackAnimating, now, this.attackAnimationReleaseAt)) {
         this.performAttack();
         return;
       }
 
-      if (!this.canInterruptAttackAnimation(now)) {
+      if (!canInterruptAttackAnimation(this.isAttackAnimating, now, this.attackAnimationReleaseAt)) {
         return;
       }
 
@@ -502,7 +509,7 @@ export class PlayScene extends Phaser.Scene {
         return;
       }
 
-      if (now >= this.attackAnimationEndAt) {
+      if (shouldFinishAttackAnimation(now, this.attackAnimationEndAt)) {
         this.stopAttackAnimation();
         this.updatePlayerMovementVisual(false);
       }
@@ -878,34 +885,6 @@ export class PlayScene extends Phaser.Scene {
     }
   }
 
-  private getHeroPunchAnimationDirection(): { direction: HeroPunchAnimationDirection; flipX: boolean } {
-    if (this.facingDirection === 'left') {
-      this.heroAnimationDirection = 'right';
-      this.heroAnimationFlipX = true;
-      return { direction: 'right', flipX: true };
-    }
-
-    if (this.facingDirection === 'right') {
-      this.heroAnimationDirection = 'right';
-      this.heroAnimationFlipX = false;
-      return { direction: 'right', flipX: false };
-    }
-
-    if (this.facingDirection === 'up') {
-      this.heroAnimationDirection = 'up';
-      this.heroAnimationFlipX = false;
-      return { direction: 'up', flipX: false };
-    }
-
-    this.heroAnimationDirection = 'down';
-    this.heroAnimationFlipX = false;
-    return { direction: 'down', flipX: false };
-  }
-
-  private canInterruptAttackAnimation(now: number): boolean {
-    return !this.isAttackAnimating || now >= this.attackAnimationReleaseAt;
-  }
-
   private stopAttackAnimation(): void {
     this.isAttackAnimating = false;
     this.attackAnimationReleaseAt = 0;
@@ -919,19 +898,31 @@ export class PlayScene extends Phaser.Scene {
     }
 
     const now = this.time.now;
-    if (now - this.lastAttackAt < this.attackCooldownMs) {
+    const nextAttackState = createAttackState({
+      now,
+      lastAttackAt: this.lastAttackAt,
+      attackCooldownMs: this.attackCooldownMs,
+      attackMinDurationMs: HERO_ATTACK_MIN_DURATION_MS,
+      attackAnimationDurationMs: HERO_ATTACK_ANIMATION_DURATION_MS,
+      attackHitDelayMs: HERO_ATTACK_HIT_DELAY_MS,
+      attackDurationMs: this.attackDurationMs,
+    });
+
+    if (!nextAttackState) {
       return;
     }
 
     this.audioSystem?.playSfx(AUDIO_KEYS.ATTACK);
-    this.lastAttackAt = now;
-    this.isAttackAnimating = true;
-    this.attackAnimationReleaseAt = now + HERO_ATTACK_MIN_DURATION_MS;
-    this.attackAnimationEndAt = now + HERO_ATTACK_ANIMATION_DURATION_MS;
-    this.attackRect = null;
-    this.attackVisualUntil = now + HERO_ATTACK_HIT_DELAY_MS + this.attackDurationMs;
+    this.lastAttackAt = nextAttackState.lastAttackAt;
+    this.isAttackAnimating = nextAttackState.isAttackAnimating;
+    this.attackAnimationReleaseAt = nextAttackState.attackAnimationReleaseAt;
+    this.attackAnimationEndAt = nextAttackState.attackAnimationEndAt;
+    this.attackRect = nextAttackState.attackRect;
+    this.attackVisualUntil = nextAttackState.attackVisualUntil;
 
-    const punchAnimation = this.getHeroPunchAnimationDirection();
+    const punchAnimation = getHeroPunchAnimationState(this.facingDirection);
+    this.heroAnimationDirection = punchAnimation.heroAnimationDirection;
+    this.heroAnimationFlipX = punchAnimation.heroAnimationFlipX;
     this.playHeroAnimation('punch', punchAnimation.direction, punchAnimation.flipX, false);
     this.setPlayerAttackFeedback(true);
 
@@ -1206,7 +1197,7 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private updateAttackState(now: number): void {
-    if (now <= this.attackVisualUntil) {
+    if (!shouldClearAttackEffect(now, this.attackVisualUntil)) {
       return;
     }
 
