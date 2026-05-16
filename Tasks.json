@@ -141,7 +141,7 @@
       "id": 24,
       "name": "Play Scene Refactor",
       "description": "Refactor PlayScene by splitting scene responsibilities into smaller units while preserving current gameplay behavior and scene flow. Reference: Architecture.md sections 3-5 and Tech.md section 4",
-      "status": "in progress"
+      "status": "closed"
     }
   ]
 }
