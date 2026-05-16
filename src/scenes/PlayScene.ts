@@ -72,6 +72,14 @@ import {
   shouldFinishAttackAnimation,
 } from './playScene/PlayScenePlayer';
 import {
+  getHeroAnimationFrameRange,
+  getHeroLoopAnimationState,
+  getHeroMovementVisualState,
+  type HeroAnimationDirection,
+  type HeroAnimationState,
+  type HeroLoopAnimationDirection,
+} from './playScene/PlaySceneHero';
+import {
   createActiveEnemy,
   getEnemySpawnCells,
   getEnemySpriteDisplayWidth,
@@ -100,11 +108,7 @@ const HERO_LOOP_ANIMATION_STATES = ['idle', 'run'] as const;
 const HERO_LOOP_ANIMATION_DIRECTIONS = ['down', 'northeast', 'right', 'southeast', 'up'] as const;
 const HERO_PUNCH_ANIMATION_DIRECTIONS = ['down', 'right', 'up'] as const;
 
-type HeroLoopAnimationState = (typeof HERO_LOOP_ANIMATION_STATES)[number];
-type HeroLoopAnimationDirection = (typeof HERO_LOOP_ANIMATION_DIRECTIONS)[number];
 type HeroPunchAnimationDirection = (typeof HERO_PUNCH_ANIMATION_DIRECTIONS)[number];
-type HeroAnimationState = HeroLoopAnimationState | 'punch';
-type HeroAnimationDirection = HeroLoopAnimationDirection | HeroPunchAnimationDirection;
 
 function getHeroSheetKey(state: HeroAnimationState, direction: HeroAnimationDirection): string {
   return `hero-psz01-${state}-${direction}`;
@@ -250,7 +254,7 @@ export class PlayScene extends Phaser.Scene {
   private spawnedEnemies = 0;
 
   private get targetEnemyCount(): number {
-    return Math.min(Math.floor(this.waveNumber * 0.4 + 1), 8);
+    return Math.max(2, Math.min(Math.floor(this.waveNumber * 0.4 + 1), 8));
   }
 
   constructor() {
@@ -679,56 +683,13 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private updateHeroAnimationDirection(horizontal: number, vertical: number): void {
-    if (horizontal < 0 && vertical < 0) {
-      this.heroAnimationDirection = 'northeast';
-      this.heroAnimationFlipX = true;
-      return;
-    }
-
-    if (horizontal > 0 && vertical < 0) {
-      this.heroAnimationDirection = 'northeast';
-      this.heroAnimationFlipX = false;
-      return;
-    }
-
-    if (horizontal < 0 && vertical > 0) {
-      this.heroAnimationDirection = 'southeast';
-      this.heroAnimationFlipX = true;
-      return;
-    }
-
-    if (horizontal > 0 && vertical > 0) {
-      this.heroAnimationDirection = 'southeast';
-      this.heroAnimationFlipX = false;
-      return;
-    }
-
-    if (horizontal < 0) {
-      this.heroAnimationDirection = 'right';
-      this.heroAnimationFlipX = true;
-      return;
-    }
-
-    if (horizontal > 0) {
-      this.heroAnimationDirection = 'right';
-      this.heroAnimationFlipX = false;
-      return;
-    }
-
-    if (vertical < 0) {
-      this.heroAnimationDirection = 'up';
-      this.heroAnimationFlipX = false;
-      return;
-    }
-
-    if (vertical > 0) {
-      this.heroAnimationDirection = 'down';
-      this.heroAnimationFlipX = false;
-    }
+    const nextVisualState = getHeroMovementVisualState(horizontal, vertical);
+    this.heroAnimationDirection = nextVisualState.direction;
+    this.heroAnimationFlipX = nextVisualState.flipX;
   }
 
   private updatePlayerMovementVisual(isMoving: boolean): void {
-    const state: HeroLoopAnimationState = isMoving ? 'run' : 'idle';
+    const state = getHeroLoopAnimationState(isMoving);
 
     this.playHeroAnimation(state, this.heroAnimationDirection, this.heroAnimationFlipX, true);
   }
@@ -851,10 +812,10 @@ export class PlayScene extends Phaser.Scene {
 
     this.anims.create({
       key: animationKey,
-      frames: this.anims.generateFrameNumbers(sheetKey, {
-        start: state === 'punch' ? HERO_PUNCH_START_FRAME : 0,
-        end: HERO_SHEET_FRAME_COUNT - 1,
-      }),
+      frames: this.anims.generateFrameNumbers(
+        sheetKey,
+        getHeroAnimationFrameRange(state, HERO_PUNCH_START_FRAME, HERO_SHEET_FRAME_COUNT),
+      ),
       frameRate: HERO_ANIMATION_FRAME_RATE,
       repeat,
     });
