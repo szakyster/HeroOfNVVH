@@ -127,7 +127,12 @@ Tulajdonságaik:
 - az útvonal figyelembe veszi az akadályokat és a rácskockás elrendezést,
 - **az akadályok egy-egy rácskockát foglalnak el teljesen**, így az útkeresés ezeket blokkolva kerüli,
 - menet közben az útvonal nem változik,
-- két ütés után eltűnnek.
+- 2 életerővel indulnak,
+- találatkor az életerejük csökken,
+- ha marad életük, teljes sérülésanimációt játszanak le és csak utána folytatják a mozgást,
+- ha az életerő nullára csökken, eltűnnek.
+
+Jelenleg több vizuális enemy-variáns van használatban, amelyek azonos játékszabályokkal, de eltérő walk/sérülés sprite sheet-ekkel jelennek meg.
 
 Az ellenségek mozgása egyszerű és jól olvasható kell legyen, nem szükséges fejlett mesterséges intelligencia.
 
@@ -179,7 +184,7 @@ A játék fő ciklusa a következő:
 2. elindul a reptér felé,
 3. a játékos üldözi,
 4. a játékos támad,
-5. az ellenség lootot dob,
+5. az első túlélő találat után az ellenség lootot dob,
 6. a játékos felveszi a lootot,
 7. a játékos elviszi az NVVH-hoz,
 8. pontot kap,
@@ -206,7 +211,7 @@ Példa állapotok:
 - eléri a célt: opcionális sikeres megszökés state,
 - spawnolódik: opcionális belépési state az ellenség megjelenésekor.
 
-A második ütés után az ellenség lekerül a pályáról.
+Az a találat, amely nullára viszi az életerőt, azonnal leveszi az ellenséget a pályáról.
 
 ## 6.4 Loot időzítés
 A loot a földön csak korlátozott ideig marad.
@@ -236,6 +241,8 @@ Növelhető paraméterek:
 - egyszerre aktív ellenségek száma,
 - új ellenségek érkezési gyakorisága,
 - ellenségek mozgási sebessége.
+
+A jelenlegi implementáció hullámokban működik: az ellenségek egy időablakon belül, enyhe véletlen eltolással spawnolnak, majd a következő hullám több enemy-t engedhet be.
 
 Más komplex skálázás nem szükséges.
 

@@ -94,6 +94,21 @@ Ez a dokumentum csak azokat a pontokat tartalmazza, amelyekben már megszületet
 - **Státusz:** elfogadva
 - **Indoklás:** A játék statikus fájlkiszolgálással fusson, aktív háttérfolyamatok, service worker és PWA-funkciók nélkül. A működéshez nincs szükség aktív backend logikára, de külön offline-first réteg sem készül.
 
+## D-019 – PlayScene bontási stratégia
+- **Döntés:** a `PlayScene` vékony orchestrator maradjon, és a scene-közeli részfelelősségek külön helper modulokba kerüljenek a `src/scenes/playScene/` mappában.
+- **Státusz:** elfogadva
+- **Indoklás:** A jelenet túl nagyra nőtt egyetlen fájlban. A HUD, world, spawning, enemy, combat, loot, hero, player timing és effects logika különválasztása javítja a tesztelhetőséget és a karbantarthatóságot, miközben a Phaser scene-flow változatlan marad.
+
+## D-020 – Egyszeri tesztfuttatás külön scriptből
+- **Döntés:** a teljes, egyszeri tesztfuttatás standard parancsa `npm run test:run`.
+- **Státusz:** elfogadva
+- **Indoklás:** A `npm run test` watch módra nyit, ami fejlesztés közben hasznos, de tasklezárásnál és determinisztikus ellenőrzésnél külön, egyszer lefutó parancs szükséges.
+
+## D-021 – Ellenséganimációk több sprite-sheet családból
+- **Döntés:** az ellenségek vizuális variánsai külön sprite-sheet családokból (`enemy01`-`enemy04`) töltődnek be, és spawnoláskor ciklikusan váltakoznak.
+- **Státusz:** elfogadva
+- **Indoklás:** A több enemy-variáns növeli a vizuális változatosságot anélkül, hogy külön játékszabály-rendszerre lenne szükség. A mozgás- és sérülésanimációk azonos technikai pipeline-t követnek, ezért egyszerűen illeszthetők a meglévő rendszerbe.
+
 ---
 
 ## Nyitott megjegyzés
