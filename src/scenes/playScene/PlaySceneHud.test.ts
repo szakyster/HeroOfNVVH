@@ -1,0 +1,115 @@
+import { describe, expect, it, vi } from 'vitest';
+import {
+  ESCAPED_WARNING_COLOR,
+  HEADER_EMPHASIS_COLOR,
+  formatAudioToggleTexts,
+  formatEnemyInfoText,
+  formatInventoryIcons,
+  formatLevelInfoText,
+  formatPlaySceneHudValues,
+  syncEscapedEnemyWarningState,
+} from './PlaySceneHud';
+
+describe('PlaySceneHud helpers', () => {
+  it('formats the main HUD values consistently', () => {
+    expect(
+      formatPlaySceneHudValues({
+        score: 150,
+        inventoryCount: 2,
+        escapedEnemies: 3,
+        maxEscapedEnemies: 10,
+        waveNumber: 4,
+      }),
+    ).toEqual({
+      scoreText: '150 M Ft',
+      inventoryText: '2/4  ■■□□',
+      escapedText: '3/10',
+      waveText: '4. hullám',
+    });
+  });
+
+  it('formats inventory, level and enemy info strings', () => {
+    expect(formatInventoryIcons(3, 4)).toBe('■■■□');
+    expect(
+      formatLevelInfoText({
+        level: { name: 'Teszt pálya' },
+        activeLootCount: 1,
+        inventoryCount: 2,
+      }),
+    ).toBe('Pálya: Teszt pálya | Földön: 1 tárgy | Leadási sáv: aktív');
+    expect(
+      formatEnemyInfoText({
+        activeEnemyCount: 1,
+        spawnedEnemies: 2,
+        targetEnemyCount: 5,
+      }),
+    ).toBe('Aktív ellenfelek: 1 | Spawn ebben a hullámban: 2/5');
+    expect(
+      formatAudioToggleTexts({
+        musicMuted: true,
+        sfxMuted: false,
+      }),
+    ).toEqual({
+      musicText: 'Zene némít: Be',
+      sfxText: 'Hangeffekt némít: Ki',
+    });
+  });
+
+  it('starts the escaped warning tween at high escaped counts', () => {
+    const tween = { stop: vi.fn() };
+    const add = vi.fn(() => tween);
+    const escapedValueText = {
+      x: 430,
+      y: 63,
+      setColor: vi.fn(),
+      setPosition: vi.fn(),
+    };
+
+    const nextTween = syncEscapedEnemyWarningState({
+      escapedEnemies: 8,
+      escapedValueText,
+      escapedValueBaseX: 430,
+      escapedValueBaseY: 63,
+      tweens: { add: add as (config: { targets: unknown; x: number; duration: number; ease: string; yoyo: boolean; repeat: number }) => typeof tween },
+    });
+
+    expect(escapedValueText.setColor).toHaveBeenCalledWith(ESCAPED_WARNING_COLOR);
+    expect(add).toHaveBeenCalledWith(
+      expect.objectContaining({
+        targets: escapedValueText,
+        x: 434,
+        yoyo: true,
+        repeat: -1,
+      }),
+    );
+    expect(nextTween).toBe(tween);
+  });
+
+  it('resets warning color and position below the warning threshold', () => {
+    const existingTween = { stop: vi.fn() };
+    const add = vi.fn();
+    const escapedValueText = {
+      x: 434,
+      y: 63,
+      setColor: vi.fn(),
+      setPosition: vi.fn(),
+    };
+
+    const nextTween = syncEscapedEnemyWarningState({
+      escapedEnemies: 3,
+      escapedValueText,
+      escapedValueWarningTween: existingTween,
+      escapedValueBaseX: 430,
+      escapedValueBaseY: 63,
+      tweens: {
+        add: add as (config: { targets: unknown; x: number; duration: number; ease: string; yoyo: boolean; repeat: number }) => typeof existingTween,
+      },
+    });
+
+    expect(escapedValueText.setColor).toHaveBeenCalledWith(HEADER_EMPHASIS_COLOR);
+    expect(existingTween.stop).toHaveBeenCalledTimes(1);
+    expect(escapedValueText.setPosition).toHaveBeenCalledWith(430, 63);
+    expect(add).not.toHaveBeenCalled();
+    expect(nextTween).toBeUndefined();
+  });
+});

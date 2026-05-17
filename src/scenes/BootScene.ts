@@ -11,11 +11,47 @@ import { getAvailableLootAssets } from '../systems/LootAssets';
 import { getAvailableObstacleAssets } from '../systems/ObstacleAssets';
 import { SCENE_KEYS } from './sceneKeys';
 
-const ENEMY_SPRITE_ASSETS = [
-  { key: 'enemy-01', url: 'assets/sprites/enemy01.png' },
-  { key: 'enemy-02', url: 'assets/sprites/enemy02.png' },
-  { key: 'enemy-03', url: 'assets/sprites/enemy03.png' },
-  { key: 'enemy-04', url: 'assets/sprites/enemy04.png' },
+const HERO_SPRITE_SHEETS = [
+  { key: 'hero-psz01-idle-down', url: 'assets/sprites/PSZ01/idle_down.png' },
+  { key: 'hero-psz01-idle-northeast', url: 'assets/sprites/PSZ01/idle_northeast.png' },
+  { key: 'hero-psz01-idle-right', url: 'assets/sprites/PSZ01/idle_right.png' },
+  { key: 'hero-psz01-idle-southeast', url: 'assets/sprites/PSZ01/idle_southeast.png' },
+  { key: 'hero-psz01-idle-up', url: 'assets/sprites/PSZ01/idle_up.png' },
+  { key: 'hero-psz01-punch-down', url: 'assets/sprites/PSZ01/punch_down.png' },
+  { key: 'hero-psz01-punch-right', url: 'assets/sprites/PSZ01/punch_right.png' },
+  { key: 'hero-psz01-punch-up', url: 'assets/sprites/PSZ01/punch_up.png' },
+  { key: 'hero-psz01-run-down', url: 'assets/sprites/PSZ01/run_down.png' },
+  { key: 'hero-psz01-run-northeast', url: 'assets/sprites/PSZ01/run_northeast.png' },
+  { key: 'hero-psz01-run-right', url: 'assets/sprites/PSZ01/run_right.png' },
+  { key: 'hero-psz01-run-southeast', url: 'assets/sprites/PSZ01/run_southeast.png' },
+  { key: 'hero-psz01-run-up', url: 'assets/sprites/PSZ01/run_up.png' },
+];
+
+const ENEMY_SPRITE_SHEETS = [
+  { key: 'enemy-01-walk-down', url: 'assets/sprites/enemy01/walk_down.png' },
+  { key: 'enemy-01-walk-right', url: 'assets/sprites/enemy01/walk_right.png' },
+  { key: 'enemy-01-walk-up', url: 'assets/sprites/enemy01/walk_up.png' },
+  { key: 'enemy-02-walk-down', url: 'assets/sprites/enemy02/walk_down.png' },
+  { key: 'enemy-02-walk-right', url: 'assets/sprites/enemy02/walk_right.png' },
+  { key: 'enemy-02-walk-up', url: 'assets/sprites/enemy02/walk_up.png' },
+  { key: 'enemy-03-walk-down', url: 'assets/sprites/enemy03/walk_down.png' },
+  { key: 'enemy-03-walk-right', url: 'assets/sprites/enemy03/walk_right.png' },
+  { key: 'enemy-03-walk-up', url: 'assets/sprites/enemy03/walk_up.png' },
+  { key: 'enemy-04-walk-down', url: 'assets/sprites/enemy04/walk_down.png' },
+  { key: 'enemy-04-walk-right', url: 'assets/sprites/enemy04/walk_right.png' },
+  { key: 'enemy-04-walk-up', url: 'assets/sprites/enemy04/walk_up.png' },
+  { key: 'enemy-01-injured-down', url: 'assets/sprites/enemy01/injured_down.png' },
+  { key: 'enemy-01-injured-right', url: 'assets/sprites/enemy01/injured_right.png' },
+  { key: 'enemy-01-injured-up', url: 'assets/sprites/enemy01/injured_up.png' },
+  { key: 'enemy-02-injured-down', url: 'assets/sprites/enemy02/injured_down.png' },
+  { key: 'enemy-02-injured-right', url: 'assets/sprites/enemy02/injured_right.png' },
+  { key: 'enemy-02-injured-up', url: 'assets/sprites/enemy02/injured_up.png' },
+  { key: 'enemy-03-injured-down', url: 'assets/sprites/enemy03/injured_down.png' },
+  { key: 'enemy-03-injured-right', url: 'assets/sprites/enemy03/injured_right.png' },
+  { key: 'enemy-03-injured-up', url: 'assets/sprites/enemy03/injured_up.png' },
+  { key: 'enemy-04-injured-down', url: 'assets/sprites/enemy04/injured_down.png' },
+  { key: 'enemy-04-injured-right', url: 'assets/sprites/enemy04/injured_right.png' },
+  { key: 'enemy-04-injured-up', url: 'assets/sprites/enemy04/injured_up.png' },
 ];
 
 export class BootScene extends Phaser.Scene {
@@ -25,10 +61,19 @@ export class BootScene extends Phaser.Scene {
 
   preload(): void {
     preloadSceneBackgrounds(this);
-    this.load.image('hero-psz01', ['assets/sprites/PSZ01.png']);
 
-    for (const enemySprite of ENEMY_SPRITE_ASSETS) {
-      this.load.image(enemySprite.key, [enemySprite.url]);
+    for (const heroSheet of HERO_SPRITE_SHEETS) {
+      this.load.spritesheet(heroSheet.key, heroSheet.url, {
+        frameWidth: 128,
+        frameHeight: 128,
+      });
+    }
+
+    for (const enemySheet of ENEMY_SPRITE_SHEETS) {
+      this.load.spritesheet(enemySheet.key, enemySheet.url, {
+        frameWidth: 128,
+        frameHeight: 128,
+      });
     }
 
     for (const obstacleAsset of getAvailableObstacleAssets()) {

@@ -1,14 +1,11 @@
 import Phaser from 'phaser';
 import type { LevelData } from '../types/level';
-import type { GridCell } from '../types/level';
 import { GridSystem } from '../systems/GridSystem';
-import type { ScreenRect } from '../systems/GridSystem';
 import type { CollisionRect } from '../systems/ICollisionProvider';
 import { AStarPathfinder } from '../systems/AStarPathfinder';
 import {
   createAttackRect,
   DEFAULT_ATTACK_CONFIG,
-  getKnockbackDelta,
   type FacingDirection,
 } from '../systems/AttackSystem';
 import {
@@ -29,44 +26,96 @@ import {
 import { DEFAULT_LOOT_IMAGE_NAME, getLootAssetKey } from '../systems/LootAssets';
 import { addSceneBackground } from '../systems/SceneBackgrounds';
 import { SimpleCollisionProvider } from '../systems/SimpleCollisionProvider';
-import { getHrsAssetKey } from '../systems/HrsAssets';
-import { getObstacleAssetKey, hasObstacleAsset } from '../systems/ObstacleAssets';
-import { HEADLINE_FONT_FAMILY } from '../utils/typography';
+import {
+  createPlaySceneHud,
+  createPlaySceneStatusTexts,
+  formatEnemyInfoText,
+  formatLevelInfoText,
+  syncAudioToggleTexts,
+  formatPlaySceneHudValues,
+  syncEscapedEnemyWarningState,
+} from './playScene/PlaySceneHud';
+import {
+  ActiveEnemy,
+  buildEnemyPath,
+  ENEMY_ANIMATION_DIRECTIONS,
+  ENEMY_ANIMATION_FRAME_RATE,
+  ENEMY_SHEET_FRAME_COUNT,
+  getEnemyAnimationKey,
+  getEnemyMovementVisualState,
+  getEnemySheetKey,
+  isEnemyInjuryActive,
+  startEnemyInjuryAnimation,
+  updateActiveEnemies,
+  type EnemyAnimationState,
+} from './playScene/PlaySceneEnemies';
+import {
+  type ActiveLoot,
+  getDepositPopupColor,
+  getLootHitbox,
+  isPlayerInsideSanctuary,
+  processInventoryDeposit,
+  shouldPlayInventoryError,
+  type InventoryItem,
+} from './playScene/PlaySceneLoot';
+import {
+  getEnemyHitbox,
+  getEnemyKnockbackTarget,
+  isRectInsidePlayArea,
+  resolveAttackHits,
+} from './playScene/PlaySceneCombat';
+import {
+  canInterruptAttackAnimation,
+  createAttackState,
+  getHeroPunchAnimationState,
+  shouldClearAttackEffect,
+  shouldFinishAttackAnimation,
+} from './playScene/PlayScenePlayer';
+import {
+  getHeroAnimationFrameRange,
+  getHeroLoopAnimationState,
+  getHeroMovementVisualState,
+  type HeroAnimationDirection,
+  type HeroAnimationState,
+  type HeroLoopAnimationDirection,
+} from './playScene/PlaySceneHero';
+import {
+  createActiveEnemy,
+  getEnemySpawnCells,
+  getEnemySpriteDisplayWidth,
+  getEnemySpriteVariant,
+  getEnemyWaveSpawnDelays,
+  getPlayerSpawnCell,
+} from './playScene/PlaySceneSpawning';
+import {
+  drawHrsImages,
+  drawObstacleCells,
+  drawSanctuaryZone,
+  getLevelObstacleCells,
+} from './playScene/PlaySceneWorld';
 import { SCENE_KEYS } from './sceneKeys';
-const HEADER_EMPHASIS_COLOR = '#f4e6a2';
-const ESCAPED_WARNING_COLOR = '#ff4d4f';
 const DEPOSIT_POPUP_FONT_FAMILY = 'Bungee, Verdana, sans-serif';
-const HERO_SPRITE_KEY = 'hero-psz01';
-const ENEMY_SPRITE_KEYS = ['enemy-01', 'enemy-02', 'enemy-03', 'enemy-04'] as const;
+const HERO_ANIMATION_FRAME_RATE = 12;
+const HERO_SPRITE_DISPLAY_SIZE = 168;
+const HERO_SHEET_FRAME_COUNT = 16;
+const HERO_PUNCH_START_FRAME = 2;
+const HERO_ATTACK_RELEASE_FRAME = 8;
+const HERO_ATTACK_HIT_DELAY_MS = (1 / HERO_ANIMATION_FRAME_RATE) * 1000;
+const HERO_ATTACK_MIN_DURATION_MS =
+  ((HERO_ATTACK_RELEASE_FRAME - HERO_PUNCH_START_FRAME) / HERO_ANIMATION_FRAME_RATE) * 1000;
+const HERO_ATTACK_ANIMATION_DURATION_MS =
+  ((HERO_SHEET_FRAME_COUNT - HERO_PUNCH_START_FRAME) / HERO_ANIMATION_FRAME_RATE) * 1000;
+const HERO_LOOP_ANIMATION_STATES = ['idle', 'run'] as const;
+const HERO_LOOP_ANIMATION_DIRECTIONS = ['down', 'northeast', 'right', 'southeast', 'up'] as const;
+const HERO_PUNCH_ANIMATION_DIRECTIONS = ['down', 'right', 'up'] as const;
 
-type ActiveEnemy = {
-  body: Phaser.GameObjects.Image | Phaser.GameObjects.Ellipse;
-  shadow: Phaser.GameObjects.Ellipse;
-  path: GridCell[];
-  pathIndex: number;
-  speed: number;
-  hitsTaken: number;
-  lootDropped: boolean;
-  escaped: boolean;
-  defeated: boolean;
-};
+function getHeroSheetKey(state: HeroAnimationState, direction: HeroAnimationDirection): string {
+  return `hero-psz01-${state}-${direction}`;
+}
 
-type ActiveLoot = {
-  id: string;
-  type: string;
-  value: 10 | 20 | 50;
-  body: Phaser.GameObjects.Image;
-  shadow: Phaser.GameObjects.Ellipse;
-  createdAt: number;
-};
-
-type HrsPlacement = {
-  x: number;
-  y: number;
-  originX: number;
-  originY: number;
-  depthY: number;
-};
+function getHeroAnimationKey(state: HeroAnimationState, direction: HeroAnimationDirection): string {
+  return `${getHeroSheetKey(state, direction)}-loop`;
+}
 
 export class PlayScene extends Phaser.Scene {
   private readonly levelPath = `${import.meta.env.BASE_URL}levels/level-01.json`;
@@ -89,13 +138,13 @@ export class PlayScene extends Phaser.Scene {
 
   private readonly playerHitboxOffsetY = 27.1;
 
-  private readonly playerSpriteDisplayHeight = 128;
+  private readonly playerSpriteDisplaySize = HERO_SPRITE_DISPLAY_SIZE;
 
   private readonly enemyHitboxSize = { width: 42, height: 26 };
 
   private readonly enemyHitboxOffsetY = 20;
 
-  private readonly enemySpriteDisplayHeight = 98;
+  private readonly enemySpriteDisplayHeight = 128;
 
   private readonly attackCooldownMs = 420;
 
@@ -123,15 +172,11 @@ export class PlayScene extends Phaser.Scene {
 
   private sanctuaryRects: CollisionRect[] = [];
 
-  private playerBody?: Phaser.GameObjects.Image | Phaser.GameObjects.Ellipse;
+  private playerBody?: Phaser.GameObjects.Sprite | Phaser.GameObjects.Ellipse;
 
   private playerShadow?: Phaser.GameObjects.Ellipse;
 
-  private playerHitboxDebug?: Phaser.GameObjects.Graphics;
-
   private enemyHitboxDebug?: Phaser.GameObjects.Graphics;
-
-  private attackDebug?: Phaser.GameObjects.Graphics;
 
   private scoreValueText?: Phaser.GameObjects.Text;
 
@@ -171,7 +216,7 @@ export class PlayScene extends Phaser.Scene {
 
   private activeLoots: ActiveLoot[] = [];
 
-  private inventory: Array<{ type: string; value: 10 | 20 | 50 }> = [];
+  private inventory: InventoryItem[] = [];
 
   private droppedLootCount = 0;
 
@@ -184,6 +229,16 @@ export class PlayScene extends Phaser.Scene {
   private audioSystem?: AudioSystem;
 
   private facingDirection: FacingDirection = 'down';
+
+  private heroAnimationDirection: HeroLoopAnimationDirection = 'down';
+
+  private heroAnimationFlipX = false;
+
+  private isAttackAnimating = false;
+
+  private attackAnimationReleaseAt = 0;
+
+  private attackAnimationEndAt = 0;
 
   private attackRect: CollisionRect | null = null;
 
@@ -198,7 +253,7 @@ export class PlayScene extends Phaser.Scene {
   private spawnedEnemies = 0;
 
   private get targetEnemyCount(): number {
-    return Math.min(Math.floor(this.waveNumber * 0.75 + 1), 8);
+    return Math.max(2, Math.min(Math.floor(this.waveNumber * 0.4 + 1), 8));
   }
 
   constructor() {
@@ -234,6 +289,26 @@ export class PlayScene extends Phaser.Scene {
     this.createHud(width, height);
     this.refreshHud();
 
+    const statusRefs = createPlaySceneStatusTexts(this, width, height, {
+      onMusicToggle: () => {
+        const nextValue = !Boolean(this.registry.get(AUDIO_SETTINGS_KEYS.MUSIC_MUTED));
+        this.registry.set(AUDIO_SETTINGS_KEYS.MUSIC_MUTED, nextValue);
+        this.audioSystem?.setMusicMuted(nextValue);
+        this.refreshAudioToggleTexts();
+      },
+      onSfxToggle: () => {
+        const nextValue = !Boolean(this.registry.get(AUDIO_SETTINGS_KEYS.SFX_MUTED));
+        this.registry.set(AUDIO_SETTINGS_KEYS.SFX_MUTED, nextValue);
+        this.audioSystem?.setSfxMuted(nextValue);
+        this.refreshAudioToggleTexts();
+      },
+    });
+    this.levelInfoText = statusRefs.levelInfoText;
+    this.enemyInfoText = statusRefs.enemyInfoText;
+    this.musicToggleText = statusRefs.musicToggleText;
+    this.sfxToggleText = statusRefs.sfxToggleText;
+    this.refreshAudioToggleTexts();
+
     const graphics = this.add.graphics();
     graphics.setDepth(1);
 
@@ -251,33 +326,12 @@ export class PlayScene extends Phaser.Scene {
       graphics.strokePath();
     }
 
-    this.levelInfoText = this.add
-      .text(24, height - 58, 'Pályabetöltés: folyamatban...', {
-        fontFamily: 'Verdana',
-        fontSize: '17px',
-        color: '#f1faee',
-      })
-      .setOrigin(0, 0.5)
-      .setDepth(7);
-
-    this.enemyInfoText = this.add
-      .text(24, height - 28, 'Ellenségállapot: inicializálás...', {
-        fontFamily: 'Verdana',
-        fontSize: '17px',
-        color: '#ffd166',
-      })
-      .setOrigin(0, 0.5)
-      .setDepth(7);
-
-    this.createAudioToggleButtons(width);
-
     this.playerShadow = this.add.ellipse(0, 0, 72, 30, 0x111111, 0.35).setDepth(2);
+    this.createHeroAnimations();
+    this.createEnemyAnimations();
     this.playerBody = this.createPlayerBody();
     // DEBUG: Keep hitboxes visible during development. Remove before release build.
-    this.playerHitboxDebug = this.add.graphics().setDepth(4);
-    // DEBUG: Keep hitboxes visible during development. Remove before release build.
     this.enemyHitboxDebug = this.add.graphics().setDepth(4);
-    this.attackDebug = this.add.graphics().setDepth(4.5);
     this.playerShadow.setVisible(false);
     this.playerBody.setVisible(false);
 
@@ -285,11 +339,25 @@ export class PlayScene extends Phaser.Scene {
       .load(this.levelPath)
       .then((level) => {
         this.currentLevel = level;
-        this.obstacleRects = this.getObstacleCells(level).map((cell) => this.gridSystem!.cellBounds(cell, 10));
+        this.obstacleRects = getLevelObstacleCells(level).map((cell) => this.gridSystem!.cellBounds(cell, 10));
         this.sanctuaryRects = level.sanctuaryZone.map((cell) => this.gridSystem!.cellBounds(cell, 10));
-        this.drawObstacleCells(level);
-        this.drawSanctuaryZone(level);
-        this.drawHrsImages(level);
+        drawObstacleCells({
+          scene: this,
+          gridSystem: this.gridSystem!,
+          level,
+          obstacleSpriteMaxWidthScale: this.obstacleSpriteMaxWidthScale,
+          obstacleSpriteMaxHeightScale: this.obstacleSpriteMaxHeightScale,
+          getGameplayDepth: (worldY) => this.getGameplayDepth(worldY),
+        });
+        drawSanctuaryZone(this, this.gridSystem!, level.sanctuaryZone);
+        drawHrsImages({
+          scene: this,
+          gridSystem: this.gridSystem!,
+          level,
+          hrsSpriteMaxWidthScale: this.hrsSpriteMaxWidthScale,
+          hrsSpriteMaxHeightScale: this.hrsSpriteMaxHeightScale,
+          getGameplayDepth: (worldY) => this.getGameplayDepth(worldY),
+        });
         this.spawnPlayer(level);
         this.startEnemyWave(level);
         this.refreshLevelInfo();
@@ -313,9 +381,7 @@ export class PlayScene extends Phaser.Scene {
     this.sanctuaryRects = [];
     this.playerBody = undefined;
     this.playerShadow = undefined;
-    this.playerHitboxDebug = undefined;
     this.enemyHitboxDebug = undefined;
-    this.attackDebug = undefined;
     this.scoreValueText = undefined;
     this.inventoryValueText = undefined;
     this.escapedValueText = undefined;
@@ -335,6 +401,11 @@ export class PlayScene extends Phaser.Scene {
     this.nextLootDepositAt = null;
     this.lastInventoryErrorAt = Number.NEGATIVE_INFINITY;
     this.facingDirection = 'down';
+    this.heroAnimationDirection = 'down';
+    this.heroAnimationFlipX = false;
+    this.isAttackAnimating = false;
+    this.attackAnimationReleaseAt = 0;
+    this.attackAnimationEndAt = 0;
     this.attackRect = null;
     this.attackVisualUntil = 0;
     this.lastAttackAt = Number.NEGATIVE_INFINITY;
@@ -359,118 +430,26 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private createHud(width: number, _height: number): void {
-    const panelLeft = 18;
-    const panelWidth = width - 36;
-    const contentLeft = panelLeft + 28;
-    const contentWidth = panelWidth - 56;
-    const hudTop = 13;
+    const hudRefs = createPlaySceneHud(this, width);
 
-    const panel = this.add.graphics();
-    panel.setDepth(6);
-    panel.fillStyle(0x102a43, 0.38);
-    panel.fillRoundedRect(panelLeft, hudTop, panelWidth, 92, 24);
-    panel.lineStyle(2, 0xf4d35e, 0.45);
-    panel.strokeRoundedRect(panelLeft, hudTop, panelWidth, 92, 24);
-
-    const metricY = 31;
-    const valueY = 63;
-    const columns = [0, 0.24, 0.52, 0.8].map((ratio) => contentLeft + contentWidth * ratio);
-
-    this.addHudLabel(columns[0], metricY, 'Pont');
-    this.scoreValueText = this.addHudValue(columns[0], valueY);
-
-    this.addHudLabel(columns[1], metricY, 'Hátizsák');
-    this.inventoryValueText = this.addHudValue(columns[1], valueY);
-
-    this.addHudLabel(columns[2], metricY, 'Reptérre érkeztek');
-    this.escapedValueText = this.addHudValue(columns[2], valueY);
-    this.escapedValueBaseX = columns[2];
-    this.escapedValueBaseY = valueY;
-
-    this.addHudLabel(columns[3], metricY, 'Hullám');
-    this.waveValueText = this.addHudValue(columns[3], valueY);
-  }
-
-  private addHudLabel(x: number, y: number, text: string): void {
-    this.add
-      .text(x, y, text, {
-        fontFamily: 'Verdana',
-        fontSize: '15px',
-        color: '#a8dadc',
-      })
-      .setDepth(7);
-  }
-
-  private addHudValue(x: number, y: number): Phaser.GameObjects.Text {
-    return this.add
-      .text(x, y, '', {
-        fontFamily: HEADLINE_FONT_FAMILY,
-        fontSize: '24px',
-        color: HEADER_EMPHASIS_COLOR,
-        fontStyle: 'bold',
-      })
-      .setDepth(7);
-  }
-
-  private createAudioToggleButtons(width: number): void {
-    this.musicToggleText = this.add
-      .text(width - 18, 122, '', {
-        fontFamily: 'Verdana',
-        fontSize: '15px',
-        color: '#f4f1de',
-        backgroundColor: '#223247',
-        padding: { x: 10, y: 6 },
-      })
-      .setOrigin(1, 0)
-      .setDepth(6)
-      .setInteractive({ useHandCursor: true });
-
-    this.musicToggleText.setData('ui-button', true);
-    this.musicToggleText.on('pointerdown', () => {
-      const nextValue = !Boolean(this.registry.get(AUDIO_SETTINGS_KEYS.MUSIC_MUTED));
-      this.registry.set(AUDIO_SETTINGS_KEYS.MUSIC_MUTED, nextValue);
-      this.audioSystem?.setMusicMuted(nextValue);
-      this.refreshAudioToggleTexts();
-    });
-
-    this.sfxToggleText = this.add
-      .text(width - 18, 160, '', {
-        fontFamily: 'Verdana',
-        fontSize: '15px',
-        color: '#f4f1de',
-        backgroundColor: '#223247',
-        padding: { x: 10, y: 6 },
-      })
-      .setOrigin(1, 0)
-      .setDepth(6)
-      .setInteractive({ useHandCursor: true });
-
-    this.sfxToggleText.setData('ui-button', true);
-    this.sfxToggleText.on('pointerdown', () => {
-      const nextValue = !Boolean(this.registry.get(AUDIO_SETTINGS_KEYS.SFX_MUTED));
-      this.registry.set(AUDIO_SETTINGS_KEYS.SFX_MUTED, nextValue);
-      this.audioSystem?.setSfxMuted(nextValue);
-      this.refreshAudioToggleTexts();
-    });
-
-    for (const button of [this.musicToggleText, this.sfxToggleText]) {
-      button.on('pointerover', () => {
-        button.setStyle({ backgroundColor: '#314863' });
-      });
-      button.on('pointerout', () => {
-        button.setStyle({ backgroundColor: '#223247' });
-      });
-    }
-
-    this.refreshAudioToggleTexts();
+    this.scoreValueText = hudRefs.scoreValueText;
+    this.inventoryValueText = hudRefs.inventoryValueText;
+    this.escapedValueText = hudRefs.escapedValueText;
+    this.escapedValueBaseX = hudRefs.escapedValueBaseX;
+    this.escapedValueBaseY = hudRefs.escapedValueBaseY;
+    this.waveValueText = hudRefs.waveValueText;
   }
 
   private refreshAudioToggleTexts(): void {
-    this.musicToggleText?.setText(
-      `Zene némít: ${this.registry.get(AUDIO_SETTINGS_KEYS.MUSIC_MUTED) ? 'Be' : 'Ki'}`,
-    );
-    this.sfxToggleText?.setText(
-      `Hangeffekt némít: ${this.registry.get(AUDIO_SETTINGS_KEYS.SFX_MUTED) ? 'Be' : 'Ki'}`,
+    syncAudioToggleTexts(
+      {
+        musicToggleText: this.musicToggleText,
+        sfxToggleText: this.sfxToggleText,
+      },
+      {
+        musicMuted: Boolean(this.registry.get(AUDIO_SETTINGS_KEYS.MUSIC_MUTED)),
+        sfxMuted: Boolean(this.registry.get(AUDIO_SETTINGS_KEYS.SFX_MUTED)),
+      },
     );
   }
 
@@ -479,7 +458,7 @@ export class PlayScene extends Phaser.Scene {
       return;
     }
 
-    if (!this.playerBody || !this.playerShadow || !this.gridSystem || !this.playerHitboxDebug) {
+    if (!this.playerBody || !this.playerShadow || !this.gridSystem) {
       return;
     }
 
@@ -487,15 +466,12 @@ export class PlayScene extends Phaser.Scene {
       return;
     }
 
-    this.renderPlayerHitbox();
+    const now = this.time.now;
+
     this.updateEnemies(delta);
     this.updateLoots();
     this.renderEnemyHitboxes();
-    this.renderAttackEffect();
-
-    if (this.keySpace && Phaser.Input.Keyboard.JustDown(this.keySpace)) {
-      this.performAttack();
-    }
+    this.updateAttackState(now);
 
     let horizontal = 0;
     let vertical = 0;
@@ -517,259 +493,62 @@ export class PlayScene extends Phaser.Scene {
       this.facingDirection = 'down';
     }
 
-    if (horizontal !== 0 || vertical !== 0) {
-      const direction = new Phaser.Math.Vector2(horizontal, vertical).normalize();
-      const distance = (this.playerSpeed * delta) / 1000;
+    const wantsToMove = horizontal !== 0 || vertical !== 0;
+    const wantsToAttack = Boolean(this.keySpace && Phaser.Input.Keyboard.JustDown(this.keySpace));
 
-      this.tryMovePlayerAlongGrid(direction.x * distance, 0);
-      this.tryMovePlayerAlongGrid(0, direction.y * distance);
-    }
-  }
-
-  private drawObstacleCells(level: LevelData): void {
-    let fallbackGraphics: Phaser.GameObjects.Graphics | undefined;
-    const obstacleTextureSizes = new Map<string, { width: number; height: number }>();
-
-    for (const obstacle of level.obstacles) {
-      const textureKey = getObstacleAssetKey(obstacle.image);
-
-      if (!hasObstacleAsset(obstacle.image) || !this.textures.exists(textureKey)) {
-        fallbackGraphics ??= this.add.graphics().setDepth(1.5);
-        this.drawFallbackObstacleCell(fallbackGraphics, obstacle);
-        continue;
+    if (this.isAttackAnimating) {
+      if (wantsToAttack && canInterruptAttackAnimation(this.isAttackAnimating, now, this.attackAnimationReleaseAt)) {
+        this.performAttack();
+        return;
       }
 
-      let textureSize = obstacleTextureSizes.get(textureKey);
-
-      if (!textureSize) {
-        const sourceImage = this.textures.get(textureKey).getSourceImage();
-        const textureSource = Array.isArray(sourceImage) ? sourceImage[0] : sourceImage;
-        textureSize = {
-          width: textureSource?.width ?? 1,
-          height: textureSource?.height ?? 1,
-        };
-        obstacleTextureSizes.set(textureKey, textureSize);
+      if (!canInterruptAttackAnimation(this.isAttackAnimating, now, this.attackAnimationReleaseAt)) {
+        return;
       }
 
-      const center = this.gridSystem!.cellCenter(obstacle);
-      const bounds = this.gridSystem!.cellBounds(obstacle, 8);
-      const displaySize = this.getObstacleDisplaySize(bounds, textureSize);
-      const anchorY = bounds.y + bounds.height * 1.08;
+      if (wantsToMove) {
+        const direction = new Phaser.Math.Vector2(horizontal, vertical).normalize();
+        const distance = (this.playerSpeed * delta) / 1000;
 
-      this.add
-        .image(center.x, anchorY, textureKey)
-        .setOrigin(0.5, 1)
-        .setDisplaySize(displaySize.width, displaySize.height)
-        .setDepth(this.getGameplayDepth(anchorY));
-    }
-  }
+        this.stopAttackAnimation();
+        this.updateHeroAnimationDirection(horizontal, vertical);
+        this.updatePlayerMovementVisual(true);
 
-  private drawFallbackObstacleCell(graphics: Phaser.GameObjects.Graphics, cell: GridCell): void {
-    const polygon = this.gridSystem!.cellPolygon(cell);
-    graphics.fillStyle(0xe76f51, 0.35);
-    graphics.lineStyle(2, 0xffb4a2, 0.95);
-    graphics.beginPath();
-    graphics.moveTo(polygon[0].x, polygon[0].y);
-    graphics.lineTo(polygon[1].x, polygon[1].y);
-    graphics.lineTo(polygon[2].x, polygon[2].y);
-    graphics.lineTo(polygon[3].x, polygon[3].y);
-    graphics.closePath();
-    graphics.fillPath();
-    graphics.strokePath();
-  }
+        this.tryMovePlayerAlongGrid(direction.x * distance, 0);
+        this.tryMovePlayerAlongGrid(0, direction.y * distance);
+        return;
+      }
 
-  private getObstacleCells(level: LevelData): GridCell[] {
-    return level.obstacles.map((obstacle) => ({ x: obstacle.x, y: obstacle.y }));
-  }
+      if (shouldFinishAttackAnimation(now, this.attackAnimationEndAt)) {
+        this.stopAttackAnimation();
+        this.updatePlayerMovementVisual(false);
+      }
 
-  private getObstacleDisplaySize(
-    bounds: ScreenRect,
-    textureSize: { width: number; height: number },
-  ): { width: number; height: number } {
-    return this.getFittedSpriteDisplaySize(
-      bounds,
-      textureSize,
-      this.obstacleSpriteMaxWidthScale,
-      this.obstacleSpriteMaxHeightScale,
-    );
-  }
-
-  private getHrsDisplaySize(
-    bounds: ScreenRect,
-    textureSize: { width: number; height: number },
-    scale = 1,
-  ): { width: number; height: number } {
-    return this.getFittedSpriteDisplaySize(
-      bounds,
-      textureSize,
-      this.hrsSpriteMaxWidthScale * scale,
-      this.hrsSpriteMaxHeightScale * scale,
-    );
-  }
-
-  private getFittedSpriteDisplaySize(
-    bounds: ScreenRect,
-    textureSize: { width: number; height: number },
-    maxWidthScale: number,
-    maxHeightScale: number,
-  ): { width: number; height: number } {
-    const maxWidth = bounds.width * maxWidthScale;
-    const maxHeight = bounds.height * maxHeightScale;
-
-    if (textureSize.width <= 0 || textureSize.height <= 0) {
-      return { width: maxWidth, height: maxHeight };
-    }
-
-    const scale = Math.min(maxWidth / textureSize.width, maxHeight / textureSize.height);
-
-    return {
-      width: textureSize.width * scale,
-      height: textureSize.height * scale,
-    };
-  }
-
-  private drawHrsImages(level: LevelData): void {
-    if (level.hrsImages.length === 0) {
       return;
     }
 
-    const textureSizes = new Map<string, { width: number; height: number }>();
-
-    for (const hrsImage of level.hrsImages) {
-      const textureKey = getHrsAssetKey(hrsImage.image);
-
-      if (!this.textures.exists(textureKey)) {
-        continue;
-      }
-
-      const zoneCells = this.getHrsZoneCells(level, hrsImage);
-
-      if (zoneCells.length === 0) {
-        continue;
-      }
-
-      let textureSize = textureSizes.get(textureKey);
-
-      if (!textureSize) {
-        const sourceImage = this.textures.get(textureKey).getSourceImage();
-        const textureSource = Array.isArray(sourceImage) ? sourceImage[0] : sourceImage;
-        textureSize = {
-          width: textureSource?.width ?? 1,
-          height: textureSource?.height ?? 1,
-        };
-        textureSizes.set(textureKey, textureSize);
-      }
-
-      const zoneBounds = this.getGridCellsBounds(zoneCells);
-      const placement = this.getHrsPlacement(zoneBounds, hrsImage.side, hrsImage.offsetX, hrsImage.offsetY);
-      const displaySize = this.getHrsDisplaySize(zoneBounds, textureSize, hrsImage.scale);
-
-      this.add
-        .image(placement.x, placement.y, textureKey)
-        .setOrigin(placement.originX, placement.originY)
-        .setDisplaySize(displaySize.width, displaySize.height)
-        .setDepth(this.getGameplayDepth(placement.depthY) - 0.08);
-    }
-  }
-
-  private getHrsZoneCells(level: LevelData, hrsImage: LevelData['hrsImages'][number]): GridCell[] {
-    if (hrsImage.zoneType === 'sanctuary') {
-      return [...level.sanctuaryZone];
+    if (wantsToAttack) {
+      this.performAttack();
+      return;
     }
 
-    if (hrsImage.zoneType === 'spawn') {
-      return level.spawnZones.find((zone) => zone.id === hrsImage.zoneId)?.cells ?? [];
+    if (wantsToMove) {
+      const direction = new Phaser.Math.Vector2(horizontal, vertical).normalize();
+      const distance = (this.playerSpeed * delta) / 1000;
+
+      this.updateHeroAnimationDirection(horizontal, vertical);
+      this.updatePlayerMovementVisual(true);
+
+      this.tryMovePlayerAlongGrid(direction.x * distance, 0);
+      this.tryMovePlayerAlongGrid(0, direction.y * distance);
+      return;
     }
 
-    return level.goalZones.find((zone) => zone.id === hrsImage.zoneId)?.cells ?? [];
-  }
-
-  private getGridCellsBounds(cells: GridCell[]): ScreenRect {
-    const cellBounds = cells.map((cell) => this.gridSystem!.cellBounds(cell, 0));
-    const minX = Math.min(...cellBounds.map((bounds) => bounds.x));
-    const minY = Math.min(...cellBounds.map((bounds) => bounds.y));
-    const maxX = Math.max(...cellBounds.map((bounds) => bounds.x + bounds.width));
-    const maxY = Math.max(...cellBounds.map((bounds) => bounds.y + bounds.height));
-
-    return {
-      x: minX,
-      y: minY,
-      width: maxX - minX,
-      height: maxY - minY,
-    };
-  }
-
-  private getHrsPlacement(
-    zoneBounds: ScreenRect,
-    side: LevelData['hrsImages'][number]['side'],
-    offsetX = 0,
-    offsetY = 0,
-  ): HrsPlacement {
-    const centerX = zoneBounds.x + zoneBounds.width / 2;
-    const horizontalMargin = Math.max(26, zoneBounds.width * 0.36);
-    const verticalMargin = Math.max(18, zoneBounds.height * 0.34);
-    const baseBottomY = zoneBounds.y + zoneBounds.height;
-
-    if (side === 'left') {
-      return {
-        x: zoneBounds.x - horizontalMargin + offsetX,
-        y: baseBottomY + offsetY,
-        originX: 1,
-        originY: 1,
-        depthY: baseBottomY,
-      };
-    }
-
-    if (side === 'right') {
-      return {
-        x: zoneBounds.x + zoneBounds.width + horizontalMargin + offsetX,
-        y: baseBottomY + offsetY,
-        originX: 0,
-        originY: 1,
-        depthY: baseBottomY,
-      };
-    }
-
-    if (side === 'top') {
-      return {
-        x: centerX + offsetX,
-        y: zoneBounds.y - verticalMargin + offsetY,
-        originX: 0.5,
-        originY: 1,
-        depthY: zoneBounds.y,
-      };
-    }
-
-    return {
-      x: centerX + offsetX,
-      y: baseBottomY + verticalMargin + offsetY,
-      originX: 0.5,
-      originY: 0,
-      depthY: baseBottomY,
-    };
-  }
-
-  private drawSanctuaryZone(level: LevelData): void {
-    const graphics = this.add.graphics();
-    graphics.setDepth(1.4);
-
-    for (const cell of level.sanctuaryZone) {
-      const polygon = this.gridSystem!.cellPolygon(cell);
-      graphics.fillStyle(0x2a9d8f, 0.22);
-      graphics.lineStyle(2, 0x95d5b2, 0.9);
-      graphics.beginPath();
-      graphics.moveTo(polygon[0].x, polygon[0].y);
-      graphics.lineTo(polygon[1].x, polygon[1].y);
-      graphics.lineTo(polygon[2].x, polygon[2].y);
-      graphics.lineTo(polygon[3].x, polygon[3].y);
-      graphics.closePath();
-      graphics.fillPath();
-      graphics.strokePath();
-    }
+    this.updatePlayerMovementVisual(false);
   }
 
   private spawnPlayer(level: LevelData): void {
-    const startCell = level.sanctuaryZone[0] ?? level.spawnZones[0]?.cells[0];
+    const startCell = getPlayerSpawnCell(level);
     if (!startCell || !this.playerBody || !this.playerShadow) {
       return;
     }
@@ -778,20 +557,17 @@ export class PlayScene extends Phaser.Scene {
     this.playerBody.setPosition(center.x, center.y - 24).setVisible(true);
     this.playerShadow.setPosition(center.x, center.y + 30).setVisible(true);
     this.updatePlayerRenderDepth();
-    this.renderPlayerHitbox();
   }
 
   private startEnemyWave(level: LevelData): void {
-    const waveWindow = 10_000;
+    const waveWindow = 13_000;
     const count = this.targetEnemyCount;
 
     this.spawnedEnemies = 0;
     this.refreshEnemyInfo(count);
 
-    for (let i = 0; i < count; i++) {
-      const baseDelay = (i / count) * (waveWindow-1500);
-      const randomExtra = Math.random() * 1000;
-      this.time.delayedCall(baseDelay + randomExtra, () => {
+    for (const delay of getEnemyWaveSpawnDelays(count, waveWindow, () => Math.random() * 1000)) {
+      this.time.delayedCall(delay, () => {
         const spawned = this.spawnEnemy(level);
         if (spawned) {
           this.spawnedEnemies += 1;
@@ -811,14 +587,22 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private spawnEnemy(level: LevelData): boolean {
-    const spawnCell = level.spawnZones[0]?.cells[this.spawnedEnemies % (level.spawnZones[0]?.cells.length ?? 1)];
-    const goalCell = level.goalZones[0]?.cells[0];
+    const spawnCells = getEnemySpawnCells(level, this.spawnedEnemies);
 
-    if (!spawnCell || !goalCell || !this.gridSystem) {
+    if (!spawnCells || !this.gridSystem) {
       return false;
     }
 
-    const path = this.buildEnemyPath(level, spawnCell, goalCell);
+    const { spawnCell, goalCell } = spawnCells;
+    const spriteVariant = getEnemySpriteVariant(this.spawnedEnemies);
+
+    const path = buildEnemyPath({
+      level,
+      spawnCell,
+      goalCell,
+      gridSystem: this.gridSystem,
+      pathfinder: this.pathfinder,
+    });
 
     if (!path || path.length === 0) {
       return false;
@@ -826,20 +610,16 @@ export class PlayScene extends Phaser.Scene {
 
     const startPoint = this.gridSystem.cellCenter(path[0]);
     const shadow = this.add.ellipse(startPoint.x, startPoint.y + 16, 42, 16, 0x111111, 0.28).setDepth(2);
-    const enemySpriteKey = ENEMY_SPRITE_KEYS[this.spawnedEnemies % ENEMY_SPRITE_KEYS.length];
-    const body = this.createEnemyBody(startPoint.x, startPoint.y - 2, enemySpriteKey);
+    const body = this.createEnemyBody(startPoint.x, startPoint.y - 2, spriteVariant);
 
-    const enemy: ActiveEnemy = {
+    const enemy: ActiveEnemy = createActiveEnemy({
       body,
       shadow,
       path,
-      pathIndex: 0,
-      speed: this.enemySpeed * Phaser.Math.FloatBetween(0.75, 1.25),
-      hitsTaken: 0,
-      lootDropped: false,
-      escaped: false,
-      defeated: false,
-    };
+      enemySpeed: this.enemySpeed,
+      speedRoll: Phaser.Math.FloatBetween(0.75, 1.25),
+      spriteVariant,
+    });
 
     this.activeEnemies.push(enemy);
     this.updateEnemyRenderDepth(enemy);
@@ -847,120 +627,128 @@ export class PlayScene extends Phaser.Scene {
     return true;
   }
 
-  private buildEnemyPath(level: LevelData, spawnCell: GridCell, goalCell: GridCell): GridCell[] | null {
-    const waypoint = this.pickEnemyWaypoint(level, spawnCell, goalCell);
-
-    if (waypoint) {
-      const obstacleCells = this.getObstacleCells(level);
-      const waypointPath = this.pathfinder.findPathViaWaypoint(
-        level.grid.width,
-        level.grid.height,
-        spawnCell,
-        waypoint,
-        goalCell,
-        obstacleCells,
-      );
-
-      if (waypointPath && waypointPath.length > 0) {
-        return waypointPath;
-      }
-    }
-    return this.pathfinder.findPath(level.grid.width, level.grid.height, spawnCell, goalCell, this.getObstacleCells(level));
-  }
-
-  private pickEnemyWaypoint(level: LevelData, spawnCell: GridCell, goalCell: GridCell): GridCell | null {
-    const obstacleCells = this.getObstacleCells(level);
-    const blockedKeys = new Set(obstacleCells.map((cell) => this.cellKey(cell)));
-    const candidates = this.gridSystem
-      ?.allCells()
-      .filter((cell) => {
-        const candidateKey = this.cellKey(cell);
-
-        if (blockedKeys.has(candidateKey)) {
-          return false;
-        }
-
-        if (candidateKey === this.cellKey(spawnCell) || candidateKey === this.cellKey(goalCell)) {
-          return false;
-        }
-
-        return this.manhattanDistance(cell, spawnCell) >= 2 && this.manhattanDistance(cell, goalCell) >= 2;
-      });
-
-    if (!candidates || candidates.length === 0) {
-      return null;
-    }
-
-    const shuffledCandidates = Phaser.Utils.Array.Shuffle([...candidates]);
-
-    for (const candidate of shuffledCandidates) {
-      const waypointPath = this.pathfinder.findPathViaWaypoint(
-        level.grid.width,
-        level.grid.height,
-        spawnCell,
-        candidate,
-        goalCell,
-        obstacleCells,
-      );
-
-      if (waypointPath && waypointPath.length > 0) {
-        return candidate;
+  private createHeroAnimations(): void {
+    for (const state of HERO_LOOP_ANIMATION_STATES) {
+      for (const direction of HERO_LOOP_ANIMATION_DIRECTIONS) {
+        this.createHeroAnimation(state, direction, -1);
       }
     }
 
-    return null;
+    for (const direction of HERO_PUNCH_ANIMATION_DIRECTIONS) {
+      this.createHeroAnimation('punch', direction, 0);
+    }
   }
 
-  private manhattanDistance(a: GridCell, b: GridCell): number {
-    return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+  private createEnemyAnimations(): void {
+    const spriteVariants = [
+      { walkPrefix: 'enemy-01', injuredPrefix: 'enemy-01' },
+      { walkPrefix: 'enemy-02', injuredPrefix: 'enemy-02' },
+      { walkPrefix: 'enemy-03', injuredPrefix: 'enemy-03' },
+      { walkPrefix: 'enemy-04', injuredPrefix: 'enemy-04' },
+    ];
+
+    for (const spriteVariant of spriteVariants) {
+      for (const direction of ENEMY_ANIMATION_DIRECTIONS) {
+        for (const animationState of ['walk', 'injured'] as const) {
+          const sheetKey = getEnemySheetKey(animationState, direction, spriteVariant);
+          const animationKey = getEnemyAnimationKey(animationState, direction, spriteVariant);
+
+          if (!this.textures.exists(sheetKey) || this.anims.exists(animationKey)) {
+            continue;
+          }
+
+          this.anims.create({
+            key: animationKey,
+            frames: this.anims.generateFrameNumbers(sheetKey, { start: 0, end: ENEMY_SHEET_FRAME_COUNT - 1 }),
+            frameRate: ENEMY_ANIMATION_FRAME_RATE,
+            repeat: animationState === 'walk' ? -1 : 0,
+          });
+        }
+      }
+    }
   }
 
-  private createPlayerBody(): Phaser.GameObjects.Image | Phaser.GameObjects.Ellipse {
-    if (!this.textures.exists(HERO_SPRITE_KEY)) {
+  private createPlayerBody(): Phaser.GameObjects.Sprite | Phaser.GameObjects.Ellipse {
+    const initialTextureKey = getHeroSheetKey('idle', 'down');
+
+    if (!this.textures.exists(initialTextureKey)) {
       return this.add
         .ellipse(0, 0, 72, 90, 0xf4d35e, 1)
         .setStrokeStyle(2, 0x102a43, 1)
         .setDepth(3);
     }
 
-    const sourceImage = this.textures.get(HERO_SPRITE_KEY).getSourceImage();
-    const textureSource = Array.isArray(sourceImage) ? sourceImage[0] : sourceImage;
-    const textureWidth = textureSource?.width ?? this.playerSpriteDisplayHeight;
-    const textureHeight = textureSource?.height ?? this.playerSpriteDisplayHeight;
-    const displayWidth = textureHeight > 0 ? (this.playerSpriteDisplayHeight * textureWidth) / textureHeight : 72;
-
     return this.add
-      .image(0, 0, HERO_SPRITE_KEY)
-      .setDisplaySize(displayWidth, this.playerSpriteDisplayHeight)
+      .sprite(0, 0, initialTextureKey)
+      .setDisplaySize(this.playerSpriteDisplaySize, this.playerSpriteDisplaySize)
       .setDepth(3);
+  }
+
+  private applyHeroDisplaySize(): void {
+    if (!this.playerBody || typeof this.playerBody.setDisplaySize !== 'function') {
+      return;
+    }
+
+    this.playerBody.setDisplaySize(this.playerSpriteDisplaySize, this.playerSpriteDisplaySize);
+  }
+
+  private updateHeroAnimationDirection(horizontal: number, vertical: number): void {
+    const nextVisualState = getHeroMovementVisualState(horizontal, vertical);
+    this.heroAnimationDirection = nextVisualState.direction;
+    this.heroAnimationFlipX = nextVisualState.flipX;
+  }
+
+  private updatePlayerMovementVisual(isMoving: boolean): void {
+    const state = getHeroLoopAnimationState(isMoving);
+
+    this.playHeroAnimation(state, this.heroAnimationDirection, this.heroAnimationFlipX, true);
   }
 
   private createEnemyBody(
     x: number,
     y: number,
-    textureKey: (typeof ENEMY_SPRITE_KEYS)[number],
-  ): Phaser.GameObjects.Image | Phaser.GameObjects.Ellipse {
-    if (!this.textures.exists(textureKey)) {
+    spriteVariant: ActiveEnemy['spriteVariant'],
+  ): Phaser.GameObjects.Sprite | Phaser.GameObjects.Ellipse {
+    const initialTextureKey = getEnemySheetKey('walk', 'down', spriteVariant);
+
+    if (!this.textures.exists(initialTextureKey)) {
       return this.add
         .ellipse(x, y, 42, 58, 0xe63946, 1)
         .setStrokeStyle(2, 0x3d0c11, 1)
         .setDepth(3);
     }
 
-    const sourceImage = this.textures.get(textureKey).getSourceImage();
+    const sourceImage = this.textures.get(initialTextureKey).getSourceImage();
     const textureSource = Array.isArray(sourceImage) ? sourceImage[0] : sourceImage;
-    const textureWidth = textureSource?.width ?? this.enemySpriteDisplayHeight;
-    const textureHeight = textureSource?.height ?? this.enemySpriteDisplayHeight;
-    const displayWidth = textureHeight > 0 ? (this.enemySpriteDisplayHeight * textureWidth) / textureHeight : 42;
+    const displayWidth = getEnemySpriteDisplayWidth(textureSource, this.enemySpriteDisplayHeight);
 
     return this.add
-      .image(x, y, textureKey)
+      .sprite(x, y, initialTextureKey)
       .setDisplaySize(displayWidth, this.enemySpriteDisplayHeight)
       .setDepth(3);
   }
 
-  private cellKey(cell: GridCell): string {
-    return `${cell.x},${cell.y}`;
+  private updateEnemyMovementVisual(enemy: ActiveEnemy, deltaX: number, deltaY: number): void {
+    const nextVisualState = getEnemyMovementVisualState(deltaX, deltaY);
+    enemy.animationDirection = nextVisualState.direction;
+    enemy.animationFlipX = nextVisualState.flipX;
+    this.playEnemyAnimation(enemy, 'walk', true);
+  }
+
+  private playEnemyAnimation(enemy: ActiveEnemy, animationState: EnemyAnimationState, ignoreIfPlaying: boolean): void {
+    if (!('play' in enemy.body) || typeof enemy.body.play !== 'function') {
+      return;
+    }
+
+    const animationKey = getEnemyAnimationKey(animationState, enemy.animationDirection, enemy.spriteVariant);
+    if (!this.anims.exists(animationKey)) {
+      return;
+    }
+
+    enemy.body.play(animationKey, ignoreIfPlaying);
+    if (typeof enemy.body.setFlipX === 'function') {
+      enemy.body.setFlipX(enemy.animationFlipX);
+    }
   }
 
   private tryMovePlayerAlongGrid(deltaX: number, deltaY: number): void {
@@ -991,7 +779,6 @@ export class PlayScene extends Phaser.Scene {
     this.playerBody.setPosition(nextPosition.x, nextPosition.y);
     this.playerShadow.setPosition(nextPosition.x, nextPosition.y + 54);
     this.updatePlayerRenderDepth();
-    this.renderPlayerHitbox();
   }
 
   private getGameplayDepth(worldY: number): number {
@@ -1029,28 +816,95 @@ export class PlayScene extends Phaser.Scene {
     }
   }
 
+  private createHeroAnimation(state: HeroAnimationState, direction: HeroAnimationDirection, repeat: number): void {
+    const sheetKey = getHeroSheetKey(state, direction);
+    const animationKey = getHeroAnimationKey(state, direction);
+
+    if (!this.textures.exists(sheetKey) || this.anims.exists(animationKey)) {
+      return;
+    }
+
+    this.anims.create({
+      key: animationKey,
+      frames: this.anims.generateFrameNumbers(
+        sheetKey,
+        getHeroAnimationFrameRange(state, HERO_PUNCH_START_FRAME, HERO_SHEET_FRAME_COUNT),
+      ),
+      frameRate: HERO_ANIMATION_FRAME_RATE,
+      repeat,
+    });
+  }
+
+  private playHeroAnimation(
+    state: HeroAnimationState,
+    direction: HeroAnimationDirection,
+    flipX: boolean,
+    ignoreIfPlaying: boolean,
+  ): void {
+    if (!this.playerBody || !('play' in this.playerBody) || typeof this.playerBody.play !== 'function') {
+      return;
+    }
+
+    const animationKey = getHeroAnimationKey(state, direction);
+    if (!this.anims.exists(animationKey)) {
+      return;
+    }
+
+    this.applyHeroDisplaySize();
+    this.playerBody.play(animationKey, ignoreIfPlaying);
+    if (typeof this.playerBody.setFlipX === 'function') {
+      this.playerBody.setFlipX(flipX);
+    }
+  }
+
+  private stopAttackAnimation(): void {
+    this.isAttackAnimating = false;
+    this.attackAnimationReleaseAt = 0;
+    this.attackAnimationEndAt = 0;
+    this.setPlayerAttackFeedback(false);
+  }
+
   private performAttack(): void {
     if (!this.playerBody || !this.playerShadow) {
       return;
     }
 
     const now = this.time.now;
-    if (now - this.lastAttackAt < this.attackCooldownMs) {
+    const nextAttackState = createAttackState({
+      now,
+      lastAttackAt: this.lastAttackAt,
+      attackCooldownMs: this.attackCooldownMs,
+      attackMinDurationMs: HERO_ATTACK_MIN_DURATION_MS,
+      attackAnimationDurationMs: HERO_ATTACK_ANIMATION_DURATION_MS,
+      attackHitDelayMs: HERO_ATTACK_HIT_DELAY_MS,
+      attackDurationMs: this.attackDurationMs,
+    });
+
+    if (!nextAttackState) {
       return;
     }
 
     this.audioSystem?.playSfx(AUDIO_KEYS.ATTACK);
-    this.lastAttackAt = now;
-    this.attackVisualUntil = now + this.attackDurationMs;
-    this.attackRect = createAttackRect(this.getPlayerHitbox(this.playerBody.x, this.playerBody.y), this.facingDirection);
+    this.lastAttackAt = nextAttackState.lastAttackAt;
+    this.isAttackAnimating = nextAttackState.isAttackAnimating;
+    this.attackAnimationReleaseAt = nextAttackState.attackAnimationReleaseAt;
+    this.attackAnimationEndAt = nextAttackState.attackAnimationEndAt;
+    this.attackRect = nextAttackState.attackRect;
+    this.attackVisualUntil = nextAttackState.attackVisualUntil;
 
+    const punchAnimation = getHeroPunchAnimationState(this.facingDirection);
+    this.heroAnimationDirection = punchAnimation.heroAnimationDirection;
+    this.heroAnimationFlipX = punchAnimation.heroAnimationFlipX;
+    this.playHeroAnimation('punch', punchAnimation.direction, punchAnimation.flipX, false);
     this.setPlayerAttackFeedback(true);
-    this.time.delayedCall(this.attackDurationMs, () => {
-      this.attackRect = null;
-      this.setPlayerAttackFeedback(false);
-    });
 
-    this.checkAttackHits();
+    const attackHitbox = this.getPlayerHitbox(this.playerBody.x, this.playerBody.y);
+    const attackDirection = this.facingDirection;
+
+    this.time.delayedCall(HERO_ATTACK_HIT_DELAY_MS, () => {
+      this.attackRect = createAttackRect(attackHitbox, attackDirection);
+      this.checkAttackHits();
+    });
   }
 
   private checkAttackHits(): void {
@@ -1058,62 +912,43 @@ export class PlayScene extends Phaser.Scene {
       return;
     }
 
-    let hitAny = false;
-
-    for (const enemy of this.activeEnemies) {
-      if (enemy.escaped || enemy.defeated) {
-        continue;
-      }
-
-      const enemyHitbox = this.getEnemyHitbox(enemy.body.x, enemy.body.y);
-      if (!this.collisionProvider.intersects(this.attackRect, enemyHitbox)) {
-        continue;
-      }
-
-      if (!hitAny) {
-        this.audioSystem?.playSfx(AUDIO_KEYS.HIT);
-        hitAny = true;
-      }
-
-      enemy.hitsTaken += 1;
-      this.applyEnemyKnockback(enemy);
-
-      if (enemy.hitsTaken === 1 && !enemy.lootDropped) {
-        this.spawnLootAtEnemy(enemy);
-        enemy.lootDropped = true;
-      }
-
-      if (enemy.hitsTaken >= 2) {
-        this.defeatEnemy(enemy);
-        continue;
-      }
-
-      enemy.speed *= 0.6;
-      if ('setTint' in enemy.body && typeof enemy.body.setTint === 'function') {
-        enemy.body.setTint(0xf77f00);
-      } else {
-        enemy.body.setFillStyle(0xf77f00, 1);
-        enemy.body.setStrokeStyle(2, 0x6a040f, 1);
-      }
-    }
+    resolveAttackHits({
+      attackRect: this.attackRect,
+      activeEnemies: this.activeEnemies,
+      now: this.time?.now ?? 0,
+      collisionProvider: this.collisionProvider,
+      getEnemyHitbox: (centerX, centerY) =>
+        getEnemyHitbox(centerX, centerY, this.enemyHitboxSize, this.enemyHitboxOffsetY),
+      isEnemyInjuryActive: (enemy, now) => isEnemyInjuryActive(enemy, now),
+      onFirstHit: () => this.audioSystem?.playSfx(AUDIO_KEYS.HIT),
+      onEnemyDefeated: (enemy) => this.defeatEnemy(enemy),
+      onEnemyKnockback: (enemy) => this.applyEnemyKnockback(enemy),
+      onEnemyLootDrop: (enemy) => this.spawnLootAtEnemy(enemy),
+      onEnemyInjured: (enemy, now) => {
+        startEnemyInjuryAnimation(enemy, now);
+        this.playEnemyAnimation(enemy, 'injured', false);
+      },
+    });
   }
 
   private applyEnemyKnockback(enemy: ActiveEnemy): void {
-    const knockback = getKnockbackDelta(this.facingDirection, DEFAULT_ATTACK_CONFIG.knockbackDistance);
-    const nextX = enemy.body.x + knockback.x;
-    const nextY = enemy.body.y + knockback.y;
-    const nextHitbox = this.getEnemyHitbox(nextX, nextY);
+    const nextPosition = getEnemyKnockbackTarget({
+      enemy,
+      facingDirection: this.facingDirection,
+      knockbackDistance: DEFAULT_ATTACK_CONFIG.knockbackDistance,
+      enemyHitboxSize: this.enemyHitboxSize,
+      enemyHitboxOffsetY: this.enemyHitboxOffsetY,
+      collisionProvider: this.collisionProvider,
+      obstacleRects: this.obstacleRects,
+      containsPoint: (point) => this.gridSystem?.containsPoint(point) ?? false,
+    });
 
-    if (!this.isInsidePlayArea(nextHitbox)) {
+    if (!nextPosition) {
       return;
     }
 
-    if (this.collisionProvider.collidesWithAny(nextHitbox, this.obstacleRects)) {
-      return;
-    }
-
-    enemy.body.setPosition(nextX, nextY);
-    enemy.shadow.setPosition(nextX, nextY + 18);
+    enemy.body.setPosition(nextPosition.x, nextPosition.y);
+    enemy.shadow.setPosition(nextPosition.x, nextPosition.y + 18);
     this.updateEnemyRenderDepth(enemy);
   }
 
@@ -1165,42 +1000,16 @@ export class PlayScene extends Phaser.Scene {
     };
   }
 
-  private getEnemyHitbox(centerX: number, centerY: number): CollisionRect {
-    return {
-      x: centerX - this.enemyHitboxSize.width / 2,
-      y: centerY - this.enemyHitboxSize.height / 2 + this.enemyHitboxOffsetY,
-      width: this.enemyHitboxSize.width,
-      height: this.enemyHitboxSize.height,
-    };
-  }
-
   private isInsidePlayArea(rect: CollisionRect): boolean {
-    if (!this.gridSystem) {
-      return false;
-    }
-
-    return [
-      { x: rect.x, y: rect.y },
-      { x: rect.x + rect.width, y: rect.y },
-      { x: rect.x + rect.width, y: rect.y + rect.height },
-      { x: rect.x, y: rect.y + rect.height },
-    ].every((corner) => this.gridSystem!.containsPoint(corner));
-  }
-
-  private renderPlayerHitbox(): void {
-    if (!this.playerBody || !this.playerHitboxDebug) {
-      return;
-    }
-
-    // DEBUG: Temporary hitbox overlay for gameplay tuning. Remove before release.
-    const hitbox = this.getPlayerHitbox(this.playerBody.x, this.playerBody.y);
-    this.playerHitboxDebug.clear();
-    this.playerHitboxDebug.lineStyle(2, 0xff4d6d, 0.95);
-    this.playerHitboxDebug.strokeRect(hitbox.x, hitbox.y, hitbox.width, hitbox.height);
+    return isRectInsidePlayArea(rect, (point) => this.gridSystem?.containsPoint(point) ?? false);
   }
 
   private setPlayerAttackFeedback(isAttacking: boolean): void {
     if (!this.playerBody) {
+      return;
+    }
+
+    if ('play' in this.playerBody && typeof this.playerBody.play === 'function') {
       return;
     }
 
@@ -1238,19 +1047,19 @@ export class PlayScene extends Phaser.Scene {
       loot.shadow.setAlpha(Math.max(0.1, alpha * 0.45));
 
       if (!isInventoryFull(this.inventory.length)) {
-        const lootHitbox = this.getLootHitbox(loot.body.x, loot.body.y);
+        const lootHitbox = getLootHitbox(loot.body.x, loot.body.y, this.lootSize);
         if (this.collisionProvider.intersects(playerHitbox, lootHitbox)) {
           this.pickUpLoot(loot);
         }
       } else {
-        const lootHitbox = this.getLootHitbox(loot.body.x, loot.body.y);
+        const lootHitbox = getLootHitbox(loot.body.x, loot.body.y, this.lootSize);
         if (this.collisionProvider.intersects(playerHitbox, lootHitbox)) {
           this.playInventoryError(now);
         }
       }
     }
 
-    const isInsideSanctuary = this.isPlayerInsideSanctuary(playerHitbox);
+    const isInsideSanctuary = isPlayerInsideSanctuary(playerHitbox, this.sanctuaryRects, this.collisionProvider);
 
     if (this.inventory.length > 0 && isInsideSanctuary) {
       this.depositInventory(now);
@@ -1267,30 +1076,25 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private depositInventory(now: number): void {
-    if (this.inventory.length === 0) {
+    const currentScore = this.registry.get('score') ?? 0;
+    const depositResult = processInventoryDeposit({
+      inventory: this.inventory,
+      now,
+      nextLootDepositAt: this.nextLootDepositAt,
+      lootDepositIntervalMs: this.lootDepositIntervalMs,
+      score: currentScore,
+    });
+
+    this.inventory = depositResult.inventory;
+    this.nextLootDepositAt = depositResult.nextLootDepositAt;
+
+    if (depositResult.depositedValue === null) {
       return;
     }
 
-    if (this.nextLootDepositAt === null) {
-      this.nextLootDepositAt = now + this.lootDepositIntervalMs;
-      return;
-    }
-
-    if (now < this.nextLootDepositAt) {
-      return;
-    }
-
-    const depositedLoot = this.inventory.shift();
-    const depositedValue = depositedLoot?.value ?? 0;
-
-    this.registry.set('score', (this.registry.get('score') ?? 0) + depositedValue);
+    this.registry.set('score', depositResult.score);
     this.audioSystem?.playSfx(AUDIO_KEYS.DEPOSIT);
-    this.showDepositValuePopup(depositedValue);
-    this.nextLootDepositAt += this.lootDepositIntervalMs;
-
-    if (this.inventory.length === 0) {
-      this.nextLootDepositAt = null;
-    }
+    this.showDepositValuePopup(depositResult.depositedValue);
 
     this.refreshLevelInfo();
   }
@@ -1301,7 +1105,7 @@ export class PlayScene extends Phaser.Scene {
     }
 
     const fontSize = value >= 50 ? '39px' : value >= 20 ? '34px' : '29px';
-    const color = this.getDepositPopupColor(value);
+    const color = getDepositPopupColor(value);
     const popup = this.add
       .text(this.playerBody.x, this.playerBody.y - 78, `+${value} M Ft`, {
         fontFamily: DEPOSIT_POPUP_FONT_FAMILY,
@@ -1326,18 +1130,6 @@ export class PlayScene extends Phaser.Scene {
     });
   }
 
-  private getDepositPopupColor(value: number): string {
-    if (value >= 50) {
-      return '#ffd166';
-    }
-
-    if (value >= 20) {
-      return '#80ed99';
-    }
-
-    return '#8ecae6';
-  }
-
   private destroyLoot(loot: ActiveLoot, refreshInfo = true): void {
     loot.body.destroy();
     loot.shadow.destroy();
@@ -1349,45 +1141,16 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private updateEnemies(delta: number): void {
-    if (!this.gridSystem || this.activeEnemies.length === 0 || this.isGameOver) {
-      return;
-    }
-
-    for (const enemy of this.activeEnemies) {
-      if (enemy.escaped || enemy.defeated) {
-        continue;
-      }
-
-      const deltaDistance = (delta / 1000) * enemy.speed;
-
-      const nextGridCell = enemy.path[enemy.pathIndex + 1];
-      if (!nextGridCell) {
-        enemy.escaped = true;
-        enemy.body.destroy();
-        enemy.shadow.destroy();
-        this.handleEnemyEscaped();
-        continue;
-      }
-
-      const target = this.gridSystem.cellCenter(nextGridCell);
-      const targetX = target.x;
-      const targetY = target.y - 2;
-      const vector = new Phaser.Math.Vector2(targetX - enemy.body.x, targetY - enemy.body.y);
-
-      if (vector.length() <= deltaDistance) {
-        enemy.body.setPosition(targetX, targetY);
-        enemy.shadow.setPosition(target.x, target.y + 16);
-        enemy.pathIndex += 1;
-      } else {
-        vector.normalize().scale(deltaDistance);
-        enemy.body.setPosition(enemy.body.x + vector.x, enemy.body.y + vector.y);
-        enemy.shadow.setPosition(enemy.body.x, enemy.body.y + 18);
-      }
-
-      this.updateEnemyRenderDepth(enemy);
-    }
-
-    this.activeEnemies = this.activeEnemies.filter((enemy) => !enemy.escaped && !enemy.defeated);
+    this.activeEnemies = updateActiveEnemies({
+      activeEnemies: this.activeEnemies,
+      delta,
+      now: this.time?.now ?? 0,
+      isGameOver: this.isGameOver,
+      gridSystem: this.gridSystem,
+      onEnemyEscaped: () => this.handleEnemyEscaped(),
+      updateEnemyMovementVisual: (enemy, deltaX, deltaY) => this.updateEnemyMovementVisual(enemy, deltaX, deltaY),
+      updateEnemyRenderDepth: (enemy) => this.updateEnemyRenderDepth(enemy),
+    });
   }
 
   private renderEnemyHitboxes(): void {
@@ -1400,26 +1163,18 @@ export class PlayScene extends Phaser.Scene {
 
     for (const enemy of this.activeEnemies) {
       // DEBUG: Temporary enemy hitbox overlay for gameplay tuning. Remove before release.
-      const hitbox = this.getEnemyHitbox(enemy.body.x, enemy.body.y);
+      const hitbox = getEnemyHitbox(enemy.body.x, enemy.body.y, this.enemyHitboxSize, this.enemyHitboxOffsetY);
       this.enemyHitboxDebug.strokeRect(hitbox.x, hitbox.y, hitbox.width, hitbox.height);
     }
   }
 
-  private renderAttackEffect(): void {
-    if (!this.attackDebug) {
+  private updateAttackState(now: number): void {
+    if (!shouldClearAttackEffect(now, this.attackVisualUntil)) {
       return;
     }
 
-    this.attackDebug.clear();
-
-    if (!this.attackRect || this.time.now > this.attackVisualUntil) {
-      return;
-    }
-
-    this.attackDebug.fillStyle(0xffbe0b, 0.2);
-    this.attackDebug.lineStyle(2, 0xffbe0b, 0.85);
-    this.attackDebug.fillRect(this.attackRect.x, this.attackRect.y, this.attackRect.width, this.attackRect.height);
-    this.attackDebug.strokeRect(this.attackRect.x, this.attackRect.y, this.attackRect.width, this.attackRect.height);
+    this.attackRect = null;
+    this.setPlayerAttackFeedback(false);
   }
 
   private handleEnemyEscaped(): void {
@@ -1435,85 +1190,58 @@ export class PlayScene extends Phaser.Scene {
 
   private refreshEnemyInfo(count: number = this.targetEnemyCount): void {
     this.enemyInfoText?.setText(
-      `Aktív ellenfelek: ${this.activeEnemies.length} | Spawn ebben a hullámban: ${this.spawnedEnemies}/${count}`,
+      formatEnemyInfoText({
+        activeEnemyCount: this.activeEnemies.length,
+        spawnedEnemies: this.spawnedEnemies,
+        targetEnemyCount: count,
+      }),
     );
     this.refreshHud();
   }
 
   private refreshLevelInfo(): void {
     this.levelInfoText?.setText(
-      `Pálya: ${this.currentLevel?.name ?? 'betöltés alatt'} | Földön: ${this.activeLoots.length} tárgy | Leadási sáv: ${this.inventory.length > 0 ? 'aktív' : 'üres'}`,
+      formatLevelInfoText({
+        level: this.currentLevel,
+        activeLootCount: this.activeLoots.length,
+        inventoryCount: this.inventory.length,
+      }),
     );
     this.refreshHud();
   }
 
   private refreshHud(): void {
+    const score = this.registry.get('score') ?? 0;
     const escapedEnemies = this.registry.get('escapedEnemies') ?? 0;
+    const hudValues = formatPlaySceneHudValues({
+      score,
+      inventoryCount: this.inventory.length,
+      escapedEnemies,
+      maxEscapedEnemies: this.maxEscapedEnemies,
+      waveNumber: this.waveNumber,
+      maxInventory: DEFAULT_LOOT_CONFIG.maxInventory,
+    });
 
-    this.scoreValueText?.setText(`${this.registry.get('score') ?? 0} M Ft`);
-    this.inventoryValueText?.setText(`${this.inventory.length}/${DEFAULT_LOOT_CONFIG.maxInventory}  ${this.getInventoryIcons()}`);
-    this.escapedValueText?.setText(`${escapedEnemies}/${this.maxEscapedEnemies}`);
+    this.scoreValueText?.setText(hudValues.scoreText);
+    this.inventoryValueText?.setText(hudValues.inventoryText);
+    this.escapedValueText?.setText(hudValues.escapedText);
     this.updateEscapedEnemyWarningState(escapedEnemies);
-    this.waveValueText?.setText(`${this.waveNumber}. hullám`);
+    this.waveValueText?.setText(hudValues.waveText);
   }
 
   private updateEscapedEnemyWarningState(escapedEnemies: number): void {
-    if (!this.escapedValueText) {
-      return;
-    }
-
-    const setColor = 'setColor' in this.escapedValueText ? this.escapedValueText.setColor?.bind(this.escapedValueText) : undefined;
-    const setPosition =
-      'setPosition' in this.escapedValueText ? this.escapedValueText.setPosition?.bind(this.escapedValueText) : undefined;
-
-    if (escapedEnemies >= 8) {
-      setColor?.(ESCAPED_WARNING_COLOR);
-
-      if (!this.escapedValueWarningTween) {
-        this.escapedValueWarningTween = this.tweens.add({
-          targets: this.escapedValueText,
-          x: (this.escapedValueBaseX ?? this.escapedValueText.x) + 4,
-          duration: 55,
-          ease: 'Sine.easeInOut',
-          yoyo: true,
-          repeat: -1,
-        });
-      }
-
-      return;
-    }
-
-    setColor?.(HEADER_EMPHASIS_COLOR);
-    this.escapedValueWarningTween?.stop();
-    this.escapedValueWarningTween = undefined;
-
-    if (this.escapedValueBaseX !== undefined && this.escapedValueBaseY !== undefined) {
-      setPosition?.(this.escapedValueBaseX, this.escapedValueBaseY);
-    }
-  }
-
-  private getInventoryIcons(): string {
-    const filledSlots = '■'.repeat(this.inventory.length);
-    const emptySlots = '□'.repeat(Math.max(0, DEFAULT_LOOT_CONFIG.maxInventory - this.inventory.length));
-
-    return `${filledSlots}${emptySlots}`;
-  }
-
-  private isPlayerInsideSanctuary(playerHitbox: CollisionRect): boolean {
-    return this.sanctuaryRects.some((rect) => this.collisionProvider.intersects(playerHitbox, rect));
-  }
-
-  private getLootHitbox(centerX: number, centerY: number): CollisionRect {
-    return {
-      x: centerX - this.lootSize.width / 2,
-      y: centerY - this.lootSize.height / 2,
-      width: this.lootSize.width,
-      height: this.lootSize.height,
-    };
+    this.escapedValueWarningTween = syncEscapedEnemyWarningState({
+      escapedEnemies,
+      escapedValueText: this.escapedValueText,
+      escapedValueWarningTween: this.escapedValueWarningTween,
+      escapedValueBaseX: this.escapedValueBaseX,
+      escapedValueBaseY: this.escapedValueBaseY,
+      tweens: this.tweens,
+    }) as Phaser.Tweens.Tween | undefined;
   }
 
   private playInventoryError(now: number): void {
-    if (now - this.lastInventoryErrorAt < this.inventoryErrorCooldownMs) {
+    if (!shouldPlayInventoryError(now, this.lastInventoryErrorAt, this.inventoryErrorCooldownMs)) {
       return;
     }
 
