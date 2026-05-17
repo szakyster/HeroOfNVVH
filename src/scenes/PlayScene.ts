@@ -644,6 +644,7 @@ export class PlayScene extends Phaser.Scene {
       { walkPrefix: 'enemy-01', injuredPrefix: 'enemy-01' },
       { walkPrefix: 'enemy-02', injuredPrefix: 'enemy-02' },
       { walkPrefix: 'enemy-03', injuredPrefix: 'enemy-03' },
+      { walkPrefix: 'enemy-04', injuredPrefix: 'enemy-04' },
     ];
 
     for (const spriteVariant of spriteVariants) {
