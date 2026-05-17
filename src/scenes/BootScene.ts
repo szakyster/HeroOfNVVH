@@ -9,6 +9,7 @@ import { preloadSceneBackgrounds } from '../systems/SceneBackgrounds';
 import { getAvailableHrsAssets } from '../systems/HrsAssets';
 import { getAvailableLootAssets } from '../systems/LootAssets';
 import { getAvailableObstacleAssets } from '../systems/ObstacleAssets';
+import { getAvailableUiAssets } from '../systems/UiAssets';
 import { SCENE_KEYS } from './sceneKeys';
 
 const HERO_SPRITE_SHEETS = [
@@ -86,6 +87,10 @@ export class BootScene extends Phaser.Scene {
 
     for (const lootAsset of getAvailableLootAssets()) {
       this.load.image(lootAsset.key, [lootAsset.url]);
+    }
+
+    for (const uiAsset of getAvailableUiAssets()) {
+      this.load.image(uiAsset.key, [uiAsset.url]);
     }
 
     this.load.audio(AUDIO_KEYS.ATTACK, ['assets/audio/effect/Punch01.mp3']);

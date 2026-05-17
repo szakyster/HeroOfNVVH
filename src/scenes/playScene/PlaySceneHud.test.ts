@@ -4,9 +4,9 @@ import {
   HEADER_EMPHASIS_COLOR,
   formatAudioToggleTexts,
   formatEnemyInfoText,
-  formatInventoryIcons,
   formatLevelInfoText,
   formatPlaySceneHudValues,
+  syncInventorySlotImages,
   syncEscapedEnemyWarningState,
 } from './PlaySceneHud';
 
@@ -15,21 +15,18 @@ describe('PlaySceneHud helpers', () => {
     expect(
       formatPlaySceneHudValues({
         score: 150,
-        inventoryCount: 2,
         escapedEnemies: 3,
         maxEscapedEnemies: 10,
         waveNumber: 4,
       }),
     ).toEqual({
       scoreText: '150 M Ft',
-      inventoryText: '2/4  ■■□□',
       escapedText: '3/10',
       waveText: '4. hullám',
     });
   });
 
-  it('formats inventory, level and enemy info strings', () => {
-    expect(formatInventoryIcons(3, 4)).toBe('■■■□');
+    it('formats level and enemy info strings', () => {
     expect(
       formatLevelInfoText({
         level: { name: 'Teszt pálya' },
@@ -111,5 +108,22 @@ describe('PlaySceneHud helpers', () => {
     expect(escapedValueText.setPosition).toHaveBeenCalledWith(430, 63);
     expect(add).not.toHaveBeenCalled();
     expect(nextTween).toBeUndefined();
+  });
+
+  it('renders filled and empty inventory slots with different styling', () => {
+    const slotImages = Array.from({ length: 4 }, () => ({
+      setAlpha: vi.fn(),
+      setTint: vi.fn(),
+      clearTint: vi.fn(),
+    }));
+
+    syncInventorySlotImages(slotImages, 2, 4);
+
+    expect(slotImages[0].setAlpha).toHaveBeenCalledWith(1);
+    expect(slotImages[0].clearTint).toHaveBeenCalledTimes(1);
+    expect(slotImages[0].setTint).not.toHaveBeenCalled();
+    expect(slotImages[2].setAlpha).toHaveBeenCalledWith(0.4);
+    expect(slotImages[2].setTint).toHaveBeenCalledWith(0x7f7f7f);
+    expect(slotImages[2].clearTint).not.toHaveBeenCalled();
   });
 });

@@ -19,6 +19,7 @@ describe('LevelLoader', () => {
         { id: 'hrs-sanctuary', zoneType: 'sanctuary', image: 'nvvh01.png', side: 'bottom' },
       ],
       lootSpawns: [{ id: 'loot-1', type: 'wallet', value: 20, image: 'money01.png', cell: { x: 2, y: 4 } }],
+      scoreMilestones: [{ score: 1000, text: 'elso visszaszerzett milliard' }],
     });
 
     expect(parsed.id).toBe('level-test');
@@ -29,6 +30,24 @@ describe('LevelLoader', () => {
     expect(parsed.lootSpawns[0].cell.x).toBe(2);
     expect(parsed.lootSpawns[0].value).toBe(20);
     expect(parsed.lootSpawns[0].image).toBe('money01.png');
+    expect(parsed.scoreMilestones).toEqual([{ score: 1000, text: 'elso visszaszerzett milliard' }]);
+  });
+
+  it('throws when a score milestone is malformed', () => {
+    expect(() =>
+      loader.parse({
+        id: 'bad-level',
+        name: 'Bad Level',
+        grid: { width: 7, height: 6 },
+        obstacles: [],
+        spawnZones: [{ id: 'spawn-1', cells: [{ x: 0, y: 0 }] }],
+        goalZones: [{ id: 'goal-1', cells: [{ x: 6, y: 5 }] }],
+        sanctuaryZone: [{ x: 3, y: 5 }],
+        hrsImages: [],
+        lootSpawns: [{ id: 'loot-1', type: 'wallet', value: 20, cell: { x: 2, y: 4 } }],
+        scoreMilestones: [{ score: 0, text: '' }],
+      }),
+    ).toThrow(/scoreMilestones\[0\]\.score must be a positive integer/i);
   });
 
   it('throws when a cell is outside grid bounds', () => {

@@ -1,6 +1,7 @@
 import type Phaser from 'phaser';
 import type { LevelData } from '../../types/level';
 import { DEFAULT_LOOT_CONFIG } from '../../systems/LootSystem';
+import { getUiAssetKey, INVENTORY_SLOT_IMAGE_NAME } from '../../systems/UiAssets';
 import { HEADLINE_FONT_FAMILY } from '../../utils/typography';
 
 export const HEADER_EMPHASIS_COLOR = '#f4e6a2';
@@ -44,11 +45,17 @@ export type AudioToggleTextRefs = {
 
 export type PlaySceneHudRefs = {
   scoreValueText: Phaser.GameObjects.Text;
-  inventoryValueText: Phaser.GameObjects.Text;
+  inventorySlotImages: Phaser.GameObjects.Image[];
   escapedValueText: Phaser.GameObjects.Text;
   escapedValueBaseX: number;
   escapedValueBaseY: number;
   waveValueText: Phaser.GameObjects.Text;
+};
+
+type InventorySlotImageLike = {
+  setAlpha?: (value: number) => unknown;
+  setTint?: (value: number) => unknown;
+  clearTint?: () => unknown;
 };
 
 export type PlaySceneStatusRefs = {
@@ -64,6 +71,8 @@ function addHudLabel(scene: Phaser.Scene, x: number, y: number, text: string): v
       fontFamily: 'Verdana',
       fontSize: '15px',
       color: '#a8dadc',
+      stroke: '#000000',
+      strokeThickness: 3,
     })
     .setDepth(7);
 }
@@ -75,6 +84,8 @@ function addHudValue(scene: Phaser.Scene, x: number, y: number): Phaser.GameObje
       fontSize: '24px',
       color: HEADER_EMPHASIS_COLOR,
       fontStyle: 'bold',
+      stroke: '#000000',
+      strokeThickness: 4,
     })
     .setDepth(7);
 }
@@ -91,6 +102,8 @@ function createToggleButton(
       fontSize: '15px',
       color: '#f4f1de',
       backgroundColor: '#223247',
+      stroke: '#000000',
+      strokeThickness: 3,
       padding: { x: 10, y: 6 },
     })
     .setOrigin(1, 0)
@@ -131,7 +144,13 @@ export function createPlaySceneHud(scene: Phaser.Scene, width: number): PlayScen
   const scoreValueText = addHudValue(scene, columns[0], valueY);
 
   addHudLabel(scene, columns[1], metricY, 'Hátizsák');
-  const inventoryValueText = addHudValue(scene, columns[1], valueY);
+  const inventorySlotImages = Array.from({ length: DEFAULT_LOOT_CONFIG.maxInventory }, (_, index) =>
+    scene.add
+      .image(columns[1] + index * 34, valueY + 17, getUiAssetKey(INVENTORY_SLOT_IMAGE_NAME))
+      .setDisplaySize(33, 33)
+      .setOrigin(0, 0.5)
+      .setDepth(7),
+  );
 
   addHudLabel(scene, columns[2], metricY, 'Reptérre érkeztek');
   const escapedValueText = addHudValue(scene, columns[2], valueY);
@@ -141,7 +160,7 @@ export function createPlaySceneHud(scene: Phaser.Scene, width: number): PlayScen
 
   return {
     scoreValueText,
-    inventoryValueText,
+    inventorySlotImages,
     escapedValueText,
     escapedValueBaseX: columns[2],
     escapedValueBaseY: valueY,
@@ -160,6 +179,8 @@ export function createPlaySceneStatusTexts(
       fontFamily: 'Verdana',
       fontSize: '17px',
       color: '#f1faee',
+      stroke: '#000000',
+      strokeThickness: 3,
     })
     .setOrigin(0, 0.5)
     .setDepth(7);
@@ -169,6 +190,8 @@ export function createPlaySceneStatusTexts(
       fontFamily: 'Verdana',
       fontSize: '17px',
       color: '#ffd166',
+      stroke: '#000000',
+      strokeThickness: 3,
     })
     .setOrigin(0, 0.5)
     .setDepth(7);
@@ -184,31 +207,40 @@ export function createPlaySceneStatusTexts(
   };
 }
 
-export function formatInventoryIcons(inventoryCount: number, maxInventory: number = DEFAULT_LOOT_CONFIG.maxInventory): string {
-  const filledSlots = '■'.repeat(inventoryCount);
-  const emptySlots = '□'.repeat(Math.max(0, maxInventory - inventoryCount));
+export function syncInventorySlotImages(
+  slotImages: InventorySlotImageLike[],
+  inventoryCount: number,
+  maxInventory: number = DEFAULT_LOOT_CONFIG.maxInventory,
+): void {
+  const visibleSlots = Math.min(slotImages.length, maxInventory);
 
-  return `${filledSlots}${emptySlots}`;
+  for (let index = 0; index < visibleSlots; index += 1) {
+    const slotImage = slotImages[index];
+    const isFilled = index < inventoryCount;
+
+    slotImage.setAlpha?.(isFilled ? 1 : 0.4);
+
+    if (isFilled) {
+      slotImage.clearTint?.();
+      continue;
+    }
+
+    slotImage.setTint?.(0x7f7f7f);
+  }
 }
 
 export function formatPlaySceneHudValues(args: {
   score: number;
-  inventoryCount: number;
   escapedEnemies: number;
   maxEscapedEnemies: number;
   waveNumber: number;
-  maxInventory?: number;
 }): {
   scoreText: string;
-  inventoryText: string;
   escapedText: string;
   waveText: string;
 } {
-  const maxInventory = args.maxInventory ?? DEFAULT_LOOT_CONFIG.maxInventory;
-
   return {
     scoreText: `${args.score} M Ft`,
-    inventoryText: `${args.inventoryCount}/${maxInventory}  ${formatInventoryIcons(args.inventoryCount, maxInventory)}`,
     escapedText: `${args.escapedEnemies}/${args.maxEscapedEnemies}`,
     waveText: `${args.waveNumber}. hullám`,
   };
