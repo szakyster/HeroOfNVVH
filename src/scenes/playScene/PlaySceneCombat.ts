@@ -123,17 +123,22 @@ export function resolveAttackHits({
       hitAny = true;
     }
 
-    if (isEnemyInjuryActive(enemy, now)) {
+    enemy.health -= 1;
+
+    if (enemy.health <= 0) {
       onEnemyDefeated(enemy);
       continue;
     }
 
-    enemy.hitsTaken += 1;
     onEnemyKnockback(enemy);
 
-    if (enemy.hitsTaken === 1 && !enemy.lootDropped) {
+    if (!enemy.lootDropped) {
       onEnemyLootDrop(enemy);
       enemy.lootDropped = true;
+    }
+
+    if (isEnemyInjuryActive(enemy, now)) {
+      enemy.injuryAnimationUntil = null;
     }
 
     onEnemyInjured(enemy, now);

@@ -4,6 +4,7 @@ import {
   createActiveEnemy,
   getEnemySpawnCells,
   getEnemySpriteDisplayWidth,
+  getEnemySpriteVariant,
   getEnemyWaveSpawnDelays,
   getPlayerSpawnCell,
 } from './PlaySceneSpawning';
@@ -41,7 +42,7 @@ describe('PlaySceneSpawning helpers', () => {
     const values = [250, 500, 750];
     let index = 0;
 
-    expect(getEnemyWaveSpawnDelays(3, 12000, () => values[index++])).toEqual([250, 4000, 7750]);
+    expect(getEnemyWaveSpawnDelays(3, 12000, () => values[index++])).toEqual([250, 3666.6666666666665, 7083.333333333333]);
   });
 
   it('computes the enemy sprite display width from the source texture ratio', () => {
@@ -49,9 +50,18 @@ describe('PlaySceneSpawning helpers', () => {
     expect(getEnemySpriteDisplayWidth(undefined, 98)).toBe(98);
   });
 
+  it('cycles enemy sprite variants across all available enemy sheets', () => {
+    expect(getEnemySpriteVariant(0)).toEqual({ walkPrefix: 'enemy-01', injuredPrefix: 'enemy-01' });
+    expect(getEnemySpriteVariant(1)).toEqual({ walkPrefix: 'enemy-02', injuredPrefix: 'enemy-02' });
+    expect(getEnemySpriteVariant(2)).toEqual({ walkPrefix: 'enemy-03', injuredPrefix: 'enemy-03' });
+    expect(getEnemySpriteVariant(3)).toEqual({ walkPrefix: 'enemy-04', injuredPrefix: 'enemy-04' });
+    expect(getEnemySpriteVariant(4)).toEqual({ walkPrefix: 'enemy-01', injuredPrefix: 'enemy-01' });
+  });
+
   it('creates a fresh active enemy state with default flags', () => {
     const body = { x: 100, y: 120 } as never;
     const shadow = { x: 100, y: 136 } as never;
+    const spriteVariant = { walkPrefix: 'enemy-02', injuredPrefix: 'enemy-02' };
 
     expect(
       createActiveEnemy({
@@ -60,13 +70,15 @@ describe('PlaySceneSpawning helpers', () => {
         path: [{ x: 0, y: 0 }, { x: 1, y: 0 }],
         enemySpeed: 88,
         speedRoll: 1.25,
+        spriteVariant,
       }),
     ).toMatchObject({
       body,
       shadow,
       pathIndex: 0,
       speed: 110,
-      hitsTaken: 0,
+      spriteVariant,
+      health: 2,
       lootDropped: false,
       escaped: false,
       defeated: false,

@@ -607,7 +607,7 @@ describe('PlayScene runtime reset', () => {
       path: [],
       pathIndex: 0,
       speed: 88,
-      hitsTaken: 0,
+      health: 2,
       lootDropped: false,
       escaped: false,
       defeated: false,
@@ -632,14 +632,14 @@ describe('PlayScene runtime reset', () => {
     expect(applyEnemyKnockback).toHaveBeenCalledWith(enemy);
     expect(spawnLootAtEnemy).toHaveBeenCalledWith(enemy);
     expect(defeatEnemy).not.toHaveBeenCalled();
-    expect(enemy.hitsTaken).toBe(1);
+    expect(enemy.health).toBe(1);
     expect(enemy.lootDropped).toBe(true);
     expect(enemy.injuryAnimationUntil).toBeCloseTo(2333.333, 2);
     expect(play).toHaveBeenCalledWith('enemy-01-injured-up-once', false);
     expect(setFlipX).toHaveBeenCalledWith(true);
   });
 
-  it('defeats the enemy immediately when it is hit again during the injured animation', () => {
+  it('defeats the enemy immediately when its remaining health reaches zero', () => {
     const applyEnemyKnockback = vi.fn();
     const spawnLootAtEnemy = vi.fn();
     const defeatEnemy = vi.fn();
@@ -651,7 +651,7 @@ describe('PlayScene runtime reset', () => {
       path: [],
       pathIndex: 0,
       speed: 88,
-      hitsTaken: 1,
+      health: 1,
       lootDropped: true,
       escaped: false,
       defeated: false,
@@ -778,7 +778,7 @@ describe('PlayScene runtime reset', () => {
       path: [{ x: 0, y: 0 }, { x: 1, y: 0 }],
       pathIndex: 0,
       speed: 88,
-      hitsTaken: 1,
+      health: 1,
       lootDropped: true,
       escaped: false,
       defeated: false,
@@ -817,7 +817,7 @@ describe('PlayScene runtime reset', () => {
       path: [{ x: 0, y: 0 }, { x: 1, y: 0 }],
       pathIndex: 0,
       speed: 88,
-      hitsTaken: 1,
+      health: 1,
       lootDropped: true,
       escaped: false,
       defeated: false,
