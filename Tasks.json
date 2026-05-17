@@ -117,7 +117,7 @@
       "id": 20,
       "name": "Character Animation Integration",
       "description": "Turn the approved hero and enemy designs into animation-ready sheets or atlases and integrate them into Phaser with correct state timing. Reference: Tech.md section 6 and Architecture.md sections 3-5",
-      "status": "in progress"
+      "status": "closed"
     },
     {
       "id": 21,
