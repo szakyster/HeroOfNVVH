@@ -19,6 +19,9 @@ const mockAudioSystem = {
 };
 
 const applyAudioSettingsFromRegistry = vi.fn();
+const updateAudioSetting = vi.fn((scene: { registry: { set: (key: string, value: boolean) => void } }, key: string, value: boolean) => {
+  scene.registry.set(key, value);
+});
 
 vi.mock('phaser', () => {
   class MockScene {
@@ -42,6 +45,7 @@ vi.mock('../systems/AudioSystem', () => ({
   },
   applyAudioSettingsFromRegistry,
   getAudioSystem: vi.fn(() => mockAudioSystem),
+  updateAudioSetting,
 }));
 
 let MenuScene: typeof import('./MenuScene').MenuScene;
@@ -131,6 +135,8 @@ describe('MenuScene', () => {
 
     expect(scene.scene.start).toHaveBeenCalledWith('LeaderboardScene');
     expect(scene.scene.start).toHaveBeenCalledWith('PlayScene');
+    expect(updateAudioSetting).toHaveBeenCalledWith(scene, 'musicMuted', true);
+    expect(updateAudioSetting).toHaveBeenCalledWith(scene, 'sfxMuted', true);
     expect(mockAudioSystem.setMusicMuted).toHaveBeenCalledWith(true);
     expect(mockAudioSystem.setSfxMuted).toHaveBeenCalledWith(true);
     expect(musicToggle?.text).toBe('Zene némít: Be');

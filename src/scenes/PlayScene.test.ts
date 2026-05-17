@@ -71,7 +71,7 @@ describe('PlayScene runtime reset', () => {
     scene.waveValueText = { setText: () => undefined };
     scene.levelInfoText = { setText: () => undefined };
     scene.enemyInfoText = { setText: () => undefined };
-    scene.musicToggleText = { setText: () => undefined };
+    scene.musicToggleIcon = { setTint: () => undefined, clearTint: () => undefined, setAlpha: () => undefined };
     scene.sfxToggleText = { setText: () => undefined };
     scene.activeEnemies = [{ defeated: false }];
     scene.activeLoots = [{ id: 'loot-1' }];
@@ -106,7 +106,7 @@ describe('PlayScene runtime reset', () => {
     expect(scene.waveValueText).toBeUndefined();
     expect(scene.levelInfoText).toBeUndefined();
     expect(scene.enemyInfoText).toBeUndefined();
-    expect(scene.musicToggleText).toBeUndefined();
+    expect(scene.musicToggleIcon).toBeUndefined();
     expect(scene.sfxToggleText).toBeUndefined();
     expect(scene.activeEnemies).toEqual([]);
     expect(scene.activeLoots).toEqual([]);
@@ -430,10 +430,19 @@ describe('PlayScene runtime reset', () => {
 
     (scene.showScoreMilestonePopup as (text: string) => void)('elso visszaszerzett milliard');
 
-    expect(addText).toHaveBeenCalledWith(
-      400,
-      230.4,
-      'elso visszaszerzett milliard',
+    expect(addText).toHaveBeenCalledTimes(1);
+    const popupCall = addText.mock.calls[0];
+    expect(popupCall).toBeDefined();
+    const [popupX, popupY, popupLabel, popupStyle] = popupCall as unknown as [
+      number,
+      number,
+      string,
+      Record<string, unknown>,
+    ];
+    expect(popupX).toBe(400);
+    expect(popupY).toBeCloseTo(230.4, 5);
+    expect(popupLabel).toBe('elso visszaszerzett milliard');
+    expect(popupStyle).toEqual(
       expect.objectContaining({
         fontFamily: 'Bungee, Verdana, sans-serif',
         fontSize: '58px',
@@ -443,8 +452,13 @@ describe('PlayScene runtime reset', () => {
     expect(popupSetOrigin).toHaveBeenCalledWith(0.5);
     expect(popupSetDepth).toHaveBeenCalledWith(9);
     expect(addCircle).toHaveBeenCalledTimes(22);
-    expect(addCircle).toHaveBeenCalledWith(190, 254.4, 18, 0xfff4b1, 0.95);
-    expect(addCircle).toHaveBeenCalledWith(610, 222.4, 18, 0xfff4b1, 0.95);
+    const [leftFlash, rightFlash] = [addCircle.mock.calls[0], addCircle.mock.calls[11]];
+    expect(leftFlash?.[0]).toBe(190);
+    expect(leftFlash?.[1]).toBeCloseTo(254.4, 5);
+    expect(leftFlash?.slice(2)).toEqual([18, 0xfff4b1, 0.95]);
+    expect(rightFlash?.[0]).toBe(610);
+    expect(rightFlash?.[1]).toBeCloseTo(222.4, 5);
+    expect(rightFlash?.slice(2)).toEqual([18, 0xfff4b1, 0.95]);
     expect(tweensAdd).toHaveBeenCalledWith(
       expect.objectContaining({
         targets: popup,
@@ -532,7 +546,7 @@ describe('PlayScene runtime reset', () => {
           width: 8,
           height: 8,
         },
-        scene.sanctuaryRects,
+        scene.sanctuaryRects as never,
         scene.collisionProvider as never,
       ),
     ).toBe(true);

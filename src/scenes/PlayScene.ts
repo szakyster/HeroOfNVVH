@@ -15,6 +15,7 @@ import {
   AudioSystem,
   DEATH_AUDIO_KEYS,
   getAudioSystem,
+  updateAudioSetting,
 } from '../systems/AudioSystem';
 import { LevelLoader } from '../systems/LevelLoader';
 import {
@@ -212,7 +213,7 @@ export class PlayScene extends Phaser.Scene {
 
   private enemyInfoText?: Phaser.GameObjects.Text;
 
-  private musicToggleText?: Phaser.GameObjects.Text;
+  private musicToggleIcon?: Phaser.GameObjects.Image;
 
   private sfxToggleText?: Phaser.GameObjects.Text;
 
@@ -310,20 +311,20 @@ export class PlayScene extends Phaser.Scene {
     const statusRefs = createPlaySceneStatusTexts(this, width, height, {
       onMusicToggle: () => {
         const nextValue = !Boolean(this.registry.get(AUDIO_SETTINGS_KEYS.MUSIC_MUTED));
-        this.registry.set(AUDIO_SETTINGS_KEYS.MUSIC_MUTED, nextValue);
+        updateAudioSetting(this, AUDIO_SETTINGS_KEYS.MUSIC_MUTED, nextValue);
         this.audioSystem?.setMusicMuted(nextValue);
         this.refreshAudioToggleTexts();
       },
       onSfxToggle: () => {
         const nextValue = !Boolean(this.registry.get(AUDIO_SETTINGS_KEYS.SFX_MUTED));
-        this.registry.set(AUDIO_SETTINGS_KEYS.SFX_MUTED, nextValue);
+        updateAudioSetting(this, AUDIO_SETTINGS_KEYS.SFX_MUTED, nextValue);
         this.audioSystem?.setSfxMuted(nextValue);
         this.refreshAudioToggleTexts();
       },
     });
     this.levelInfoText = statusRefs.levelInfoText;
     this.enemyInfoText = statusRefs.enemyInfoText;
-    this.musicToggleText = statusRefs.musicToggleText;
+    this.musicToggleIcon = statusRefs.musicToggleIcon;
     this.sfxToggleText = statusRefs.sfxToggleText;
     this.refreshAudioToggleTexts();
 
@@ -411,7 +412,7 @@ export class PlayScene extends Phaser.Scene {
     this.waveValueText = undefined;
     this.levelInfoText = undefined;
     this.enemyInfoText = undefined;
-    this.musicToggleText = undefined;
+    this.musicToggleIcon = undefined;
     this.sfxToggleText = undefined;
     this.activeEnemies = [];
     this.activeLoots = [];
@@ -462,7 +463,7 @@ export class PlayScene extends Phaser.Scene {
   private refreshAudioToggleTexts(): void {
     syncAudioToggleTexts(
       {
-        musicToggleText: this.musicToggleText,
+        musicToggleIcon: this.musicToggleIcon,
         sfxToggleText: this.sfxToggleText,
       },
       {

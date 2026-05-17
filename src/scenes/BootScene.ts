@@ -1,9 +1,9 @@
 import Phaser from 'phaser';
 import {
   AUDIO_KEYS,
-  AUDIO_SETTINGS_KEYS,
   applyAudioSettingsFromRegistry,
   getAudioSystem,
+  loadAudioSettingsIntoRegistry,
 } from '../systems/AudioSystem';
 import { preloadSceneBackgrounds } from '../systems/SceneBackgrounds';
 import { getAvailableHrsAssets } from '../systems/HrsAssets';
@@ -107,8 +107,7 @@ export class BootScene extends Phaser.Scene {
     this.registry.set('score', 0);
     this.registry.set('escapedEnemies', 0);
     this.registry.set('currentWave', 1);
-    this.registry.set(AUDIO_SETTINGS_KEYS.MUSIC_MUTED, false);
-    this.registry.set(AUDIO_SETTINGS_KEYS.SFX_MUTED, false);
+    loadAudioSettingsIntoRegistry(this);
     getAudioSystem(this).setMasterVolume(0.35);
     getAudioSystem(this).setMuted(false);
     applyAudioSettingsFromRegistry(this);

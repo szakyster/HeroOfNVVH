@@ -52,6 +52,50 @@ describe('PlaySceneHud helpers', () => {
     });
   });
 
+  it('tints the music icon gray when music is enabled and restores it when muted', async () => {
+    const musicToggleIcon = {
+      setTint: vi.fn(),
+      clearTint: vi.fn(),
+      setAlpha: vi.fn(),
+    };
+    const sfxToggleText = {
+      setText: vi.fn(),
+    };
+
+    const { syncAudioToggleTexts } = await import('./PlaySceneHud');
+
+    syncAudioToggleTexts(
+      {
+        musicToggleIcon,
+        sfxToggleText,
+      },
+      {
+        musicMuted: false,
+        sfxMuted: true,
+      },
+    );
+
+    expect(musicToggleIcon.setAlpha).toHaveBeenCalledWith(0.9);
+    expect(musicToggleIcon.setTint).toHaveBeenCalledWith(0x8f8f8f);
+    expect(musicToggleIcon.clearTint).not.toHaveBeenCalled();
+    expect(sfxToggleText.setText).toHaveBeenCalledWith('Hangeffekt némít: Be');
+
+    syncAudioToggleTexts(
+      {
+        musicToggleIcon,
+        sfxToggleText,
+      },
+      {
+        musicMuted: true,
+        sfxMuted: false,
+      },
+    );
+
+    expect(musicToggleIcon.setAlpha).toHaveBeenCalledWith(1);
+    expect(musicToggleIcon.clearTint).toHaveBeenCalledTimes(1);
+    expect(sfxToggleText.setText).toHaveBeenCalledWith('Hangeffekt némít: Ki');
+  });
+
   it('starts the escaped warning tween at high escaped counts', () => {
     const tween = { stop: vi.fn() };
     const add = vi.fn(() => tween);

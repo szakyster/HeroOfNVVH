@@ -279,4 +279,58 @@ describe('AudioSystem', () => {
     expect(setMusicMutedSpy).toHaveBeenCalledWith(true);
     expect(setSfxMutedSpy).toHaveBeenCalledWith(false);
   });
+
+  it('loads persisted audio settings into the registry', async () => {
+    const localStorageMock = {
+      getItem: vi.fn(() => JSON.stringify({ musicMuted: true, sfxMuted: false })),
+      setItem: vi.fn(),
+    };
+
+    vi.stubGlobal('localStorage', localStorageMock);
+
+    const { AUDIO_SETTINGS_KEYS, loadAudioSettingsIntoRegistry } = await loadAudioModule();
+    const scene = {
+      registry: {
+        set: vi.fn(),
+      },
+    };
+
+    loadAudioSettingsIntoRegistry(scene as never);
+
+    expect(scene.registry.set).toHaveBeenCalledWith(AUDIO_SETTINGS_KEYS.MUSIC_MUTED, true);
+    expect(scene.registry.set).toHaveBeenCalledWith(AUDIO_SETTINGS_KEYS.SFX_MUTED, false);
+  });
+
+  it('persists registry-backed audio settings after updates', async () => {
+    const localStorageMock = {
+      getItem: vi.fn(),
+      setItem: vi.fn(),
+    };
+
+    vi.stubGlobal('localStorage', localStorageMock);
+
+    const { AUDIO_SETTINGS_KEYS, updateAudioSetting } = await loadAudioModule();
+    const registryState = {
+      musicMuted: false,
+      sfxMuted: false,
+    };
+    const scene = {
+      registry: {
+        get: vi.fn((key: string) => registryState[key as keyof typeof registryState]),
+        set: vi.fn((key: string, value: boolean) => {
+          registryState[key as keyof typeof registryState] = value;
+        }),
+      },
+    };
+
+    updateAudioSetting(scene as never, AUDIO_SETTINGS_KEYS.MUSIC_MUTED, true);
+    updateAudioSetting(scene as never, AUDIO_SETTINGS_KEYS.SFX_MUTED, true);
+
+    expect(scene.registry.set).toHaveBeenCalledWith(AUDIO_SETTINGS_KEYS.MUSIC_MUTED, true);
+    expect(scene.registry.set).toHaveBeenCalledWith(AUDIO_SETTINGS_KEYS.SFX_MUTED, true);
+    expect(localStorageMock.setItem).toHaveBeenLastCalledWith(
+      'heroes-of-nvvh.audio-settings',
+      JSON.stringify({ musicMuted: true, sfxMuted: true }),
+    );
+  });
 });

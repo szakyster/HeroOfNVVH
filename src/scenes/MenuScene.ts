@@ -4,6 +4,7 @@ import {
   AUDIO_SETTINGS_KEYS,
   applyAudioSettingsFromRegistry,
   getAudioSystem,
+  updateAudioSetting,
 } from '../systems/AudioSystem';
 import { addSceneBackground } from '../systems/SceneBackgrounds';
 import { HEADLINE_FONT_FAMILY } from '../utils/typography';
@@ -51,14 +52,14 @@ export class MenuScene extends Phaser.Scene {
 
     this.musicToggleText = this.createMenuButton(width / 2, height / 2 + 182, '', () => {
       const nextValue = !Boolean(this.registry.get(AUDIO_SETTINGS_KEYS.MUSIC_MUTED));
-      this.registry.set(AUDIO_SETTINGS_KEYS.MUSIC_MUTED, nextValue);
+      updateAudioSetting(this, AUDIO_SETTINGS_KEYS.MUSIC_MUTED, nextValue);
       audioSystem.setMusicMuted(nextValue);
       this.refreshAudioToggleTexts();
     });
 
     this.sfxToggleText = this.createMenuButton(width / 2, height / 2 + 234, '', () => {
       const nextValue = !Boolean(this.registry.get(AUDIO_SETTINGS_KEYS.SFX_MUTED));
-      this.registry.set(AUDIO_SETTINGS_KEYS.SFX_MUTED, nextValue);
+      updateAudioSetting(this, AUDIO_SETTINGS_KEYS.SFX_MUTED, nextValue);
       audioSystem.setSfxMuted(nextValue);
       this.refreshAudioToggleTexts();
     });

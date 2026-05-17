@@ -19,6 +19,18 @@ export const AUDIO_SETTINGS_KEYS = {
   SFX_MUTED: 'sfxMuted',
 } as const;
 
+const AUDIO_SETTINGS_STORAGE_KEY = 'heroes-of-nvvh.audio-settings';
+
+type AudioSettingsState = {
+  musicMuted: boolean;
+  sfxMuted: boolean;
+};
+
+const DEFAULT_AUDIO_SETTINGS: AudioSettingsState = {
+  musicMuted: false,
+  sfxMuted: false,
+};
+
 type SynthMusicNodes = {
   oscillator: OscillatorNode;
   gainNode: GainNode;
@@ -355,12 +367,73 @@ export class AudioSystem {
 
 let sharedAudioSystem: AudioSystem | null = null;
 
+function getAudioSettingsStorage(): Storage | null {
+  if (!('localStorage' in globalThis)) {
+    return null;
+  }
+
+  try {
+    return globalThis.localStorage;
+  } catch {
+    return null;
+  }
+}
+
+function readStoredAudioSettings(): AudioSettingsState {
+  const storage = getAudioSettingsStorage();
+  const storedValue = storage?.getItem(AUDIO_SETTINGS_STORAGE_KEY);
+
+  if (!storedValue) {
+    return { ...DEFAULT_AUDIO_SETTINGS };
+  }
+
+  try {
+    const parsed = JSON.parse(storedValue) as Partial<AudioSettingsState>;
+
+    return {
+      musicMuted: Boolean(parsed.musicMuted),
+      sfxMuted: Boolean(parsed.sfxMuted),
+    };
+  } catch {
+    return { ...DEFAULT_AUDIO_SETTINGS };
+  }
+}
+
+function writeStoredAudioSettings(settings: AudioSettingsState): void {
+  const storage = getAudioSettingsStorage();
+
+  try {
+    storage?.setItem(AUDIO_SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+  } catch {
+    // Ignore storage failures so audio toggles still work in restricted browsers.
+  }
+}
+
 export function getAudioSystem(scene: Phaser.Scene): AudioSystem {
   if (!sharedAudioSystem) {
     sharedAudioSystem = new AudioSystem(new PhaserAudioService(scene.sound));
   }
 
   return sharedAudioSystem;
+}
+
+export function loadAudioSettingsIntoRegistry(scene: Phaser.Scene): void {
+  const settings = readStoredAudioSettings();
+
+  scene.registry.set(AUDIO_SETTINGS_KEYS.MUSIC_MUTED, settings.musicMuted);
+  scene.registry.set(AUDIO_SETTINGS_KEYS.SFX_MUTED, settings.sfxMuted);
+}
+
+export function saveAudioSettingsFromRegistry(scene: Phaser.Scene): void {
+  writeStoredAudioSettings({
+    musicMuted: Boolean(scene.registry.get(AUDIO_SETTINGS_KEYS.MUSIC_MUTED)),
+    sfxMuted: Boolean(scene.registry.get(AUDIO_SETTINGS_KEYS.SFX_MUTED)),
+  });
+}
+
+export function updateAudioSetting(scene: Phaser.Scene, key: (typeof AUDIO_SETTINGS_KEYS)[keyof typeof AUDIO_SETTINGS_KEYS], value: boolean): void {
+  scene.registry.set(key, value);
+  saveAudioSettingsFromRegistry(scene);
 }
 
 export function applyAudioSettingsFromRegistry(scene: Phaser.Scene): void {

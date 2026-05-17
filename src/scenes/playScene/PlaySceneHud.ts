@@ -1,7 +1,7 @@
 import type Phaser from 'phaser';
 import type { LevelData } from '../../types/level';
 import { DEFAULT_LOOT_CONFIG } from '../../systems/LootSystem';
-import { getUiAssetKey, INVENTORY_SLOT_IMAGE_NAME } from '../../systems/UiAssets';
+import { getUiAssetKey, INVENTORY_SLOT_IMAGE_NAME, MUSIC_OFF_IMAGE_NAME } from '../../systems/UiAssets';
 import { HEADLINE_FONT_FAMILY } from '../../utils/typography';
 
 export const HEADER_EMPHASIS_COLOR = '#f4e6a2';
@@ -9,6 +9,12 @@ export const ESCAPED_WARNING_COLOR = '#ff4d4f';
 
 type SetTextLike = {
   setText?: (value: string) => unknown;
+};
+
+type SetIconLike = {
+  setTint?: (value: number) => unknown;
+  clearTint?: () => unknown;
+  setAlpha?: (value: number) => unknown;
 };
 
 type WarningTextLike = SetTextLike & {
@@ -39,7 +45,7 @@ type ButtonCallbacks = {
 };
 
 export type AudioToggleTextRefs = {
-  musicToggleText?: SetTextLike;
+  musicToggleIcon?: SetIconLike;
   sfxToggleText?: SetTextLike;
 };
 
@@ -61,7 +67,7 @@ type InventorySlotImageLike = {
 export type PlaySceneStatusRefs = {
   levelInfoText: Phaser.GameObjects.Text;
   enemyInfoText: Phaser.GameObjects.Text;
-  musicToggleText: Phaser.GameObjects.Text;
+  musicToggleIcon: Phaser.GameObjects.Image;
   sfxToggleText: Phaser.GameObjects.Text;
 };
 
@@ -117,6 +123,34 @@ function createToggleButton(
   });
   button.on('pointerout', () => {
     button.setStyle({ backgroundColor: '#223247' });
+  });
+
+  return button;
+}
+
+function createIconToggleButton(
+  scene: Phaser.Scene,
+  x: number,
+  y: number,
+  imageName: string,
+  onPointerDown: () => void,
+): Phaser.GameObjects.Image {
+  const baseSize = 32;
+  const hoverScale = 1.08;
+  const button = scene.add
+    .image(x, y, getUiAssetKey(imageName))
+    .setDisplaySize(baseSize, baseSize)
+    .setOrigin(1, 0)
+    .setDepth(6)
+    .setInteractive({ useHandCursor: true });
+
+  button.setData('ui-button', true);
+  button.on('pointerdown', onPointerDown);
+  button.on('pointerover', () => {
+    button.setDisplaySize(baseSize * hoverScale, baseSize * hoverScale);
+  });
+  button.on('pointerout', () => {
+    button.setDisplaySize(baseSize, baseSize);
   });
 
   return button;
@@ -196,13 +230,13 @@ export function createPlaySceneStatusTexts(
     .setOrigin(0, 0.5)
     .setDepth(7);
 
-  const musicToggleText = createToggleButton(scene, width - 18, 122, callbacks.onMusicToggle);
+  const musicToggleIcon = createIconToggleButton(scene, width - 18, 122, MUSIC_OFF_IMAGE_NAME, callbacks.onMusicToggle);
   const sfxToggleText = createToggleButton(scene, width - 18, 160, callbacks.onSfxToggle);
 
   return {
     levelInfoText,
     enemyInfoText,
-    musicToggleText,
+    musicToggleIcon,
     sfxToggleText,
   };
 }
@@ -278,7 +312,14 @@ export function syncAudioToggleTexts(
 ): void {
   const labels = formatAudioToggleTexts(args);
 
-  refs.musicToggleText?.setText?.(labels.musicText);
+  refs.musicToggleIcon?.setAlpha?.(args.musicMuted ? 1 : 0.9);
+
+  if (args.musicMuted) {
+    refs.musicToggleIcon?.clearTint?.();
+  } else {
+    refs.musicToggleIcon?.setTint?.(0x8f8f8f);
+  }
+
   refs.sfxToggleText?.setText?.(labels.sfxText);
 }
 
