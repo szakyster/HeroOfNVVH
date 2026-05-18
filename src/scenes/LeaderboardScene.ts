@@ -1,11 +1,18 @@
 import Phaser from 'phaser';
 import { LeaderboardStorage } from '../systems/LeaderboardStorage';
 import { addSceneBackground } from '../systems/SceneBackgrounds';
-import { HEADLINE_FONT_FAMILY } from '../utils/typography';
 import { SCENE_KEYS } from './sceneKeys';
 
 export class LeaderboardScene extends Phaser.Scene {
   private readonly leaderboardStorage = new LeaderboardStorage();
+
+  private readonly listOffsetX = -205;
+
+  private readonly rankColumnX = -220;
+
+  private readonly scoreColumnX = -165;
+
+  private readonly dateColumnX = 10;
 
   constructor() {
     super(SCENE_KEYS.LEADERBOARD);
@@ -14,42 +21,18 @@ export class LeaderboardScene extends Phaser.Scene {
   create(): void {
     const { width, height } = this.scale;
     const entries = this.leaderboardStorage.getEntries();
+    const listCenterX = width / 2 + this.listOffsetX;
 
     addSceneBackground(this, 'leaderboard');
-    this.add.rectangle(width / 2, height / 2, width * 0.7, height * 0.72, 0x102a43, 0.88).setStrokeStyle(2, 0xf4d35e, 0.4);
 
-    this.add
-      .text(width / 2, 110, 'Eredménylista', {
-        fontFamily: HEADLINE_FONT_FAMILY,
-        fontSize: '42px',
-        color: '#f4f1de',
-      })
-      .setOrigin(0.5);
-
-    this.add
-      .text(width / 2, 154, 'A 10 legjobb eredmény helyben mentve', {
-        fontFamily: 'Verdana',
-        fontSize: '18px',
-        color: '#a8dadc',
-      })
-      .setOrigin(0.5);
-
-    if (entries.length === 0) {
-      this.add
-        .text(width / 2, height / 2, 'Még nincs mentett eredmény.', {
-          fontFamily: 'Verdana',
-          fontSize: '24px',
-          color: '#f1faee',
-        })
-        .setOrigin(0.5);
-    } else {
+    if (entries.length > 0) {
       entries.forEach((entry, index) => {
-        const rowY = 220 + index * 38;
+        const rowY = 190 + index * 42;
         const rank = `${index + 1}.`;
         const dateLabel = formatDate(entry.createdAt);
 
         this.add
-          .text(width / 2 - 250, rowY, rank, {
+          .text(listCenterX + this.rankColumnX, rowY, rank, {
             fontFamily: 'Verdana',
             fontSize: '22px',
             color: '#ffd166',
@@ -57,7 +40,7 @@ export class LeaderboardScene extends Phaser.Scene {
           .setOrigin(0, 0.5);
 
         this.add
-          .text(width / 2 - 180, rowY, `${entry.score} M Ft`, {
+          .text(listCenterX + this.scoreColumnX, rowY, `${entry.score} M Ft`, {
             fontFamily: 'Verdana',
             fontSize: '22px',
             color: '#f1faee',
@@ -66,7 +49,7 @@ export class LeaderboardScene extends Phaser.Scene {
           .setOrigin(0, 0.5);
 
         this.add
-          .text(width / 2 + 50, rowY, dateLabel, {
+          .text(listCenterX + this.dateColumnX, rowY, dateLabel, {
             fontFamily: 'Verdana',
             fontSize: '18px',
             color: '#a8dadc',

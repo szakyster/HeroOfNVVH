@@ -7,13 +7,19 @@ import {
   updateAudioSetting,
 } from '../systems/AudioSystem';
 import { addSceneBackground } from '../systems/SceneBackgrounds';
-import { HEADLINE_FONT_FAMILY } from '../utils/typography';
+import { EFFECT_OFF_IMAGE_NAME, getUiAssetKey, MUSIC_OFF_IMAGE_NAME } from '../systems/UiAssets';
 import { SCENE_KEYS } from './sceneKeys';
 
 export class MenuScene extends Phaser.Scene {
-  private musicToggleText?: Phaser.GameObjects.Text;
+  private musicToggleIcon?: Phaser.GameObjects.Image;
 
-  private sfxToggleText?: Phaser.GameObjects.Text;
+  private sfxToggleIcon?: Phaser.GameObjects.Image;
+
+  private readonly primaryButtonsOffsetY = 230;
+
+  private readonly primaryButtonsX = -110;
+
+  private readonly audioIconsSpacingX = 56;
 
   constructor() {
     super(SCENE_KEYS.MENU);
@@ -26,45 +32,32 @@ export class MenuScene extends Phaser.Scene {
 
     addSceneBackground(this, 'menu');
 
-    this.add
-      .text(width / 2, height / 2 - 80, 'Heroes of NVVH', {
-        fontFamily: HEADLINE_FONT_FAMILY,
-        fontSize: '52px',
-        color: '#f4f1de',
-      })
-      .setOrigin(0.5);
-
-    this.add
-      .text(width / 2, height / 2 - 2, 'Heroes of NVVH', {
-        fontFamily: HEADLINE_FONT_FAMILY,
-        fontSize: '24px',
-        color: '#81b29a',
-      })
-      .setOrigin(0.5);
-
-    this.createMenuButton(width / 2, height / 2 + 64, 'Játék indítása', () => {
+    this.createMenuButton(width / 2 + this.primaryButtonsX, height / 2 + 73 + this.primaryButtonsOffsetY, 'Játék indítása', () => {
       this.scene.start(SCENE_KEYS.PLAY);
     });
 
-    this.createMenuButton(width / 2, height / 2 + 116, 'Eredménylista', () => {
+    this.createMenuButton(width / 2 + this.primaryButtonsX, height / 2 + 106 + this.primaryButtonsOffsetY, 'Eredménylista', () => {
       this.scene.start(SCENE_KEYS.LEADERBOARD);
     });
 
-    this.musicToggleText = this.createMenuButton(width / 2, height / 2 + 182, '', () => {
+    const primaryButtonsCenterY = height / 2 + 89.5 + this.primaryButtonsOffsetY;
+    const audioIconsBaseX = width / 2 + 66;
+
+    this.musicToggleIcon = this.createAudioIconButton(audioIconsBaseX, primaryButtonsCenterY, MUSIC_OFF_IMAGE_NAME, () => {
       const nextValue = !Boolean(this.registry.get(AUDIO_SETTINGS_KEYS.MUSIC_MUTED));
       updateAudioSetting(this, AUDIO_SETTINGS_KEYS.MUSIC_MUTED, nextValue);
       audioSystem.setMusicMuted(nextValue);
-      this.refreshAudioToggleTexts();
+      this.refreshAudioToggleIcons();
     });
 
-    this.sfxToggleText = this.createMenuButton(width / 2, height / 2 + 234, '', () => {
+    this.sfxToggleIcon = this.createAudioIconButton(audioIconsBaseX + this.audioIconsSpacingX, primaryButtonsCenterY, EFFECT_OFF_IMAGE_NAME, () => {
       const nextValue = !Boolean(this.registry.get(AUDIO_SETTINGS_KEYS.SFX_MUTED));
       updateAudioSetting(this, AUDIO_SETTINGS_KEYS.SFX_MUTED, nextValue);
       audioSystem.setSfxMuted(nextValue);
-      this.refreshAudioToggleTexts();
+      this.refreshAudioToggleIcons();
     });
 
-    this.refreshAudioToggleTexts();
+    this.refreshAudioToggleIcons();
 
     if (!this.sound.locked) {
       audioSystem.playMusic(AUDIO_KEYS.MENU, true);
@@ -103,12 +96,43 @@ export class MenuScene extends Phaser.Scene {
     return button;
   }
 
-  private refreshAudioToggleTexts(): void {
-    this.musicToggleText?.setText(
-      `Zene némít: ${this.registry.get(AUDIO_SETTINGS_KEYS.MUSIC_MUTED) ? 'Be' : 'Ki'}`,
-    );
-    this.sfxToggleText?.setText(
-      `Hangeffekt némít: ${this.registry.get(AUDIO_SETTINGS_KEYS.SFX_MUTED) ? 'Be' : 'Ki'}`,
-    );
+  private createAudioIconButton(x: number, y: number, imageName: string, onSelect: () => void): Phaser.GameObjects.Image {
+    const baseSize = 32 * 1.3;
+    const hoverScale = 1.08;
+    const button = this.add
+      .image(x, y, getUiAssetKey(imageName))
+      .setDisplaySize(baseSize, baseSize)
+      .setOrigin(0.5)
+      .setDepth(6)
+      .setInteractive({ useHandCursor: true });
+
+    button.setData('ui-button', true);
+    button.on('pointerdown', onSelect);
+    button.on('pointerover', () => {
+      button.setDisplaySize(baseSize * hoverScale, baseSize * hoverScale);
+    });
+    button.on('pointerout', () => {
+      button.setDisplaySize(baseSize, baseSize);
+    });
+
+    return button;
+  }
+
+  private refreshAudioToggleIcons(): void {
+    if (this.registry.get(AUDIO_SETTINGS_KEYS.MUSIC_MUTED)) {
+      this.musicToggleIcon?.clearTint();
+      this.musicToggleIcon?.setAlpha(1);
+    } else {
+      this.musicToggleIcon?.setTint(0x8f8f8f);
+      this.musicToggleIcon?.setAlpha(0.9);
+    }
+
+    if (this.registry.get(AUDIO_SETTINGS_KEYS.SFX_MUTED)) {
+      this.sfxToggleIcon?.clearTint();
+      this.sfxToggleIcon?.setAlpha(1);
+    } else {
+      this.sfxToggleIcon?.setTint(0x8f8f8f);
+      this.sfxToggleIcon?.setAlpha(0.9);
+    }
   }
 }

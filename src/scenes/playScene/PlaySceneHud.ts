@@ -1,7 +1,7 @@
 import type Phaser from 'phaser';
 import type { LevelData } from '../../types/level';
 import { DEFAULT_LOOT_CONFIG } from '../../systems/LootSystem';
-import { getUiAssetKey, INVENTORY_SLOT_IMAGE_NAME, MUSIC_OFF_IMAGE_NAME } from '../../systems/UiAssets';
+import { EFFECT_OFF_IMAGE_NAME, getUiAssetKey, INVENTORY_SLOT_IMAGE_NAME, MUSIC_OFF_IMAGE_NAME } from '../../systems/UiAssets';
 import { HEADLINE_FONT_FAMILY } from '../../utils/typography';
 
 export const HEADER_EMPHASIS_COLOR = '#f4e6a2';
@@ -46,7 +46,7 @@ type ButtonCallbacks = {
 
 export type AudioToggleTextRefs = {
   musicToggleIcon?: SetIconLike;
-  sfxToggleText?: SetTextLike;
+  sfxToggleIcon?: SetIconLike;
 };
 
 export type PlaySceneHudRefs = {
@@ -68,7 +68,7 @@ export type PlaySceneStatusRefs = {
   levelInfoText: Phaser.GameObjects.Text;
   enemyInfoText: Phaser.GameObjects.Text;
   musicToggleIcon: Phaser.GameObjects.Image;
-  sfxToggleText: Phaser.GameObjects.Text;
+  sfxToggleIcon: Phaser.GameObjects.Image;
 };
 
 function addHudLabel(scene: Phaser.Scene, x: number, y: number, text: string): void {
@@ -96,38 +96,6 @@ function addHudValue(scene: Phaser.Scene, x: number, y: number): Phaser.GameObje
     .setDepth(7);
 }
 
-function createToggleButton(
-  scene: Phaser.Scene,
-  x: number,
-  y: number,
-  onPointerDown: () => void,
-): Phaser.GameObjects.Text {
-  const button = scene.add
-    .text(x, y, '', {
-      fontFamily: 'Verdana',
-      fontSize: '15px',
-      color: '#f4f1de',
-      backgroundColor: '#223247',
-      stroke: '#000000',
-      strokeThickness: 3,
-      padding: { x: 10, y: 6 },
-    })
-    .setOrigin(1, 0)
-    .setDepth(6)
-    .setInteractive({ useHandCursor: true });
-
-  button.setData('ui-button', true);
-  button.on('pointerdown', onPointerDown);
-  button.on('pointerover', () => {
-    button.setStyle({ backgroundColor: '#314863' });
-  });
-  button.on('pointerout', () => {
-    button.setStyle({ backgroundColor: '#223247' });
-  });
-
-  return button;
-}
-
 function createIconToggleButton(
   scene: Phaser.Scene,
   x: number,
@@ -135,7 +103,7 @@ function createIconToggleButton(
   imageName: string,
   onPointerDown: () => void,
 ): Phaser.GameObjects.Image {
-  const baseSize = 32;
+  const baseSize = 32 * 1.3;
   const hoverScale = 1.08;
   const button = scene.add
     .image(x, y, getUiAssetKey(imageName))
@@ -208,6 +176,9 @@ export function createPlaySceneStatusTexts(
   height: number,
   callbacks: ButtonCallbacks,
 ): PlaySceneStatusRefs {
+  const audioIconsTopY = 122;
+  const audioIconsSpacingY = 46;
+
   const levelInfoText = scene.add
     .text(24, height - 58, 'Pályabetöltés: folyamatban...', {
       fontFamily: 'Verdana',
@@ -230,15 +201,26 @@ export function createPlaySceneStatusTexts(
     .setOrigin(0, 0.5)
     .setDepth(7);
 
-  const musicToggleIcon = createIconToggleButton(scene, width - 18, 122, MUSIC_OFF_IMAGE_NAME, callbacks.onMusicToggle);
-  const sfxToggleText = createToggleButton(scene, width - 18, 160, callbacks.onSfxToggle);
+  const musicToggleIcon = createIconToggleButton(scene, width - 18, audioIconsTopY, MUSIC_OFF_IMAGE_NAME, callbacks.onMusicToggle);
+  const sfxToggleIcon = createIconToggleButton(scene, width - 18, audioIconsTopY + audioIconsSpacingY, EFFECT_OFF_IMAGE_NAME, callbacks.onSfxToggle);
 
   return {
     levelInfoText,
     enemyInfoText,
     musicToggleIcon,
-    sfxToggleText,
+    sfxToggleIcon,
   };
+}
+
+function syncAudioToggleIcon(icon: SetIconLike | undefined, isMuted: boolean): void {
+  icon?.setAlpha?.(isMuted ? 1 : 0.9);
+
+  if (isMuted) {
+    icon?.clearTint?.();
+    return;
+  }
+
+  icon?.setTint?.(0x8f8f8f);
 }
 
 export function syncInventorySlotImages(
@@ -310,17 +292,8 @@ export function syncAudioToggleTexts(
   refs: AudioToggleTextRefs,
   args: { musicMuted: boolean; sfxMuted: boolean },
 ): void {
-  const labels = formatAudioToggleTexts(args);
-
-  refs.musicToggleIcon?.setAlpha?.(args.musicMuted ? 1 : 0.9);
-
-  if (args.musicMuted) {
-    refs.musicToggleIcon?.clearTint?.();
-  } else {
-    refs.musicToggleIcon?.setTint?.(0x8f8f8f);
-  }
-
-  refs.sfxToggleText?.setText?.(labels.sfxText);
+  syncAudioToggleIcon(refs.musicToggleIcon, args.musicMuted);
+  syncAudioToggleIcon(refs.sfxToggleIcon, args.sfxMuted);
 }
 
 export function syncEscapedEnemyWarningState(args: {

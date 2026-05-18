@@ -215,7 +215,7 @@ export class PlayScene extends Phaser.Scene {
 
   private musicToggleIcon?: Phaser.GameObjects.Image;
 
-  private sfxToggleText?: Phaser.GameObjects.Text;
+  private sfxToggleIcon?: Phaser.GameObjects.Image;
 
   private cursors?: Phaser.Types.Input.Keyboard.CursorKeys;
 
@@ -325,7 +325,7 @@ export class PlayScene extends Phaser.Scene {
     this.levelInfoText = statusRefs.levelInfoText;
     this.enemyInfoText = statusRefs.enemyInfoText;
     this.musicToggleIcon = statusRefs.musicToggleIcon;
-    this.sfxToggleText = statusRefs.sfxToggleText;
+    this.sfxToggleIcon = statusRefs.sfxToggleIcon;
     this.refreshAudioToggleTexts();
 
     const graphics = this.add.graphics();
@@ -413,7 +413,7 @@ export class PlayScene extends Phaser.Scene {
     this.levelInfoText = undefined;
     this.enemyInfoText = undefined;
     this.musicToggleIcon = undefined;
-    this.sfxToggleText = undefined;
+    this.sfxToggleIcon = undefined;
     this.activeEnemies = [];
     this.activeLoots = [];
     this.inventory = [];
@@ -464,7 +464,7 @@ export class PlayScene extends Phaser.Scene {
     syncAudioToggleTexts(
       {
         musicToggleIcon: this.musicToggleIcon,
-        sfxToggleText: this.sfxToggleText,
+        sfxToggleIcon: this.sfxToggleIcon,
       },
       {
         musicMuted: Boolean(this.registry.get(AUDIO_SETTINGS_KEYS.MUSIC_MUTED)),

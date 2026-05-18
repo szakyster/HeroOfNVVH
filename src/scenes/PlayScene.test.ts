@@ -72,7 +72,7 @@ describe('PlayScene runtime reset', () => {
     scene.levelInfoText = { setText: () => undefined };
     scene.enemyInfoText = { setText: () => undefined };
     scene.musicToggleIcon = { setTint: () => undefined, clearTint: () => undefined, setAlpha: () => undefined };
-    scene.sfxToggleText = { setText: () => undefined };
+    scene.sfxToggleIcon = { setTint: () => undefined, clearTint: () => undefined, setAlpha: () => undefined };
     scene.activeEnemies = [{ defeated: false }];
     scene.activeLoots = [{ id: 'loot-1' }];
     scene.inventory = [{ type: 'bag', value: 50 }];
@@ -107,7 +107,7 @@ describe('PlayScene runtime reset', () => {
     expect(scene.levelInfoText).toBeUndefined();
     expect(scene.enemyInfoText).toBeUndefined();
     expect(scene.musicToggleIcon).toBeUndefined();
-    expect(scene.sfxToggleText).toBeUndefined();
+    expect(scene.sfxToggleIcon).toBeUndefined();
     expect(scene.activeEnemies).toEqual([]);
     expect(scene.activeLoots).toEqual([]);
     expect(scene.inventory).toEqual([]);

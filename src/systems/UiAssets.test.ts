@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  EFFECT_OFF_IMAGE_NAME,
   getAvailableUiAssets,
   getUiAssetKey,
   hasUiAsset,
@@ -19,6 +20,8 @@ describe('UiAssets', () => {
   it('exposes the inventory bag asset registry', () => {
     expect(getUiAssetKey(INVENTORY_SLOT_IMAGE_NAME)).toBe('ui:bag01.png');
     expect(hasUiAsset(INVENTORY_SLOT_IMAGE_NAME)).toBe(true);
+    expect(getUiAssetKey(EFFECT_OFF_IMAGE_NAME)).toBe('ui:effectoff.png');
+    expect(hasUiAsset(EFFECT_OFF_IMAGE_NAME)).toBe(true);
     expect(getUiAssetKey(MUSIC_OFF_IMAGE_NAME)).toBe('ui:musicoff.png');
     expect(hasUiAsset(MUSIC_OFF_IMAGE_NAME)).toBe(true);
     expect(getAvailableUiAssets()).toEqual([
@@ -26,6 +29,11 @@ describe('UiAssets', () => {
         imageName: INVENTORY_SLOT_IMAGE_NAME,
         key: 'ui:bag01.png',
         url: expect.stringContaining('/assets/sprites/bag01.png'),
+      },
+      {
+        imageName: EFFECT_OFF_IMAGE_NAME,
+        key: 'ui:effectoff.png',
+        url: expect.stringContaining('/assets/sprites/effectoff.png'),
       },
       {
         imageName: MUSIC_OFF_IMAGE_NAME,

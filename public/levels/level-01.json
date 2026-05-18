@@ -1,6 +1,6 @@
 {
   "id": "level-01",
-  "name": "Hatvanpuszta Kezdo PalyA",
+  "name": "Hatvanpuszta Kezdő Pálya",
   "grid": {
     "width": 7,
     "height": 6
@@ -72,6 +72,6 @@
   ],
   "scoreMilestones": [
     { "score": 100, "text": "Valami elkezdődött" },
-    { "score": 1000, "text": "Az első visszaszerzett milliárd" }
+    { "score": 1000, "text": "Az első visszaszerzett\n MILLIÁRD" }
   ]
 }

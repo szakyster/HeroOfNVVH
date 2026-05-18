@@ -45,13 +45,14 @@ describe('LeaderboardScene', () => {
   it('shows an empty state and allows returning to the menu', () => {
     const createdTexts: MockText[] = [];
     const keyboardHandlers: Record<string, () => void> = {};
+    const rectangle = vi.fn(() => ({ setDepth: vi.fn().mockReturnThis() }));
 
     getEntries.mockReturnValue([]);
 
     const scene = new LeaderboardScene() as unknown as Record<string, unknown>;
     scene.scale = { width: 1024, height: 768 };
     scene.add = {
-      rectangle: vi.fn(() => ({ setStrokeStyle: vi.fn().mockReturnThis() })),
+      rectangle,
       text: vi.fn((_x: number, _y: number, text: string) => {
         const handlers: Record<string, (() => void) | undefined> = {};
         const item: MockText = {
@@ -80,7 +81,9 @@ describe('LeaderboardScene', () => {
 
     (scene.create as () => void)();
 
-    expect(createdTexts.some((entry) => entry.text === 'Még nincs mentett eredmény.')).toBe(true);
+    expect(rectangle).toHaveBeenCalledWith(512, 384, 1024, 768, 0x15232f, 1);
+    expect(createdTexts.some((entry) => entry.text === 'Még nincs mentett eredmény.')).toBe(false);
+    expect(createdTexts.some((entry) => entry.text === 'Eredménylista')).toBe(false);
 
     const backButton = createdTexts.find((entry) => entry.text === 'Vissza a menübe');
     backButton?.handlers.pointerdown?.();
@@ -91,6 +94,19 @@ describe('LeaderboardScene', () => {
 
   it('renders saved leaderboard entries', () => {
     const createdTexts: MockText[] = [];
+    const rectangle = vi.fn(() => ({ setDepth: vi.fn().mockReturnThis() }));
+    const addText = vi.fn((_x: number, _y: number, text: string) => {
+      const item: MockText = {
+        text,
+        handlers: {},
+        setOrigin: vi.fn().mockReturnThis(),
+        setInteractive: vi.fn().mockReturnThis(),
+        setStyle: vi.fn().mockReturnThis(),
+        on: vi.fn().mockReturnThis(),
+      };
+      createdTexts.push(item);
+      return item;
+    });
 
     getEntries.mockReturnValue([
       { score: 120, createdAt: '2026-05-09T12:00:00.000Z' },
@@ -100,19 +116,8 @@ describe('LeaderboardScene', () => {
     const scene = new LeaderboardScene() as unknown as Record<string, unknown>;
     scene.scale = { width: 1024, height: 768 };
     scene.add = {
-      rectangle: vi.fn(() => ({ setStrokeStyle: vi.fn().mockReturnThis() })),
-      text: vi.fn((_x: number, _y: number, text: string) => {
-        const item: MockText = {
-          text,
-          handlers: {},
-          setOrigin: vi.fn().mockReturnThis(),
-          setInteractive: vi.fn().mockReturnThis(),
-          setStyle: vi.fn().mockReturnThis(),
-          on: vi.fn().mockReturnThis(),
-        };
-        createdTexts.push(item);
-        return item;
-      }),
+      rectangle,
+      text: addText,
     };
     scene.scene = { start: vi.fn() };
     scene.input = { keyboard: { once: vi.fn() } };
@@ -124,5 +129,10 @@ describe('LeaderboardScene', () => {
     expect(createdTexts.some((entry) => entry.text === '120 M Ft')).toBe(true);
     expect(createdTexts.some((entry) => entry.text === '80 M Ft')).toBe(true);
     expect(createdTexts.some((entry) => entry.text === 'Még nincs mentett eredmény.')).toBe(false);
+    expect(createdTexts.some((entry) => entry.text === 'Eredménylista')).toBe(false);
+    expect(rectangle).toHaveBeenCalledWith(512, 384, 1024, 768, 0x15232f, 1);
+    expect(addText).toHaveBeenCalledWith(87, 190, '1.', expect.any(Object));
+    expect(addText).toHaveBeenCalledWith(142, 190, '120 M Ft', expect.any(Object));
+    expect(addText).toHaveBeenCalledWith(317, 190, expect.any(String), expect.any(Object));
   });
 });
