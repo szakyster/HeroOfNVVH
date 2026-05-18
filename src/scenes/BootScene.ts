@@ -94,6 +94,7 @@ export class BootScene extends Phaser.Scene {
     }
 
     this.load.audio(AUDIO_KEYS.ATTACK, ['assets/audio/effect/Punch01.mp3']);
+    this.load.audio(AUDIO_KEYS.ALARM, ['assets/audio/alarm.mp3']);
     this.load.audio(AUDIO_KEYS.DEATH_1, ['assets/audio/effect/death01.mp3']);
     this.load.audio(AUDIO_KEYS.DEATH_2, ['assets/audio/effect/death02.mp3']);
     this.load.audio(AUDIO_KEYS.DEATH_3, ['assets/audio/effect/death03.mp3']);

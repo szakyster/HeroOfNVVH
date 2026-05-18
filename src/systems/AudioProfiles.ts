@@ -1,5 +1,6 @@
 export const AUDIO_KEYS = {
   ATTACK: 'sfx-attack',
+  ALARM: 'sfx-alarm',
   HIT: 'sfx-hit',
   DEATH_1: 'sfx-death-1',
   DEATH_2: 'sfx-death-2',
@@ -44,6 +45,13 @@ export function getSfxProfile(key: string): SfxProfile {
         type: 'square',
         slideToFrequency: 180,
         loadedAudioSeekMs: 400,
+      };
+    case AUDIO_KEYS.ALARM:
+      return {
+        frequency: 260,
+        durationMs: 700,
+        gain: 0.13,
+        type: 'square',
       };
     case AUDIO_KEYS.HIT:
       return { frequency: 130, durationMs: 90, gain: 0.11, type: 'sawtooth', slideToFrequency: 90 };
