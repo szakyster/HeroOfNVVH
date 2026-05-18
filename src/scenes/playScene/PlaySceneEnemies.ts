@@ -7,6 +7,8 @@ import { getLevelObstacleCells } from './PlaySceneWorld';
 export const ENEMY_ANIMATION_FRAME_RATE = 12;
 export const ENEMY_SHEET_FRAME_COUNT = 16;
 export const ENEMY_INJURY_ANIMATION_DURATION_MS = (ENEMY_SHEET_FRAME_COUNT / ENEMY_ANIMATION_FRAME_RATE) * 1000;
+export const ENEMY_MAX_HEALTH = 2;
+export const ENEMY_DAMAGED_SPEED_MULTIPLIER = 0.5;
 export const ENEMY_ANIMATION_DIRECTIONS = ['down', 'right', 'up'] as const;
 export const DEFAULT_ENEMY_SPRITE_VARIANT = {
   walkPrefix: 'enemy-01',
@@ -96,6 +98,10 @@ export function getEnemyMovementVisualState(deltaX: number, deltaY: number): Mov
 
 export function startEnemyInjuryAnimation(enemy: ActiveEnemy, now: number): void {
   enemy.injuryAnimationUntil = now + ENEMY_INJURY_ANIMATION_DURATION_MS;
+}
+
+export function getEnemyCurrentSpeed(enemy: ActiveEnemy): number {
+  return enemy.health < ENEMY_MAX_HEALTH ? enemy.speed * ENEMY_DAMAGED_SPEED_MULTIPLIER : enemy.speed;
 }
 
 export function isEnemyInjuryActive(enemy: ActiveEnemy, now: number): boolean {
@@ -205,7 +211,7 @@ export function updateActiveEnemies({
       continue;
     }
 
-    const deltaDistance = (delta / 1000) * enemy.speed;
+    const deltaDistance = (delta / 1000) * getEnemyCurrentSpeed(enemy);
     const nextGridCell = enemy.path[enemy.pathIndex + 1];
 
     if (!nextGridCell) {

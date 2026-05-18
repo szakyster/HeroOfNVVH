@@ -42,6 +42,8 @@ vi.mock('phaser', () => {
 });
 
 let buildEnemyPath: typeof import('./PlaySceneEnemies').buildEnemyPath;
+let ENEMY_DAMAGED_SPEED_MULTIPLIER: typeof import('./PlaySceneEnemies').ENEMY_DAMAGED_SPEED_MULTIPLIER;
+let getEnemyCurrentSpeed: typeof import('./PlaySceneEnemies').getEnemyCurrentSpeed;
 let getEnemyAnimationKey: typeof import('./PlaySceneEnemies').getEnemyAnimationKey;
 let getEnemyMovementVisualState: typeof import('./PlaySceneEnemies').getEnemyMovementVisualState;
 let getEnemySheetKey: typeof import('./PlaySceneEnemies').getEnemySheetKey;
@@ -53,6 +55,8 @@ type ActiveEnemy = import('./PlaySceneEnemies').ActiveEnemy;
 beforeAll(async () => {
   ({
     buildEnemyPath,
+    ENEMY_DAMAGED_SPEED_MULTIPLIER,
+    getEnemyCurrentSpeed,
     getEnemyAnimationKey,
     getEnemyMovementVisualState,
     getEnemySheetKey,
@@ -141,6 +145,12 @@ describe('PlaySceneEnemies helpers', () => {
     expect(enemy.injuryAnimationUntil).toBeNull();
   });
 
+  it('reduces speed permanently after the enemy is damaged', () => {
+    const enemy = createEnemyFixture({ health: 1 });
+
+    expect(getEnemyCurrentSpeed(enemy)).toBe(88 * ENEMY_DAMAGED_SPEED_MULTIPLIER);
+  });
+
   it('prefers a waypoint path when one is available', () => {
     const pathfinder = {
       findPathViaWaypoint: vi.fn((_, __, ___, waypoint) => (waypoint.x === 4 ? [{ x: 0, y: 0 }, { x: 4, y: 2 }, { x: 6, y: 5 }] : null)),
@@ -192,5 +202,33 @@ describe('PlaySceneEnemies helpers', () => {
     expect(updateEnemyMovementVisual).toHaveBeenCalledTimes(1);
     expect(updateEnemyRenderDepth).toHaveBeenCalledTimes(1);
     expect(nextEnemies).toEqual([injuredEnemy, movingEnemy]);
+  });
+
+  it('moves damaged enemies at half speed after injury is no longer active', () => {
+    const damagedEnemy = createEnemyFixture({ health: 1, injuryAnimationUntil: 1500 });
+    const updateEnemyMovementVisual = vi.fn();
+    const updateEnemyRenderDepth = vi.fn();
+    const gridSystem = {
+      cellCenter: vi.fn(() => ({ x: 240, y: 180 })),
+    };
+
+    updateActiveEnemies({
+      activeEnemies: [damagedEnemy],
+      delta: 16,
+      now: 1600,
+      isGameOver: false,
+      gridSystem: gridSystem as never,
+      onEnemyEscaped: vi.fn(),
+      updateEnemyMovementVisual,
+      updateEnemyRenderDepth,
+    });
+
+    expect(damagedEnemy.injuryAnimationUntil).toBeNull();
+    expect(updateEnemyMovementVisual).toHaveBeenCalledTimes(1);
+    expect((damagedEnemy.body.setPosition as unknown as ReturnType<typeof vi.fn>)).toHaveBeenCalledWith(
+      120 + 120 / Math.hypot(120, 38) * 88 * ENEMY_DAMAGED_SPEED_MULTIPLIER * 0.016,
+      140 + 38 / Math.hypot(120, 38) * 88 * ENEMY_DAMAGED_SPEED_MULTIPLIER * 0.016,
+    );
+    expect(updateEnemyRenderDepth).toHaveBeenCalledWith(damagedEnemy);
   });
 });
