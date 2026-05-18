@@ -71,7 +71,7 @@
     { "id": "loot-3", "type": "bag", "value": 50, "image": "helicopter01.png", "cell": { "x": 6, "y": 1 } }
   ],
   "scoreMilestones": [
-    { "score": 100, "text": "Valami elkezdődött" },
+    { "score": 100, "text": "Andika! Siessünk!" },
     { "score": 1000, "text": "Az első visszaszerzett\n MILLIÁRD" }
   ]
 }
