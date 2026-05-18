@@ -128,6 +128,6 @@ describe('GameOverScene', () => {
     (scene.create as (data: { score: number }) => void)({ score: 0 });
 
     expect(saveEntry).not.toHaveBeenCalled();
-    expect(createdTexts.some((entry) => entry.text === 'Ez a kör nem került fel az eredménylistára.')).toBe(true);
+    expect(createdTexts.some((entry) => entry.text === 'Ez a kör nem került fel az \neredménylistára.')).toBe(true);
   });
 });

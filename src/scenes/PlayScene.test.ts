@@ -64,7 +64,6 @@ describe('PlayScene runtime reset', () => {
     scene.sanctuaryRects = [{ x: 5, y: 6, width: 7, height: 8 }];
     scene.playerBody = { visible: true };
     scene.playerShadow = { visible: true };
-    scene.enemyHitboxDebug = { clear: () => undefined };
     scene.scoreValueText = { setText: () => undefined };
     scene.inventorySlotImages = [{ setAlpha: () => undefined }];
     scene.escapedValueText = { setText: () => undefined };
@@ -99,7 +98,6 @@ describe('PlayScene runtime reset', () => {
     expect(scene.sanctuaryRects).toEqual([]);
     expect(scene.playerBody).toBeUndefined();
     expect(scene.playerShadow).toBeUndefined();
-    expect(scene.enemyHitboxDebug).toBeUndefined();
     expect(scene.scoreValueText).toBeUndefined();
     expect(scene.inventorySlotImages).toEqual([]);
     expect(scene.escapedValueText).toBeUndefined();
@@ -1099,7 +1097,6 @@ describe('PlayScene runtime reset', () => {
     scene.renderPlayerHitbox = vi.fn();
     scene.updateEnemies = vi.fn();
     scene.updateLoots = vi.fn();
-    scene.renderEnemyHitboxes = vi.fn();
     scene.renderAttackEffect = vi.fn();
     scene.tryMovePlayerAlongGrid = vi.fn();
     scene.updatePlayerMovementVisual = vi.fn();
@@ -1131,7 +1128,6 @@ describe('PlayScene runtime reset', () => {
     scene.renderPlayerHitbox = vi.fn();
     scene.updateEnemies = vi.fn();
     scene.updateLoots = vi.fn();
-    scene.renderEnemyHitboxes = vi.fn();
     scene.renderAttackEffect = vi.fn();
     scene.tryMovePlayerAlongGrid = vi.fn();
     scene.updatePlayerMovementVisual = vi.fn();
@@ -1165,7 +1161,6 @@ describe('PlayScene runtime reset', () => {
     scene.renderPlayerHitbox = vi.fn();
     scene.updateEnemies = vi.fn();
     scene.updateLoots = vi.fn();
-    scene.renderEnemyHitboxes = vi.fn();
     scene.renderAttackEffect = vi.fn();
     scene.updatePlayerMovementVisual = vi.fn();
     scene.cursors = {

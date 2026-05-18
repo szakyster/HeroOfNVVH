@@ -193,8 +193,6 @@ export class PlayScene extends Phaser.Scene {
 
   private playerShadow?: Phaser.GameObjects.Ellipse;
 
-  private enemyHitboxDebug?: Phaser.GameObjects.Graphics;
-
   private scoreValueText?: Phaser.GameObjects.Text;
 
   private inventorySlotImages: Phaser.GameObjects.Image[] = [];
@@ -349,8 +347,6 @@ export class PlayScene extends Phaser.Scene {
     this.createHeroAnimations();
     this.createEnemyAnimations();
     this.playerBody = this.createPlayerBody();
-    // DEBUG: Keep hitboxes visible during development. Remove before release build.
-    this.enemyHitboxDebug = this.add.graphics().setDepth(4);
     this.playerShadow.setVisible(false);
     this.playerBody.setVisible(false);
 
@@ -401,7 +397,6 @@ export class PlayScene extends Phaser.Scene {
     this.sanctuaryRects = [];
     this.playerBody = undefined;
     this.playerShadow = undefined;
-    this.enemyHitboxDebug = undefined;
     this.scoreValueText = undefined;
     this.inventorySlotImages = [];
     this.escapedValueText = undefined;
@@ -490,7 +485,6 @@ export class PlayScene extends Phaser.Scene {
 
     this.updateEnemies(delta);
     this.updateLoots();
-    this.renderEnemyHitboxes();
     this.updateAttackState(now);
 
     let horizontal = 0;
@@ -1286,21 +1280,6 @@ export class PlayScene extends Phaser.Scene {
       updateEnemyMovementVisual: (enemy, deltaX, deltaY) => this.updateEnemyMovementVisual(enemy, deltaX, deltaY),
       updateEnemyRenderDepth: (enemy) => this.updateEnemyRenderDepth(enemy),
     });
-  }
-
-  private renderEnemyHitboxes(): void {
-    if (!this.enemyHitboxDebug) {
-      return;
-    }
-
-    this.enemyHitboxDebug.clear();
-    this.enemyHitboxDebug.lineStyle(2, 0x80ed99, 0.95);
-
-    for (const enemy of this.activeEnemies) {
-      // DEBUG: Temporary enemy hitbox overlay for gameplay tuning. Remove before release.
-      const hitbox = getEnemyHitbox(enemy.body.x, enemy.body.y, this.enemyHitboxSize, this.enemyHitboxOffsetY);
-      this.enemyHitboxDebug.strokeRect(hitbox.x, hitbox.y, hitbox.width, hitbox.height);
-    }
   }
 
   private updateAttackState(now: number): void {
