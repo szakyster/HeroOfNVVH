@@ -3,12 +3,13 @@ import type { LevelData, GridCell } from '../../types/level';
 import type { GridSystem } from '../../systems/GridSystem';
 import type { AStarPathfinder } from '../../systems/AStarPathfinder';
 import { getLevelObstacleCells } from './PlaySceneWorld';
+import { ENEMY_DAMAGED_SPEED_MULTIPLIER, ENEMY_MAX_HEALTH } from './PlaySceneEnemyConstants';
+
+export { ENEMY_DAMAGED_SPEED_MULTIPLIER, ENEMY_MAX_HEALTH } from './PlaySceneEnemyConstants';
 
 export const ENEMY_ANIMATION_FRAME_RATE = 12;
 export const ENEMY_SHEET_FRAME_COUNT = 16;
 export const ENEMY_INJURY_ANIMATION_DURATION_MS = (ENEMY_SHEET_FRAME_COUNT / ENEMY_ANIMATION_FRAME_RATE) * 1000;
-export const ENEMY_MAX_HEALTH = 2;
-export const ENEMY_DAMAGED_SPEED_MULTIPLIER = 0.5;
 export const ENEMY_ANIMATION_DIRECTIONS = ['down', 'right', 'up'] as const;
 export const DEFAULT_ENEMY_SPRITE_VARIANT = {
   walkPrefix: 'enemy-01',

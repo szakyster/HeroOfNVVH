@@ -15,6 +15,7 @@ export class GameOverScene extends Phaser.Scene {
     scoreValue: +6,
     scoreTail: 50,
     result: 104,
+    menuButton: 168,
     controls: 210,
   };
 
@@ -32,6 +33,10 @@ export class GameOverScene extends Phaser.Scene {
     const textAnchor = {
       x: 260,
       y: 280,
+    };
+    const openMenu = () => {
+      audioSystem.playMusic(AUDIO_KEYS.MENU, true);
+      this.scene.start(SCENE_KEYS.MENU);
     };
 
     addSceneBackground(this, 'gameOver');
@@ -94,6 +99,29 @@ export class GameOverScene extends Phaser.Scene {
     this.add
       .text(
         textAnchor.x,
+        textAnchor.y + GameOverScene.TEXT_ROW_OFFSETS.menuButton,
+        'Főmenü',
+        {
+          fontFamily: 'Verdana',
+          fontSize: '18px',
+          fontStyle: 'bold',
+          color: '#f4f1de',
+          backgroundColor: '#335c67',
+          padding: {
+            left: 18,
+            right: 18,
+            top: 8,
+            bottom: 8,
+          },
+        },
+      )
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true })
+      .on('pointerup', openMenu);
+
+    this.add
+      .text(
+        textAnchor.x,
         textAnchor.y + GameOverScene.TEXT_ROW_OFFSETS.controls,
         'R: új játék | L: eredménylista | M: főmenü',
         {
@@ -112,10 +140,7 @@ export class GameOverScene extends Phaser.Scene {
       this.scene.start(SCENE_KEYS.LEADERBOARD);
     });
 
-    this.input.keyboard?.once('keydown-M', () => {
-      audioSystem.playMusic(AUDIO_KEYS.MENU, true);
-      this.scene.start(SCENE_KEYS.MENU);
-    });
+    this.input.keyboard?.once('keydown-M', openMenu);
   }
 
   private saveScore(score: number): { rank: number } | null {

@@ -135,7 +135,7 @@
       "id": 23,
       "name": "Menu, Leaderboard & Game Over Background Graphics",
       "description": "Create distinct background artwork for the Menu, Leaderboard, and Game Over scenes that matches the established art direction and keeps UI panels, buttons, and score readouts readable. Reference: Vizualitas.md sections 2-5",
-      "status": "ready"
+      "status": "closed"
     },
     {
       "id": 24,

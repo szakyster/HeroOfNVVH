@@ -1,5 +1,6 @@
 import type { LevelData, GridCell } from '../../types/level';
-import { ENEMY_MAX_HEALTH, type ActiveEnemy, type EnemySpriteVariant } from './PlaySceneEnemies';
+import type { ActiveEnemy, EnemySpriteVariant } from './PlaySceneEnemies';
+import { ENEMY_MAX_HEALTH } from './PlaySceneEnemyConstants';
 
 export function getEnemySpriteVariant(spawnedEnemies: number): EnemySpriteVariant {
   const spriteVariants: EnemySpriteVariant[] = [

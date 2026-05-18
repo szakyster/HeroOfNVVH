@@ -3,6 +3,8 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 type MockText = {
   text: string;
   setOrigin: ReturnType<typeof vi.fn>;
+  setInteractive: ReturnType<typeof vi.fn>;
+  on: ReturnType<typeof vi.fn>;
 };
 
 const mockAudioSystem = {
@@ -58,6 +60,7 @@ describe('GameOverScene', () => {
   it('saves positive scores and wires replay, leaderboard, and menu actions', () => {
     const createdTexts: MockText[] = [];
     const keyboardHandlers: Record<string, () => void> = {};
+    const textEventHandlers = new Map<string, () => void>();
 
     saveEntry.mockReturnValue([
       { score: 120, createdAt: '2026-05-09T12:00:00.000Z' },
@@ -72,6 +75,11 @@ describe('GameOverScene', () => {
         const item: MockText = {
           text,
           setOrigin: vi.fn().mockReturnThis(),
+          setInteractive: vi.fn().mockReturnThis(),
+          on: vi.fn().mockImplementation((event: string, handler: () => void) => {
+            textEventHandlers.set(`${text}:${event}`, handler);
+            return item;
+          }),
         };
         createdTexts.push(item);
         return item;
@@ -95,6 +103,9 @@ describe('GameOverScene', () => {
       createdAt: '2026-05-09T12:00:00.000Z',
     });
     expect(createdTexts.some((entry) => entry.text.includes('Aktuális helyezés: 1.'))).toBe(true);
+    expect(createdTexts.some((entry) => entry.text === 'Főmenü')).toBe(true);
+
+    textEventHandlers.get('Főmenü:pointerup')?.();
 
     keyboardHandlers['keydown-R']();
     keyboardHandlers['keydown-L']();
@@ -104,6 +115,7 @@ describe('GameOverScene', () => {
     expect(scene.scene.start).toHaveBeenCalledWith('LeaderboardScene');
     expect(mockAudioSystem.playMusic).toHaveBeenCalledWith('music-menu', true);
     expect(scene.scene.start).toHaveBeenCalledWith('MenuScene');
+    expect(scene.scene.start).toHaveBeenCalledTimes(4);
   });
 
   it('does not save zero-score rounds', () => {
@@ -117,6 +129,8 @@ describe('GameOverScene', () => {
         const item: MockText = {
           text,
           setOrigin: vi.fn().mockReturnThis(),
+          setInteractive: vi.fn().mockReturnThis(),
+          on: vi.fn().mockReturnThis(),
         };
         createdTexts.push(item);
         return item;
