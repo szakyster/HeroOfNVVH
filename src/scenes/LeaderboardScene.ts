@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { LeaderboardStorage } from '../systems/LeaderboardStorage';
 import { addSceneBackground } from '../systems/SceneBackgrounds';
+import { createSceneTextButton } from '../systems/UiButtons';
 import { SCENE_KEYS } from './sceneKeys';
 
 export class LeaderboardScene extends Phaser.Scene {
@@ -66,25 +67,16 @@ export class LeaderboardScene extends Phaser.Scene {
   }
 
   private createBackButton(x: number, y: number): void {
-    const button = this.add
-      .text(x, y, 'Vissza a menübe', {
-        fontFamily: 'Verdana',
-        fontSize: '22px',
-        color: '#f4f1de',
-        backgroundColor: '#223247',
-        padding: { x: 16, y: 10 },
-      })
-      .setOrigin(0.5)
-      .setInteractive({ useHandCursor: true });
-
-    button.on('pointerdown', () => {
+    createSceneTextButton(this, {
+      x,
+      y,
+      label: 'Vissza a menübe',
+      width: 264,
+      height: 38,
+      fontSize: '20px',
+      onSelect: () => {
       this.scene.start(SCENE_KEYS.MENU);
-    });
-    button.on('pointerover', () => {
-      button.setStyle({ backgroundColor: '#314863' });
-    });
-    button.on('pointerout', () => {
-      button.setStyle({ backgroundColor: '#223247' });
+      },
     });
   }
 }

@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { AUDIO_KEYS, getAudioSystem } from '../systems/AudioSystem';
 import { LeaderboardStorage } from '../systems/LeaderboardStorage';
 import { addSceneBackground } from '../systems/SceneBackgrounds';
+import { createSceneTextButton } from '../systems/UiButtons';
 import { SCENE_KEYS } from './sceneKeys';
 
 type GameOverData = {
@@ -96,28 +97,16 @@ export class GameOverScene extends Phaser.Scene {
       )
       .setOrigin(0.5);
 
-    this.add
-      .text(
-        textAnchor.x,
-        textAnchor.y + GameOverScene.TEXT_ROW_OFFSETS.menuButton,
-        'Főmenü',
-        {
-          fontFamily: 'Verdana',
-          fontSize: '18px',
-          fontStyle: 'bold',
-          color: '#f4f1de',
-          backgroundColor: '#335c67',
-          padding: {
-            left: 18,
-            right: 18,
-            top: 8,
-            bottom: 8,
-          },
-        },
-      )
-      .setOrigin(0.5)
-      .setInteractive({ useHandCursor: true })
-      .on('pointerup', openMenu);
+    createSceneTextButton(this, {
+      x: textAnchor.x,
+      y: textAnchor.y + GameOverScene.TEXT_ROW_OFFSETS.menuButton,
+      label: 'Főmenü',
+      width: 176,
+      height: 36,
+      fontSize: '18px',
+      triggerEvent: 'pointerup',
+      onSelect: openMenu,
+    });
 
     this.add
       .text(

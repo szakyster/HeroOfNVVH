@@ -3,12 +3,14 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 type MockText = {
   text: string;
   handlers: Record<string, (() => void) | undefined>;
+  y?: number;
   setOrigin: ReturnType<typeof vi.fn>;
   setInteractive: ReturnType<typeof vi.fn>;
   setDepth: ReturnType<typeof vi.fn>;
   setStyle: ReturnType<typeof vi.fn>;
   setData: ReturnType<typeof vi.fn>;
   setText: ReturnType<typeof vi.fn>;
+  setY: ReturnType<typeof vi.fn>;
   on: ReturnType<typeof vi.fn>;
 };
 
@@ -24,6 +26,17 @@ type MockImage = {
   clearTint: ReturnType<typeof vi.fn>;
   setAlpha: ReturnType<typeof vi.fn>;
   on: ReturnType<typeof vi.fn>;
+};
+
+type MockGraphics = {
+  setDepth: ReturnType<typeof vi.fn>;
+  clear: ReturnType<typeof vi.fn>;
+  fillStyle: ReturnType<typeof vi.fn>;
+  fillRoundedRect: ReturnType<typeof vi.fn>;
+  lineStyle: ReturnType<typeof vi.fn>;
+  strokeRoundedRect: ReturnType<typeof vi.fn>;
+  fillCircle: ReturnType<typeof vi.fn>;
+  strokeCircle: ReturnType<typeof vi.fn>;
 };
 
 const mockAudioSystem = {
@@ -76,6 +89,7 @@ describe('MenuScene', () => {
   it('renders menu actions, plays music, and wires navigation and audio toggles', () => {
     const createdTexts: MockText[] = [];
     const createdImages: MockImage[] = [];
+    const createdGraphics: MockGraphics[] = [];
     const keyboardHandlers: Record<string, () => void> = {};
     const registryState = {
       musicMuted: false,
@@ -83,14 +97,32 @@ describe('MenuScene', () => {
     };
 
     const scene = new MenuScene() as unknown as Record<string, unknown>;
+    const sceneManager = {
+      start: vi.fn(),
+    };
     scene.scale = { width: 1024, height: 768 };
     scene.add = {
+      graphics: vi.fn(() => {
+        const graphics: MockGraphics = {
+          setDepth: vi.fn().mockReturnThis(),
+          clear: vi.fn().mockReturnThis(),
+          fillStyle: vi.fn().mockReturnThis(),
+          fillRoundedRect: vi.fn().mockReturnThis(),
+          lineStyle: vi.fn().mockReturnThis(),
+          strokeRoundedRect: vi.fn().mockReturnThis(),
+          fillCircle: vi.fn().mockReturnThis(),
+          strokeCircle: vi.fn().mockReturnThis(),
+        };
+        createdGraphics.push(graphics);
+        return graphics;
+      }),
       rectangle: vi.fn(() => ({ setOrigin: vi.fn() })),
       text: vi.fn((_x: number, _y: number, text: string) => {
         const handlers: Record<string, (() => void) | undefined> = {};
         const button: MockText = {
           text,
           handlers,
+          y: _y,
           setOrigin: vi.fn().mockReturnThis(),
           setInteractive: vi.fn().mockReturnThis(),
           setDepth: vi.fn().mockReturnThis(),
@@ -98,6 +130,10 @@ describe('MenuScene', () => {
           setData: vi.fn().mockReturnThis(),
           setText: vi.fn(function (this: MockText, value: string) {
             this.text = value;
+            return this;
+          }),
+          setY: vi.fn(function (this: MockText, value: number) {
+            this.y = value;
             return this;
           }),
           on: vi.fn(function (this: MockText, event: string, handler: () => void) {
@@ -132,9 +168,7 @@ describe('MenuScene', () => {
         return image;
       }),
     };
-    scene.scene = {
-      start: vi.fn(),
-    };
+    scene.scene = sceneManager;
     scene.registry = {
       get: vi.fn((key: string) => registryState[key as keyof typeof registryState]),
       set: vi.fn((key: string, value: boolean) => {
@@ -164,6 +198,7 @@ describe('MenuScene', () => {
     expect(leaderboardButton).toBeDefined();
     expect(titleTexts).toHaveLength(0);
     expect(createdImages).toHaveLength(2);
+    expect(createdGraphics).toHaveLength(4);
     expect(musicToggle?.texture).toBe('ui:musicoff.png');
     expect(sfxToggle?.texture).toBe('ui:effectoff.png');
     expect(musicToggle?.setTint).toHaveBeenCalledWith(0x8f8f8f);
@@ -174,8 +209,8 @@ describe('MenuScene', () => {
     musicToggle?.handlers.pointerdown?.();
     sfxToggle?.handlers.pointerdown?.();
 
-    expect(scene.scene.start).toHaveBeenCalledWith('LeaderboardScene');
-    expect(scene.scene.start).toHaveBeenCalledWith('PlayScene');
+    expect(sceneManager.start).toHaveBeenCalledWith('LeaderboardScene');
+    expect(sceneManager.start).toHaveBeenCalledWith('PlayScene');
     expect(updateAudioSetting).toHaveBeenCalledWith(scene, 'musicMuted', true);
     expect(updateAudioSetting).toHaveBeenCalledWith(scene, 'sfxMuted', true);
     expect(mockAudioSystem.setMusicMuted).toHaveBeenCalledWith(true);
