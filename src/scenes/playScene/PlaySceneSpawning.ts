@@ -1,5 +1,6 @@
 import type { LevelData, GridCell } from '../../types/level';
 import type { ActiveEnemy, EnemySpriteVariant } from './PlaySceneEnemies';
+import { ENEMY_MAX_HEALTH } from './PlaySceneEnemyConstants';
 
 export function getEnemySpriteVariant(spawnedEnemies: number): EnemySpriteVariant {
   const spriteVariants: EnemySpriteVariant[] = [
@@ -73,7 +74,7 @@ export function createActiveEnemy({ body, shadow, path, enemySpeed, speedRoll, s
     pathIndex: 0,
     speed: enemySpeed * speedRoll,
     spriteVariant,
-    health: 2,
+    health: ENEMY_MAX_HEALTH,
     lootDropped: false,
     escaped: false,
     defeated: false,

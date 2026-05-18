@@ -3,6 +3,9 @@ import type { LevelData, GridCell } from '../../types/level';
 import type { GridSystem } from '../../systems/GridSystem';
 import type { AStarPathfinder } from '../../systems/AStarPathfinder';
 import { getLevelObstacleCells } from './PlaySceneWorld';
+import { ENEMY_DAMAGED_SPEED_MULTIPLIER, ENEMY_MAX_HEALTH } from './PlaySceneEnemyConstants';
+
+export { ENEMY_DAMAGED_SPEED_MULTIPLIER, ENEMY_MAX_HEALTH } from './PlaySceneEnemyConstants';
 
 export const ENEMY_ANIMATION_FRAME_RATE = 12;
 export const ENEMY_SHEET_FRAME_COUNT = 16;
@@ -96,6 +99,10 @@ export function getEnemyMovementVisualState(deltaX: number, deltaY: number): Mov
 
 export function startEnemyInjuryAnimation(enemy: ActiveEnemy, now: number): void {
   enemy.injuryAnimationUntil = now + ENEMY_INJURY_ANIMATION_DURATION_MS;
+}
+
+export function getEnemyCurrentSpeed(enemy: ActiveEnemy): number {
+  return enemy.health < ENEMY_MAX_HEALTH ? enemy.speed * ENEMY_DAMAGED_SPEED_MULTIPLIER : enemy.speed;
 }
 
 export function isEnemyInjuryActive(enemy: ActiveEnemy, now: number): boolean {
@@ -205,7 +212,7 @@ export function updateActiveEnemies({
       continue;
     }
 
-    const deltaDistance = (delta / 1000) * enemy.speed;
+    const deltaDistance = (delta / 1000) * getEnemyCurrentSpeed(enemy);
     const nextGridCell = enemy.path[enemy.pathIndex + 1];
 
     if (!nextGridCell) {

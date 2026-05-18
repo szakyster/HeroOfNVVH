@@ -1,4 +1,4 @@
-import type { HrsImageDefinition, HrsImageSide, HrsZoneType, LevelData } from '../types/level';
+import type { HrsImageDefinition, HrsImageSide, HrsZoneType, LevelData, ScoreMilestone } from '../types/level';
 import { hasHrsAsset, isHrsImageNameAllowed } from './HrsAssets';
 import { hasLootAsset, isLootImageNameAllowed } from './LootAssets';
 import { hasObstacleAsset, isObstacleImageNameAllowed } from './ObstacleAssets';
@@ -52,6 +52,7 @@ export class LevelLoader {
     assert(Array.isArray(data.sanctuaryZone), 'sanctuaryZone must be an array');
     assert(data.hrsImages === undefined || Array.isArray(data.hrsImages), 'hrsImages must be an array when provided');
     assert(Array.isArray(data.lootSpawns), 'lootSpawns must be an array');
+    assert(data.scoreMilestones === undefined || Array.isArray(data.scoreMilestones), 'scoreMilestones must be an array when provided');
 
     const width = grid.width as number;
     const height = grid.height as number;
@@ -70,6 +71,7 @@ export class LevelLoader {
     const spawnZoneData = data.spawnZones as unknown[];
     const goalZoneData = data.goalZones as unknown[];
     const lootSpawnData = data.lootSpawns as unknown[];
+    const scoreMilestoneData = (data.scoreMilestones as unknown[] | undefined) ?? [];
 
     const obstacles = obstacleData.map((obstacle: unknown, index: number) => {
       assert(!!obstacle && typeof obstacle === 'object', `obstacles[${index}] must be object`);
@@ -237,6 +239,24 @@ export class LevelLoader {
       };
     });
 
+    const scoreMilestones = scoreMilestoneData.map((milestone: unknown, index: number): ScoreMilestone => {
+      assert(!!milestone && typeof milestone === 'object', `scoreMilestones[${index}] must be object`);
+      const candidate = milestone as { score?: unknown; text?: unknown };
+      assert(
+        Number.isInteger(candidate.score) && (candidate.score as number) > 0,
+        `scoreMilestones[${index}].score must be a positive integer`,
+      );
+      assert(
+        typeof candidate.text === 'string' && candidate.text.trim().length > 0,
+        `scoreMilestones[${index}].text is required`,
+      );
+
+      return {
+        score: candidate.score as number,
+        text: candidate.text.trim(),
+      };
+    }).sort((left, right) => left.score - right.score);
+
     return {
       id: data.id as string,
       name: data.name as string,
@@ -250,6 +270,7 @@ export class LevelLoader {
       sanctuaryZone,
       hrsImages,
       lootSpawns,
+      scoreMilestones,
     };
   }
 }

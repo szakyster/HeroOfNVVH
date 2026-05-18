@@ -15,6 +15,7 @@ import {
   AudioSystem,
   DEATH_AUDIO_KEYS,
   getAudioSystem,
+  updateAudioSetting,
 } from '../systems/AudioSystem';
 import { LevelLoader } from '../systems/LevelLoader';
 import {
@@ -26,6 +27,7 @@ import {
 import { DEFAULT_LOOT_IMAGE_NAME, getLootAssetKey } from '../systems/LootAssets';
 import { addSceneBackground } from '../systems/SceneBackgrounds';
 import { SimpleCollisionProvider } from '../systems/SimpleCollisionProvider';
+import { getUiAssetKey, INVENTORY_SLOT_IMAGE_NAME } from '../systems/UiAssets';
 import {
   createPlaySceneHud,
   createPlaySceneStatusTexts,
@@ -33,6 +35,7 @@ import {
   formatLevelInfoText,
   syncAudioToggleTexts,
   formatPlaySceneHudValues,
+  syncInventorySlotImages,
   syncEscapedEnemyWarningState,
 } from './playScene/PlaySceneHud';
 import {
@@ -95,6 +98,7 @@ import {
 } from './playScene/PlaySceneWorld';
 import { SCENE_KEYS } from './sceneKeys';
 const DEPOSIT_POPUP_FONT_FAMILY = 'Bungee, Verdana, sans-serif';
+const SCORE_MILESTONE_POPUP_FONT_FAMILY = 'Bungee, Verdana, sans-serif';
 const HERO_ANIMATION_FRAME_RATE = 12;
 const HERO_SPRITE_DISPLAY_SIZE = 168;
 const HERO_SHEET_FRAME_COUNT = 16;
@@ -108,6 +112,19 @@ const HERO_ATTACK_ANIMATION_DURATION_MS =
 const HERO_LOOP_ANIMATION_STATES = ['idle', 'run'] as const;
 const HERO_LOOP_ANIMATION_DIRECTIONS = ['down', 'northeast', 'right', 'southeast', 'up'] as const;
 const HERO_PUNCH_ANIMATION_DIRECTIONS = ['down', 'right', 'up'] as const;
+const SCORE_MILESTONE_FIREWORK_COLORS = [0xf4d35e, 0xff6b6b, 0x7bdff2, 0x80ed99, 0xf7a072] as const;
+const SCORE_MILESTONE_FIREWORK_VECTORS = [
+  { x: -92, y: -38 },
+  { x: -64, y: -86 },
+  { x: -18, y: -108 },
+  { x: 34, y: -102 },
+  { x: 82, y: -54 },
+  { x: 98, y: 4 },
+  { x: 60, y: 56 },
+  { x: 4, y: 78 },
+  { x: -54, y: 62 },
+  { x: -92, y: 8 },
+] as const;
 
 function getHeroSheetKey(state: HeroAnimationState, direction: HeroAnimationDirection): string {
   return `hero-psz01-${state}-${direction}`;
@@ -176,11 +193,9 @@ export class PlayScene extends Phaser.Scene {
 
   private playerShadow?: Phaser.GameObjects.Ellipse;
 
-  private enemyHitboxDebug?: Phaser.GameObjects.Graphics;
-
   private scoreValueText?: Phaser.GameObjects.Text;
 
-  private inventoryValueText?: Phaser.GameObjects.Text;
+  private inventorySlotImages: Phaser.GameObjects.Image[] = [];
 
   private escapedValueText?: Phaser.GameObjects.Text;
 
@@ -196,9 +211,9 @@ export class PlayScene extends Phaser.Scene {
 
   private enemyInfoText?: Phaser.GameObjects.Text;
 
-  private musicToggleText?: Phaser.GameObjects.Text;
+  private musicToggleIcon?: Phaser.GameObjects.Image;
 
-  private sfxToggleText?: Phaser.GameObjects.Text;
+  private sfxToggleIcon?: Phaser.GameObjects.Image;
 
   private cursors?: Phaser.Types.Input.Keyboard.CursorKeys;
 
@@ -252,6 +267,8 @@ export class PlayScene extends Phaser.Scene {
 
   private spawnedEnemies = 0;
 
+  private readonly shownScoreMilestones = new Set<number>();
+
   private get targetEnemyCount(): number {
     return Math.max(2, Math.min(Math.floor(this.waveNumber * 0.4 + 1), 8));
   }
@@ -292,21 +309,21 @@ export class PlayScene extends Phaser.Scene {
     const statusRefs = createPlaySceneStatusTexts(this, width, height, {
       onMusicToggle: () => {
         const nextValue = !Boolean(this.registry.get(AUDIO_SETTINGS_KEYS.MUSIC_MUTED));
-        this.registry.set(AUDIO_SETTINGS_KEYS.MUSIC_MUTED, nextValue);
+        updateAudioSetting(this, AUDIO_SETTINGS_KEYS.MUSIC_MUTED, nextValue);
         this.audioSystem?.setMusicMuted(nextValue);
         this.refreshAudioToggleTexts();
       },
       onSfxToggle: () => {
         const nextValue = !Boolean(this.registry.get(AUDIO_SETTINGS_KEYS.SFX_MUTED));
-        this.registry.set(AUDIO_SETTINGS_KEYS.SFX_MUTED, nextValue);
+        updateAudioSetting(this, AUDIO_SETTINGS_KEYS.SFX_MUTED, nextValue);
         this.audioSystem?.setSfxMuted(nextValue);
         this.refreshAudioToggleTexts();
       },
     });
     this.levelInfoText = statusRefs.levelInfoText;
     this.enemyInfoText = statusRefs.enemyInfoText;
-    this.musicToggleText = statusRefs.musicToggleText;
-    this.sfxToggleText = statusRefs.sfxToggleText;
+    this.musicToggleIcon = statusRefs.musicToggleIcon;
+    this.sfxToggleIcon = statusRefs.sfxToggleIcon;
     this.refreshAudioToggleTexts();
 
     const graphics = this.add.graphics();
@@ -330,8 +347,6 @@ export class PlayScene extends Phaser.Scene {
     this.createHeroAnimations();
     this.createEnemyAnimations();
     this.playerBody = this.createPlayerBody();
-    // DEBUG: Keep hitboxes visible during development. Remove before release build.
-    this.enemyHitboxDebug = this.add.graphics().setDepth(4);
     this.playerShadow.setVisible(false);
     this.playerBody.setVisible(false);
 
@@ -377,13 +392,13 @@ export class PlayScene extends Phaser.Scene {
 
   private resetRuntimeState(): void {
     this.currentLevel = undefined;
+    this.shownScoreMilestones.clear();
     this.obstacleRects = [];
     this.sanctuaryRects = [];
     this.playerBody = undefined;
     this.playerShadow = undefined;
-    this.enemyHitboxDebug = undefined;
     this.scoreValueText = undefined;
-    this.inventoryValueText = undefined;
+    this.inventorySlotImages = [];
     this.escapedValueText = undefined;
     this.escapedValueWarningTween?.stop();
     this.escapedValueWarningTween = undefined;
@@ -392,8 +407,8 @@ export class PlayScene extends Phaser.Scene {
     this.waveValueText = undefined;
     this.levelInfoText = undefined;
     this.enemyInfoText = undefined;
-    this.musicToggleText = undefined;
-    this.sfxToggleText = undefined;
+    this.musicToggleIcon = undefined;
+    this.sfxToggleIcon = undefined;
     this.activeEnemies = [];
     this.activeLoots = [];
     this.inventory = [];
@@ -433,7 +448,7 @@ export class PlayScene extends Phaser.Scene {
     const hudRefs = createPlaySceneHud(this, width);
 
     this.scoreValueText = hudRefs.scoreValueText;
-    this.inventoryValueText = hudRefs.inventoryValueText;
+    this.inventorySlotImages = hudRefs.inventorySlotImages;
     this.escapedValueText = hudRefs.escapedValueText;
     this.escapedValueBaseX = hudRefs.escapedValueBaseX;
     this.escapedValueBaseY = hudRefs.escapedValueBaseY;
@@ -443,8 +458,8 @@ export class PlayScene extends Phaser.Scene {
   private refreshAudioToggleTexts(): void {
     syncAudioToggleTexts(
       {
-        musicToggleText: this.musicToggleText,
-        sfxToggleText: this.sfxToggleText,
+        musicToggleIcon: this.musicToggleIcon,
+        sfxToggleIcon: this.sfxToggleIcon,
       },
       {
         musicMuted: Boolean(this.registry.get(AUDIO_SETTINGS_KEYS.MUSIC_MUTED)),
@@ -470,7 +485,6 @@ export class PlayScene extends Phaser.Scene {
 
     this.updateEnemies(delta);
     this.updateLoots();
-    this.renderEnemyHitboxes();
     this.updateAttackState(now);
 
     let horizontal = 0;
@@ -1071,8 +1085,35 @@ export class PlayScene extends Phaser.Scene {
   private pickUpLoot(loot: ActiveLoot): void {
     this.inventory.push({ type: loot.type, value: loot.value });
     this.audioSystem?.playSfx(AUDIO_KEYS.PICKUP);
+    this.showInventoryPickupAnimation(loot.body.x, loot.body.y, this.inventory.length - 1);
     this.destroyLoot(loot, false);
     this.refreshLevelInfo();
+  }
+
+  private showInventoryPickupAnimation(startX: number, startY: number, slotIndex: number): void {
+    const targetSlot = this.inventorySlotImages[slotIndex];
+
+    if (!targetSlot) {
+      return;
+    }
+
+    const pickupIcon = this.add
+      .image(startX, startY, getUiAssetKey(INVENTORY_SLOT_IMAGE_NAME))
+      .setDisplaySize(28, 28)
+      .setDepth(8)
+      .setAlpha(1);
+
+    this.tweens.add({
+      targets: pickupIcon,
+      x: targetSlot.x + 16,
+      y: targetSlot.y,
+      alpha: 0.9,
+      duration: 650,
+      ease: 'Cubic.easeInOut',
+      onComplete: () => {
+        pickupIcon.destroy();
+      },
+    });
   }
 
   private depositInventory(now: number): void {
@@ -1095,8 +1136,96 @@ export class PlayScene extends Phaser.Scene {
     this.registry.set('score', depositResult.score);
     this.audioSystem?.playSfx(AUDIO_KEYS.DEPOSIT);
     this.showDepositValuePopup(depositResult.depositedValue);
+    this.showScoreMilestones(currentScore, depositResult.score);
 
     this.refreshLevelInfo();
+  }
+
+  private showScoreMilestones(previousScore: number, nextScore: number): void {
+    const milestones = this.currentLevel?.scoreMilestones ?? [];
+
+    for (const milestone of milestones) {
+      if (this.shownScoreMilestones.has(milestone.score)) {
+        continue;
+      }
+
+      if (previousScore < milestone.score && nextScore >= milestone.score) {
+        this.shownScoreMilestones.add(milestone.score);
+        this.showScoreMilestonePopup(milestone.text);
+      }
+    }
+  }
+
+  private showScoreMilestonePopup(text: string): void {
+    if (text.trim().length === 0) {
+      return;
+    }
+
+    const { width, height } = this.scale;
+    this.showScoreMilestoneFireworks(width / 2, height * 0.48);
+
+    const popup = this.add
+      .text(width / 2, height * 0.48, text, {
+        fontFamily: SCORE_MILESTONE_POPUP_FONT_FAMILY,
+        fontSize: '58px',
+        color: '#f4e6a2',
+        fontStyle: 'bold',
+        stroke: '#000000',
+        strokeThickness: 6,
+        align: 'center',
+      })
+      .setOrigin(0.5)
+      .setDepth(9);
+
+    this.tweens.add({
+      targets: popup,
+      y: popup.y - 110,
+      alpha: 0,
+      duration: 4950,
+      ease: 'Cubic.easeOut',
+      onComplete: () => {
+        popup.destroy();
+      },
+    });
+  }
+
+  private showScoreMilestoneFireworks(centerX: number, centerY: number): void {
+    this.spawnScoreMilestoneFireworkBurst(centerX - 210, centerY + 24, 0);
+    this.spawnScoreMilestoneFireworkBurst(centerX + 210, centerY - 8, 2);
+  }
+
+  private spawnScoreMilestoneFireworkBurst(centerX: number, centerY: number, colorOffset: number): void {
+    const flash = this.add.circle(centerX, centerY, 18, 0xfff4b1, 0.95).setDepth(8);
+
+    this.tweens.add({
+      targets: flash,
+      alpha: 0,
+      scale: 2.4,
+      duration: 720,
+      ease: 'Quad.easeOut',
+      onComplete: () => {
+        flash.destroy();
+      },
+    });
+
+    SCORE_MILESTONE_FIREWORK_VECTORS.forEach((vector, index) => {
+      const color = SCORE_MILESTONE_FIREWORK_COLORS[(index + colorOffset) % SCORE_MILESTONE_FIREWORK_COLORS.length];
+      const spark = this.add.circle(centerX, centerY, 6, color, 0.96).setDepth(8);
+
+      this.tweens.add({
+        targets: spark,
+        x: centerX + vector.x,
+        y: centerY + vector.y,
+        alpha: 0,
+        scale: 0.35,
+        duration: 1480,
+        ease: 'Cubic.easeOut',
+        delay: index * 28,
+        onComplete: () => {
+          spark.destroy();
+        },
+      });
+    });
   }
 
   private showDepositValuePopup(value: number): void {
@@ -1153,21 +1282,6 @@ export class PlayScene extends Phaser.Scene {
     });
   }
 
-  private renderEnemyHitboxes(): void {
-    if (!this.enemyHitboxDebug) {
-      return;
-    }
-
-    this.enemyHitboxDebug.clear();
-    this.enemyHitboxDebug.lineStyle(2, 0x80ed99, 0.95);
-
-    for (const enemy of this.activeEnemies) {
-      // DEBUG: Temporary enemy hitbox overlay for gameplay tuning. Remove before release.
-      const hitbox = getEnemyHitbox(enemy.body.x, enemy.body.y, this.enemyHitboxSize, this.enemyHitboxOffsetY);
-      this.enemyHitboxDebug.strokeRect(hitbox.x, hitbox.y, hitbox.width, hitbox.height);
-    }
-  }
-
   private updateAttackState(now: number): void {
     if (!shouldClearAttackEffect(now, this.attackVisualUntil)) {
       return;
@@ -1215,15 +1329,13 @@ export class PlayScene extends Phaser.Scene {
     const escapedEnemies = this.registry.get('escapedEnemies') ?? 0;
     const hudValues = formatPlaySceneHudValues({
       score,
-      inventoryCount: this.inventory.length,
       escapedEnemies,
       maxEscapedEnemies: this.maxEscapedEnemies,
       waveNumber: this.waveNumber,
-      maxInventory: DEFAULT_LOOT_CONFIG.maxInventory,
     });
 
     this.scoreValueText?.setText(hudValues.scoreText);
-    this.inventoryValueText?.setText(hudValues.inventoryText);
+    syncInventorySlotImages(this.inventorySlotImages, this.inventory.length, DEFAULT_LOOT_CONFIG.maxInventory);
     this.escapedValueText?.setText(hudValues.escapedText);
     this.updateEscapedEnemyWarningState(escapedEnemies);
     this.waveValueText?.setText(hudValues.waveText);

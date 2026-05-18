@@ -24,94 +24,70 @@ Kapcsolódó döntés ID-k:
 - Collision: D-014
 - Audio: D-016
 - Deploy/statikus működés: D-005, D-017, D-018
-
----
-
-## 2. Rendszerkörnyezet (System Context)
-
-Kapcsolódó döntés ID-k: **D-005, D-017, D-018**.
-
-```mermaid
-flowchart LR
-    Player[Játékos - Desktop böngésző]
-    Browser[Browser Runtime]
-    Game[Heroes of NVVH - Phaser app]
-    Assets[Statikus assetek\nPNG/WebP, JSON, WAV/MP3]
-    Storage[LocalStorage\nHigh score + beállítások]
-    GH[GitHub Pages\nstatikus hosting]
-
-    Player --> Browser
-    Browser --> Game
-    Game --> Assets
-    Game <--> Storage
-    Browser --> GH
-    GH --> Browser
-```
-
-Megjegyzés:
-- Nincs aktív backend API.
-- Nincs telemetria.
-- Nincs PWA/service worker réteg.
-
----
-
-## 3. Logikai komponens architektúra
-
-```mermaid
-flowchart TB
     subgraph Scenes[Scene réteg]
       Boot[BootScene]
       Menu[MenuScene]
-      Help[HelpScene]
-      GameScene[GameScene]
-      UI[UIScene]
+      Play[PlayScene]
       GameOver[GameOverScene]
       Leaderboard[LeaderboardScene]
     end
 
-    subgraph Core[Core rendszerek]
-      GS[GameState]
-      EM[EnemyManager]
-      LM[LootManager]
-      DM[DifficultyManager]
-      SM[ScoreManager]
-      CM[CollisionSystem]
-      CP[ICollisionProvider\nSimpleCollisionProvider]
-      AS[AudioSystem]
-      AP[IAudioService\nPhaserAudioService]
-      PM[PathfindingService - A*]
-      GRID[GridSystem\n7x6 + cella foglaltság]
+    subgraph PlaySceneHelpers[PlayScene helper modulok]
+      Hud[PlaySceneHud]
+      World[PlaySceneWorld]
+      Enemies[PlaySceneEnemies]
+      Combat[PlaySceneCombat]
+      Loot[PlaySceneLoot]
+      Player[PlayScenePlayer]
+      Hero[PlaySceneHero]
+      Spawning[PlaySceneSpawning]
+      Effects[PlaySceneEffects]
+    end
+
+    subgraph Systems[Gameplay rendszerek]
+      GRID[GridSystem]
+      PATH[AStarPathfinder]
+      COLL[SimpleCollisionProvider]
+      AUDIO[AudioSystem]
+      LEVEL[LevelLoader]
+      ATTACK[AttackSystem]
+      LOOTSYS[LootSystem]
     end
 
     subgraph Data[Adat + Asset]
-      Map[level01.json]
-      Atlas[Sprite Atlas + textures]
+      Map[level-01.json]
+      Sheets[Sprite sheet-ek + textúrák]
       AudioFiles[Audio fájlok]
       LS[LocalStorage]
     end
 
-    Boot --> Atlas
+    Boot --> Sheets
     Boot --> AudioFiles
     Boot --> Map
-    Menu --> GameScene
-    Menu --> Help
+    Menu --> Play
     Menu --> Leaderboard
 
-    GameScene --> GS
-    GameScene --> EM
-    GameScene --> LM
-    GameScene --> DM
-    GameScene --> CM
-    GameScene --> AS
-    GameScene --> GRID
-    UI --> GS
-    UI --> SM
-    GameOver --> SM
-    Leaderboard --> LS
+    Play --> Hud
+    Play --> World
+    Play --> Enemies
+    Play --> Combat
+    Play --> Loot
+    Play --> Player
+    Play --> Hero
+    Play --> Spawning
+    Play --> Effects
 
-    EM --> PM
-    EM --> GRID
-    LM --> GRID
+    Play --> GRID
+    Play --> PATH
+    Play --> COLL
+    Play --> AUDIO
+    Play --> LEVEL
+    Play --> ATTACK
+    Play --> LOOTSYS
+
+    Menu --> AUDIO
+    GameOver --> AUDIO
+    Leaderboard --> LS
     CM --> CP
     AS --> AP
 
@@ -128,19 +104,14 @@ stateDiagram-v2
     [*] --> Boot
     Boot --> MainMenu
 
-    MainMenu --> Help : Help
-    Help --> MainMenu : Vissza
-
     MainMenu --> Leaderboard : Eredménylista
     Leaderboard --> MainMenu : Vissza
 
     MainMenu --> Playing : Start
 
     state Playing {
-      [*] --> Active
-      Active --> Paused : Pause
-      Paused --> Active : Resume
-      Active --> GameOver : Escape threshold reached
+      [*] --> ActiveWaveLoop
+      ActiveWaveLoop --> GameOver : Escape threshold reached
     }
 
     GameOver --> MainMenu : Főmenü
@@ -154,33 +125,33 @@ stateDiagram-v2
 ```mermaid
 sequenceDiagram
     participant Input as Input Layer
-    participant Scene as GameScene
-    participant Enemy as EnemyManager
+  participant Scene as PlayScene
+  participant Spawn as PlaySceneSpawning
+  participant Enemy as PlaySceneEnemies
     participant Path as A* Service
-    participant Coll as CollisionSystem
-    participant Loot as LootManager
-    participant State as GameState
-    participant UI as UIScene
+  participant Coll as SimpleCollisionProvider
+  participant Combat as PlaySceneCombat
+  participant Loot as PlaySceneLoot
+  participant FX as PlaySceneEffects
+  participant UI as PlaySceneHud
 
     loop Frame update (deltaTime)
         Input->>Scene: Player input (move/attack)
         Scene->>Coll: Player mozgás ütközésellenőrzése
         Coll-->>Scene: Engedett/tiltott elmozdulás
 
-        Scene->>Enemy: Enemy update
-        Enemy->>Path: (spawnkor) útvonal számítás
+        Scene->>Spawn: Spawn időzítés / új enemy
+        Spawn->>Path: (spawnkor) útvonal számítás
         Path-->>Enemy: Waypoint lista
-        Enemy->>Coll: Enemy/obstacle check
+        Scene->>Enemy: Aktív enemy-k update
 
-        Scene->>Coll: Attack hitbox vs enemy hitbox
-        Coll-->>Scene: Találatok
-        Scene->>Loot: Loot drop trigger
+        Scene->>Combat: Attack hitbox vs enemy hitbox
+        Combat-->>Scene: Találatok / knockback / sebzés
+        Scene->>FX: Loot drop / popup / destroy trigger
 
-        Loot->>State: Pickup/TTL/leadás események
-        Enemy->>State: Elszökött enemy increment
-        Scene->>State: Pont + inventory változások
-
-        State->>UI: Snapshot (pont, inventory, escaped)
+        Loot->>Scene: Pickup/TTL/leadás események
+        Enemy->>Scene: Elszökött enemy increment
+        Scene->>UI: HUD refresh (pont, inventory, escaped, wave)
     end
 ```
 
@@ -391,11 +362,11 @@ Működési jellemzők:
 ## 12. MVP implementációs sorrend
 
 1. Projekt bootstrap (`Phaser + TS + Vite`).
-2. Scene keret: Boot / Menu / Game / UI / GameOver.
-3. Pálya és rács betöltés (`level01.json`).
+2. Scene keret: Boot / Menu / Play / GameOver / Leaderboard.
+3. Pálya és rács betöltés (`level-01.json`).
 4. Player mozgás + akadályütközés (`SimpleCollisionProvider`).
 5. Enemy spawn + A* + waypoint követés.
-6. Attack rendszer + 2-hit enemy flow.
+6. Attack rendszer + 2 HP-s enemy flow + injured animáció.
 7. Loot drop/pickup/TTL + blink.
 8. NVVH leadás + pontszám + escaped/game over.
 9. Audio wrapper + alap SFX.

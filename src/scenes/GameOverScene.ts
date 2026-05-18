@@ -2,7 +2,6 @@ import Phaser from 'phaser';
 import { AUDIO_KEYS, getAudioSystem } from '../systems/AudioSystem';
 import { LeaderboardStorage } from '../systems/LeaderboardStorage';
 import { addSceneBackground } from '../systems/SceneBackgrounds';
-import { HEADLINE_FONT_FAMILY } from '../utils/typography';
 import { SCENE_KEYS } from './sceneKeys';
 
 type GameOverData = {
@@ -10,6 +9,16 @@ type GameOverData = {
 };
 
 export class GameOverScene extends Phaser.Scene {
+
+  private static readonly TEXT_ROW_OFFSETS = {
+    scoreLead: -36,
+    scoreValue: +6,
+    scoreTail: 50,
+    result: 104,
+    menuButton: 168,
+    controls: 210,
+  };
+
   private readonly leaderboardStorage = new LeaderboardStorage();
 
   constructor() {
@@ -17,36 +26,68 @@ export class GameOverScene extends Phaser.Scene {
   }
 
   create(data: GameOverData): void {
-    const { width, height } = this.scale;
+    //const { width, height } = this.scale;
     const score = data.score ?? 0;
     const audioSystem = getAudioSystem(this);
     const savedEntry = score > 0 ? this.saveScore(score) : null;
+    const textAnchor = {
+      x: 260,
+      y: 280,
+    };
+    const openMenu = () => {
+      audioSystem.playMusic(AUDIO_KEYS.MENU, true);
+      this.scene.start(SCENE_KEYS.MENU);
+    };
 
     addSceneBackground(this, 'gameOver');
 
     this.add
-      .text(width / 2, height / 2 - 80, 'Game Over', {
-        fontFamily: HEADLINE_FONT_FAMILY,
-        fontSize: '56px',
-        color: '#f4f1de',
-      })
-      .setOrigin(0.5);
-
-    this.add
-      .text(width / 2, height / 2 - 12, `Visszaszereztél ${score} millió forintot!`, {
-        fontFamily: 'Verdana',
-        fontSize: '28px',
-        color: '#f2cc8f',
-      })
+      .text(
+        textAnchor.x,
+        textAnchor.y + GameOverScene.TEXT_ROW_OFFSETS.scoreLead,
+        'Visszaszereztél',
+        {
+          fontFamily: 'Verdana',
+          fontSize: '24px',
+          color: '#f2cc8f',
+        },
+      )
       .setOrigin(0.5);
 
     this.add
       .text(
-        width / 2,
-        height / 2 + 42,
+        textAnchor.x,
+        textAnchor.y + GameOverScene.TEXT_ROW_OFFSETS.scoreValue,
+        `${score} millió`,
+        {
+          fontFamily: 'Verdana',
+          fontSize: '40px',
+          fontStyle: 'bold',
+          color: '#e07a5f',
+        },
+      )
+      .setOrigin(0.5);
+
+    this.add
+      .text(
+        textAnchor.x,
+        textAnchor.y + GameOverScene.TEXT_ROW_OFFSETS.scoreTail,
+        'forintot!',
+        {
+          fontFamily: 'Verdana',
+          fontSize: '24px',
+          color: '#f2cc8f',
+        },
+      )
+      .setOrigin(0.5);
+
+    this.add
+      .text(
+        textAnchor.x,
+        textAnchor.y + GameOverScene.TEXT_ROW_OFFSETS.result,
         savedEntry
-          ? `Eredmény elmentve. Aktuális helyezés: ${savedEntry.rank}.`
-          : 'Ez a kör nem került fel az eredménylistára.',
+          ? `Eredmény elmentve. \nAktuális helyezés: ${savedEntry.rank}.`
+          : 'Ez a kör nem került fel az \neredménylistára.',
         {
           fontFamily: 'Verdana',
           fontSize: '22px',
@@ -56,11 +97,39 @@ export class GameOverScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     this.add
-      .text(width / 2, height / 2 + 94, 'R: új játék | L: eredménylista | M: főmenü', {
-        fontFamily: 'Verdana',
-        fontSize: '20px',
-        color: '#81b29a',
-      })
+      .text(
+        textAnchor.x,
+        textAnchor.y + GameOverScene.TEXT_ROW_OFFSETS.menuButton,
+        'Főmenü',
+        {
+          fontFamily: 'Verdana',
+          fontSize: '18px',
+          fontStyle: 'bold',
+          color: '#f4f1de',
+          backgroundColor: '#335c67',
+          padding: {
+            left: 18,
+            right: 18,
+            top: 8,
+            bottom: 8,
+          },
+        },
+      )
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true })
+      .on('pointerup', openMenu);
+
+    this.add
+      .text(
+        textAnchor.x,
+        textAnchor.y + GameOverScene.TEXT_ROW_OFFSETS.controls,
+        'R: új játék | L: eredménylista | M: főmenü',
+        {
+          fontFamily: 'Verdana',
+          fontSize: '14px',
+          color: '#81b29a',
+        },
+      )
       .setOrigin(0.5);
 
     this.input.keyboard?.once('keydown-R', () => {
@@ -71,10 +140,7 @@ export class GameOverScene extends Phaser.Scene {
       this.scene.start(SCENE_KEYS.LEADERBOARD);
     });
 
-    this.input.keyboard?.once('keydown-M', () => {
-      audioSystem.playMusic(AUDIO_KEYS.MENU, true);
-      this.scene.start(SCENE_KEYS.MENU);
-    });
+    this.input.keyboard?.once('keydown-M', openMenu);
   }
 
   private saveScore(score: number): { rank: number } | null {

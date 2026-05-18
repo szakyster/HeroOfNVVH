@@ -1,6 +1,7 @@
 import type Phaser from 'phaser';
 import type { LevelData } from '../../types/level';
 import { DEFAULT_LOOT_CONFIG } from '../../systems/LootSystem';
+import { EFFECT_OFF_IMAGE_NAME, getUiAssetKey, INVENTORY_SLOT_IMAGE_NAME, MUSIC_OFF_IMAGE_NAME } from '../../systems/UiAssets';
 import { HEADLINE_FONT_FAMILY } from '../../utils/typography';
 
 export const HEADER_EMPHASIS_COLOR = '#f4e6a2';
@@ -8,6 +9,12 @@ export const ESCAPED_WARNING_COLOR = '#ff4d4f';
 
 type SetTextLike = {
   setText?: (value: string) => unknown;
+};
+
+type SetIconLike = {
+  setTint?: (value: number) => unknown;
+  clearTint?: () => unknown;
+  setAlpha?: (value: number) => unknown;
 };
 
 type WarningTextLike = SetTextLike & {
@@ -38,24 +45,30 @@ type ButtonCallbacks = {
 };
 
 export type AudioToggleTextRefs = {
-  musicToggleText?: SetTextLike;
-  sfxToggleText?: SetTextLike;
+  musicToggleIcon?: SetIconLike;
+  sfxToggleIcon?: SetIconLike;
 };
 
 export type PlaySceneHudRefs = {
   scoreValueText: Phaser.GameObjects.Text;
-  inventoryValueText: Phaser.GameObjects.Text;
+  inventorySlotImages: Phaser.GameObjects.Image[];
   escapedValueText: Phaser.GameObjects.Text;
   escapedValueBaseX: number;
   escapedValueBaseY: number;
   waveValueText: Phaser.GameObjects.Text;
 };
 
+type InventorySlotImageLike = {
+  setAlpha?: (value: number) => unknown;
+  setTint?: (value: number) => unknown;
+  clearTint?: () => unknown;
+};
+
 export type PlaySceneStatusRefs = {
   levelInfoText: Phaser.GameObjects.Text;
   enemyInfoText: Phaser.GameObjects.Text;
-  musicToggleText: Phaser.GameObjects.Text;
-  sfxToggleText: Phaser.GameObjects.Text;
+  musicToggleIcon: Phaser.GameObjects.Image;
+  sfxToggleIcon: Phaser.GameObjects.Image;
 };
 
 function addHudLabel(scene: Phaser.Scene, x: number, y: number, text: string): void {
@@ -64,6 +77,8 @@ function addHudLabel(scene: Phaser.Scene, x: number, y: number, text: string): v
       fontFamily: 'Verdana',
       fontSize: '15px',
       color: '#a8dadc',
+      stroke: '#000000',
+      strokeThickness: 3,
     })
     .setDepth(7);
 }
@@ -75,24 +90,24 @@ function addHudValue(scene: Phaser.Scene, x: number, y: number): Phaser.GameObje
       fontSize: '24px',
       color: HEADER_EMPHASIS_COLOR,
       fontStyle: 'bold',
+      stroke: '#000000',
+      strokeThickness: 4,
     })
     .setDepth(7);
 }
 
-function createToggleButton(
+function createIconToggleButton(
   scene: Phaser.Scene,
   x: number,
   y: number,
+  imageName: string,
   onPointerDown: () => void,
-): Phaser.GameObjects.Text {
+): Phaser.GameObjects.Image {
+  const baseSize = 32 * 1.3;
+  const hoverScale = 1.08;
   const button = scene.add
-    .text(x, y, '', {
-      fontFamily: 'Verdana',
-      fontSize: '15px',
-      color: '#f4f1de',
-      backgroundColor: '#223247',
-      padding: { x: 10, y: 6 },
-    })
+    .image(x, y, getUiAssetKey(imageName))
+    .setDisplaySize(baseSize, baseSize)
     .setOrigin(1, 0)
     .setDepth(6)
     .setInteractive({ useHandCursor: true });
@@ -100,10 +115,10 @@ function createToggleButton(
   button.setData('ui-button', true);
   button.on('pointerdown', onPointerDown);
   button.on('pointerover', () => {
-    button.setStyle({ backgroundColor: '#314863' });
+    button.setDisplaySize(baseSize * hoverScale, baseSize * hoverScale);
   });
   button.on('pointerout', () => {
-    button.setStyle({ backgroundColor: '#223247' });
+    button.setDisplaySize(baseSize, baseSize);
   });
 
   return button;
@@ -131,7 +146,13 @@ export function createPlaySceneHud(scene: Phaser.Scene, width: number): PlayScen
   const scoreValueText = addHudValue(scene, columns[0], valueY);
 
   addHudLabel(scene, columns[1], metricY, 'Hátizsák');
-  const inventoryValueText = addHudValue(scene, columns[1], valueY);
+  const inventorySlotImages = Array.from({ length: DEFAULT_LOOT_CONFIG.maxInventory }, (_, index) =>
+    scene.add
+      .image(columns[1] + index * 34, valueY + 17, getUiAssetKey(INVENTORY_SLOT_IMAGE_NAME))
+      .setDisplaySize(33, 33)
+      .setOrigin(0, 0.5)
+      .setDepth(7),
+  );
 
   addHudLabel(scene, columns[2], metricY, 'Reptérre érkeztek');
   const escapedValueText = addHudValue(scene, columns[2], valueY);
@@ -141,7 +162,7 @@ export function createPlaySceneHud(scene: Phaser.Scene, width: number): PlayScen
 
   return {
     scoreValueText,
-    inventoryValueText,
+    inventorySlotImages,
     escapedValueText,
     escapedValueBaseX: columns[2],
     escapedValueBaseY: valueY,
@@ -155,11 +176,16 @@ export function createPlaySceneStatusTexts(
   height: number,
   callbacks: ButtonCallbacks,
 ): PlaySceneStatusRefs {
+  const audioIconsTopY = 122;
+  const audioIconsSpacingY = 46;
+
   const levelInfoText = scene.add
     .text(24, height - 58, 'Pályabetöltés: folyamatban...', {
       fontFamily: 'Verdana',
       fontSize: '17px',
       color: '#f1faee',
+      stroke: '#000000',
+      strokeThickness: 3,
     })
     .setOrigin(0, 0.5)
     .setDepth(7);
@@ -169,46 +195,68 @@ export function createPlaySceneStatusTexts(
       fontFamily: 'Verdana',
       fontSize: '17px',
       color: '#ffd166',
+      stroke: '#000000',
+      strokeThickness: 3,
     })
     .setOrigin(0, 0.5)
     .setDepth(7);
 
-  const musicToggleText = createToggleButton(scene, width - 18, 122, callbacks.onMusicToggle);
-  const sfxToggleText = createToggleButton(scene, width - 18, 160, callbacks.onSfxToggle);
+  const musicToggleIcon = createIconToggleButton(scene, width - 18, audioIconsTopY, MUSIC_OFF_IMAGE_NAME, callbacks.onMusicToggle);
+  const sfxToggleIcon = createIconToggleButton(scene, width - 18, audioIconsTopY + audioIconsSpacingY, EFFECT_OFF_IMAGE_NAME, callbacks.onSfxToggle);
 
   return {
     levelInfoText,
     enemyInfoText,
-    musicToggleText,
-    sfxToggleText,
+    musicToggleIcon,
+    sfxToggleIcon,
   };
 }
 
-export function formatInventoryIcons(inventoryCount: number, maxInventory: number = DEFAULT_LOOT_CONFIG.maxInventory): string {
-  const filledSlots = '■'.repeat(inventoryCount);
-  const emptySlots = '□'.repeat(Math.max(0, maxInventory - inventoryCount));
+function syncAudioToggleIcon(icon: SetIconLike | undefined, isMuted: boolean): void {
+  icon?.setAlpha?.(isMuted ? 1 : 0.9);
 
-  return `${filledSlots}${emptySlots}`;
+  if (isMuted) {
+    icon?.clearTint?.();
+    return;
+  }
+
+  icon?.setTint?.(0x8f8f8f);
+}
+
+export function syncInventorySlotImages(
+  slotImages: InventorySlotImageLike[],
+  inventoryCount: number,
+  maxInventory: number = DEFAULT_LOOT_CONFIG.maxInventory,
+): void {
+  const visibleSlots = Math.min(slotImages.length, maxInventory);
+
+  for (let index = 0; index < visibleSlots; index += 1) {
+    const slotImage = slotImages[index];
+    const isFilled = index < inventoryCount;
+
+    slotImage.setAlpha?.(isFilled ? 1 : 0.4);
+
+    if (isFilled) {
+      slotImage.clearTint?.();
+      continue;
+    }
+
+    slotImage.setTint?.(0x7f7f7f);
+  }
 }
 
 export function formatPlaySceneHudValues(args: {
   score: number;
-  inventoryCount: number;
   escapedEnemies: number;
   maxEscapedEnemies: number;
   waveNumber: number;
-  maxInventory?: number;
 }): {
   scoreText: string;
-  inventoryText: string;
   escapedText: string;
   waveText: string;
 } {
-  const maxInventory = args.maxInventory ?? DEFAULT_LOOT_CONFIG.maxInventory;
-
   return {
     scoreText: `${args.score} M Ft`,
-    inventoryText: `${args.inventoryCount}/${maxInventory}  ${formatInventoryIcons(args.inventoryCount, maxInventory)}`,
     escapedText: `${args.escapedEnemies}/${args.maxEscapedEnemies}`,
     waveText: `${args.waveNumber}. hullám`,
   };
@@ -244,10 +292,8 @@ export function syncAudioToggleTexts(
   refs: AudioToggleTextRefs,
   args: { musicMuted: boolean; sfxMuted: boolean },
 ): void {
-  const labels = formatAudioToggleTexts(args);
-
-  refs.musicToggleText?.setText?.(labels.musicText);
-  refs.sfxToggleText?.setText?.(labels.sfxText);
+  syncAudioToggleIcon(refs.musicToggleIcon, args.musicMuted);
+  syncAudioToggleIcon(refs.sfxToggleIcon, args.sfxMuted);
 }
 
 export function syncEscapedEnemyWarningState(args: {

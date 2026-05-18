@@ -1,0 +1,2 @@
+export const ENEMY_MAX_HEALTH = 2;
+export const ENEMY_DAMAGED_SPEED_MULTIPLIER = 0.5;

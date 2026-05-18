@@ -122,8 +122,8 @@
     {
       "id": 21,
       "name": "UI Graphic Skin",
-      "description": "Replace placeholder UI visuals with final graphic elements for HUD panels, backpack display, menu buttons, leaderboard panels, and other interface chrome. Reference: Vizualitas.md section 10 and JatekLeiras.md section 12",
-      "status": "ready"
+        "description": "Replace placeholder UI visuals with final graphic elements for HUD panels, backpack display, menu buttons, leaderboard panels, and other interface chrome. Reference: Vizualitas.md sections 11 and 13, and JatekLeiras.md section 12",
+      "status": "in progress"
     },
     {
       "id": 22,
@@ -135,7 +135,7 @@
       "id": 23,
       "name": "Menu, Leaderboard & Game Over Background Graphics",
       "description": "Create distinct background artwork for the Menu, Leaderboard, and Game Over scenes that matches the established art direction and keeps UI panels, buttons, and score readouts readable. Reference: Vizualitas.md sections 2-5",
-      "status": "ready"
+      "status": "closed"
     },
     {
       "id": 24,

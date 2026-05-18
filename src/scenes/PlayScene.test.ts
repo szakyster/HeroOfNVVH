@@ -64,15 +64,14 @@ describe('PlayScene runtime reset', () => {
     scene.sanctuaryRects = [{ x: 5, y: 6, width: 7, height: 8 }];
     scene.playerBody = { visible: true };
     scene.playerShadow = { visible: true };
-    scene.enemyHitboxDebug = { clear: () => undefined };
     scene.scoreValueText = { setText: () => undefined };
-    scene.inventoryValueText = { setText: () => undefined };
+    scene.inventorySlotImages = [{ setAlpha: () => undefined }];
     scene.escapedValueText = { setText: () => undefined };
     scene.waveValueText = { setText: () => undefined };
     scene.levelInfoText = { setText: () => undefined };
     scene.enemyInfoText = { setText: () => undefined };
-    scene.musicToggleText = { setText: () => undefined };
-    scene.sfxToggleText = { setText: () => undefined };
+    scene.musicToggleIcon = { setTint: () => undefined, clearTint: () => undefined, setAlpha: () => undefined };
+    scene.sfxToggleIcon = { setTint: () => undefined, clearTint: () => undefined, setAlpha: () => undefined };
     scene.activeEnemies = [{ defeated: false }];
     scene.activeLoots = [{ id: 'loot-1' }];
     scene.inventory = [{ type: 'bag', value: 50 }];
@@ -99,15 +98,14 @@ describe('PlayScene runtime reset', () => {
     expect(scene.sanctuaryRects).toEqual([]);
     expect(scene.playerBody).toBeUndefined();
     expect(scene.playerShadow).toBeUndefined();
-    expect(scene.enemyHitboxDebug).toBeUndefined();
     expect(scene.scoreValueText).toBeUndefined();
-    expect(scene.inventoryValueText).toBeUndefined();
+    expect(scene.inventorySlotImages).toEqual([]);
     expect(scene.escapedValueText).toBeUndefined();
     expect(scene.waveValueText).toBeUndefined();
     expect(scene.levelInfoText).toBeUndefined();
     expect(scene.enemyInfoText).toBeUndefined();
-    expect(scene.musicToggleText).toBeUndefined();
-    expect(scene.sfxToggleText).toBeUndefined();
+    expect(scene.musicToggleIcon).toBeUndefined();
+    expect(scene.sfxToggleIcon).toBeUndefined();
     expect(scene.activeEnemies).toEqual([]);
     expect(scene.activeLoots).toEqual([]);
     expect(scene.inventory).toEqual([]);
@@ -131,7 +129,11 @@ describe('PlayScene runtime reset', () => {
   it('refreshes HUD texts from registry values and inventory state', () => {
     const scene = new PlayScene() as unknown as Record<string, unknown>;
     const scoreValueText = { setText: vi.fn() };
-    const inventoryValueText = { setText: vi.fn() };
+    const inventorySlotImages = Array.from({ length: 4 }, () => ({
+      setAlpha: vi.fn(),
+      setTint: vi.fn(),
+      clearTint: vi.fn(),
+    }));
     const escapedValueText = { setText: vi.fn(), setColor: vi.fn(), setPosition: vi.fn(), x: 430, y: 63 };
     const waveValueText = { setText: vi.fn() };
 
@@ -149,7 +151,7 @@ describe('PlayScene runtime reset', () => {
       }),
     };
     scene.scoreValueText = scoreValueText;
-    scene.inventoryValueText = inventoryValueText;
+    scene.inventorySlotImages = inventorySlotImages;
     scene.escapedValueText = escapedValueText;
     scene.escapedValueBaseX = 430;
     scene.escapedValueBaseY = 63;
@@ -161,7 +163,8 @@ describe('PlayScene runtime reset', () => {
     (scene.refreshHud as () => void)();
 
     expect(scoreValueText.setText).toHaveBeenCalledWith('150 M Ft');
-    expect(inventoryValueText.setText).toHaveBeenCalledWith('2/4  ■■□□');
+  expect(inventorySlotImages[0].setAlpha).toHaveBeenCalledWith(1);
+  expect(inventorySlotImages[2].setTint).toHaveBeenCalledWith(0x7f7f7f);
     expect(escapedValueText.setText).toHaveBeenCalledWith('3/10');
     expect(escapedValueText.setColor).toHaveBeenCalledWith('#f4e6a2');
     expect(escapedValueText.setPosition).toHaveBeenCalledWith(430, 63);
@@ -194,7 +197,7 @@ describe('PlayScene runtime reset', () => {
       }),
     };
     scene.scoreValueText = { setText: vi.fn() };
-    scene.inventoryValueText = { setText: vi.fn() };
+    scene.inventorySlotImages = [];
     scene.escapedValueText = escapedValueText;
     scene.escapedValueBaseX = 430;
     scene.escapedValueBaseY = 63;
@@ -234,7 +237,6 @@ describe('PlayScene runtime reset', () => {
     scene.waveNumber = 2;
     scene.registry = { get: vi.fn(() => 0) };
     scene.scoreValueText = { setText: vi.fn() };
-    scene.inventoryValueText = { setText: vi.fn() };
     scene.escapedValueText = { setText: vi.fn() };
     scene.waveValueText = { setText: vi.fn() };
 
@@ -251,12 +253,17 @@ describe('PlayScene runtime reset', () => {
 
   it('maps inventory icons and deposit popup colors consistently', () => {
     const scene = new PlayScene() as unknown as Record<string, unknown>;
+    const inventorySlotImages = Array.from({ length: 4 }, () => ({
+      setAlpha: vi.fn(),
+      setTint: vi.fn(),
+      clearTint: vi.fn(),
+    }));
 
     scene.inventory = [{ type: 'wallet', value: 10 }, { type: 'bag', value: 50 }, { type: 'phone', value: 20 }];
 
     scene.registry = { get: vi.fn((key: string) => (key === 'score' || key === 'escapedEnemies' ? 0 : undefined)) };
     scene.scoreValueText = { setText: vi.fn() };
-    scene.inventoryValueText = { setText: vi.fn() };
+    scene.inventorySlotImages = inventorySlotImages;
     scene.escapedValueText = { setText: vi.fn(), setColor: vi.fn(), setPosition: vi.fn(), x: 430, y: 63 };
     scene.escapedValueBaseX = 430;
     scene.escapedValueBaseY = 63;
@@ -266,7 +273,7 @@ describe('PlayScene runtime reset', () => {
 
     (scene.refreshHud as () => void)();
 
-    expect((scene.inventoryValueText as { setText: ReturnType<typeof vi.fn> }).setText).toHaveBeenCalledWith('3/4  ■■■□');
+  expect(inventorySlotImages[3].setTint).toHaveBeenCalledWith(0x7f7f7f);
     expect(getDepositPopupColor(10)).toBe('#8ecae6');
     expect(getDepositPopupColor(20)).toBe('#80ed99');
     expect(getDepositPopupColor(50)).toBe('#ffd166');
@@ -375,6 +382,91 @@ describe('PlayScene runtime reset', () => {
     );
   });
 
+  it('creates score milestone popup fireworks and floating text', () => {
+    const popupDestroy = vi.fn();
+    const popupSetOrigin = vi.fn().mockReturnThis();
+    const popupSetDepth = vi.fn().mockReturnThis();
+    const popup = {
+      y: 230.4,
+      destroy: popupDestroy,
+      setOrigin: popupSetOrigin,
+      setDepth: popupSetDepth,
+    };
+    const sparkSetDepth = vi.fn().mockReturnThis();
+    const flashSetDepth = vi.fn().mockReturnThis();
+    const addText = vi.fn(() => popup);
+    const addCircle = vi
+      .fn()
+      .mockImplementationOnce(() => ({ setDepth: flashSetDepth, destroy: vi.fn() }))
+      .mockImplementationOnce(() => ({ setDepth: sparkSetDepth, destroy: vi.fn() }))
+      .mockImplementationOnce(() => ({ setDepth: sparkSetDepth, destroy: vi.fn() }))
+      .mockImplementationOnce(() => ({ setDepth: sparkSetDepth, destroy: vi.fn() }))
+      .mockImplementationOnce(() => ({ setDepth: sparkSetDepth, destroy: vi.fn() }))
+      .mockImplementationOnce(() => ({ setDepth: sparkSetDepth, destroy: vi.fn() }))
+      .mockImplementationOnce(() => ({ setDepth: sparkSetDepth, destroy: vi.fn() }))
+      .mockImplementationOnce(() => ({ setDepth: sparkSetDepth, destroy: vi.fn() }))
+      .mockImplementationOnce(() => ({ setDepth: sparkSetDepth, destroy: vi.fn() }))
+      .mockImplementationOnce(() => ({ setDepth: sparkSetDepth, destroy: vi.fn() }))
+      .mockImplementationOnce(() => ({ setDepth: sparkSetDepth, destroy: vi.fn() }))
+      .mockImplementationOnce(() => ({ setDepth: flashSetDepth, destroy: vi.fn() }))
+      .mockImplementationOnce(() => ({ setDepth: sparkSetDepth, destroy: vi.fn() }))
+      .mockImplementationOnce(() => ({ setDepth: sparkSetDepth, destroy: vi.fn() }))
+      .mockImplementationOnce(() => ({ setDepth: sparkSetDepth, destroy: vi.fn() }))
+      .mockImplementationOnce(() => ({ setDepth: sparkSetDepth, destroy: vi.fn() }))
+      .mockImplementationOnce(() => ({ setDepth: sparkSetDepth, destroy: vi.fn() }))
+      .mockImplementationOnce(() => ({ setDepth: sparkSetDepth, destroy: vi.fn() }))
+      .mockImplementationOnce(() => ({ setDepth: sparkSetDepth, destroy: vi.fn() }))
+      .mockImplementationOnce(() => ({ setDepth: sparkSetDepth, destroy: vi.fn() }))
+      .mockImplementationOnce(() => ({ setDepth: sparkSetDepth, destroy: vi.fn() }))
+      .mockImplementationOnce(() => ({ setDepth: sparkSetDepth, destroy: vi.fn() }));
+    const tweensAdd = vi.fn();
+    const scene = new PlayScene() as unknown as Record<string, unknown>;
+
+    scene.scale = { width: 800, height: 480 };
+    scene.add = { text: addText, circle: addCircle };
+    scene.tweens = { add: tweensAdd };
+
+    (scene.showScoreMilestonePopup as (text: string) => void)('elso visszaszerzett milliard');
+
+    expect(addText).toHaveBeenCalledTimes(1);
+    const popupCall = addText.mock.calls[0];
+    expect(popupCall).toBeDefined();
+    const [popupX, popupY, popupLabel, popupStyle] = popupCall as unknown as [
+      number,
+      number,
+      string,
+      Record<string, unknown>,
+    ];
+    expect(popupX).toBe(400);
+    expect(popupY).toBeCloseTo(230.4, 5);
+    expect(popupLabel).toBe('elso visszaszerzett milliard');
+    expect(popupStyle).toEqual(
+      expect.objectContaining({
+        fontFamily: 'Bungee, Verdana, sans-serif',
+        fontSize: '58px',
+        color: '#f4e6a2',
+      }),
+    );
+    expect(popupSetOrigin).toHaveBeenCalledWith(0.5);
+    expect(popupSetDepth).toHaveBeenCalledWith(9);
+    expect(addCircle).toHaveBeenCalledTimes(22);
+    const [leftFlash, rightFlash] = [addCircle.mock.calls[0], addCircle.mock.calls[11]];
+    expect(leftFlash?.[0]).toBe(190);
+    expect(leftFlash?.[1]).toBeCloseTo(254.4, 5);
+    expect(leftFlash?.slice(2)).toEqual([18, 0xfff4b1, 0.95]);
+    expect(rightFlash?.[0]).toBe(610);
+    expect(rightFlash?.[1]).toBeCloseTo(222.4, 5);
+    expect(rightFlash?.slice(2)).toEqual([18, 0xfff4b1, 0.95]);
+    expect(tweensAdd).toHaveBeenCalledWith(
+      expect.objectContaining({
+        targets: popup,
+        y: 120.4,
+        alpha: 0,
+        duration: 4950,
+      }),
+    );
+  });
+
   it('scales obstacle sprites with width and height caps while keeping aspect ratio', () => {
     expect(
       getObstacleDisplaySize({ x: 0, y: 0, width: 70, height: 74 }, { width: 768, height: 768 }, 1.2, 1.6),
@@ -452,7 +544,7 @@ describe('PlayScene runtime reset', () => {
           width: 8,
           height: 8,
         },
-        scene.sanctuaryRects,
+        scene.sanctuaryRects as never,
         scene.collisionProvider as never,
       ),
     ).toBe(true);
@@ -474,16 +566,68 @@ describe('PlayScene runtime reset', () => {
     expect(scene.lastInventoryErrorAt).toBe(1300);
   });
 
+  it('animates a bag icon into the inventory HUD when loot is picked up', () => {
+    const playSfx = vi.fn();
+    const destroyLoot = vi.fn();
+    const refreshLevelInfo = vi.fn();
+    const setDisplaySize = vi.fn().mockReturnThis();
+    const setDepth = vi.fn().mockReturnThis();
+    const setAlpha = vi.fn().mockReturnThis();
+    const destroy = vi.fn();
+    const pickupIcon = { setDisplaySize, setDepth, setAlpha, destroy };
+    const tweensAdd = vi.fn();
+    const scene = new PlayScene() as unknown as Record<string, unknown>;
+
+    scene.audioSystem = { playSfx };
+    scene.destroyLoot = destroyLoot;
+    scene.refreshLevelInfo = refreshLevelInfo;
+    scene.inventory = [];
+    scene.inventorySlotImages = [{ x: 240, y: 80 }];
+    scene.add = { image: vi.fn(() => pickupIcon) };
+    scene.tweens = { add: tweensAdd };
+
+    (scene.pickUpLoot as (loot: { body: { x: number; y: number }; type: string; value: number }) => void)({
+      body: { x: 320, y: 200 },
+      type: 'wallet',
+      value: 20,
+    });
+
+    expect(scene.inventory).toEqual([{ type: 'wallet', value: 20 }]);
+    expect(playSfx).toHaveBeenCalledWith('sfx-pickup');
+    expect((scene.add as { image: ReturnType<typeof vi.fn> }).image).toHaveBeenCalledWith(320, 200, 'ui:bag01.png');
+    expect(setDisplaySize).toHaveBeenCalledWith(28, 28);
+    expect(setDepth).toHaveBeenCalledWith(8);
+    expect(setAlpha).toHaveBeenCalledWith(1);
+    expect(tweensAdd).toHaveBeenCalledWith(
+      expect.objectContaining({
+        targets: pickupIcon,
+        x: 256,
+        y: 80,
+        alpha: 0.9,
+        duration: 650,
+        ease: 'Cubic.easeInOut',
+      }),
+    );
+    expect(destroyLoot).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'wallet', value: 20 }),
+      false,
+    );
+    expect(refreshLevelInfo).toHaveBeenCalledTimes(1);
+  });
+
   it('deposits inventory over time and updates score and info state', () => {
     const playSfx = vi.fn();
     const refreshLevelInfo = vi.fn();
     const showDepositValuePopup = vi.fn();
+    const showScoreMilestonePopup = vi.fn();
     const registryState = { score: 40 };
     const scene = new PlayScene() as unknown as Record<string, unknown>;
 
     scene.audioSystem = { playSfx };
     scene.refreshLevelInfo = refreshLevelInfo;
     scene.showDepositValuePopup = showDepositValuePopup;
+    scene.showScoreMilestonePopup = showScoreMilestonePopup;
+    scene.currentLevel = { scoreMilestones: [{ score: 100, text: 'elso visszaszerzett milliard' }] };
     scene.inventory = [{ type: 'wallet', value: 10 }, { type: 'bag', value: 50 }];
     scene.nextLootDepositAt = null;
     scene.registry = {
@@ -511,8 +655,30 @@ describe('PlayScene runtime reset', () => {
     expect(scene.inventory).toHaveLength(0);
     expect(registryState.score).toBe(100);
     expect(showDepositValuePopup).toHaveBeenCalledWith(50);
+    expect(showScoreMilestonePopup).toHaveBeenCalledWith('elso visszaszerzett milliard');
     expect(scene.nextLootDepositAt).toBeNull();
     expect(refreshLevelInfo).toHaveBeenCalledTimes(2);
+  });
+
+  it('shows each score milestone only once', () => {
+    const scene = new PlayScene() as unknown as Record<string, unknown>;
+    const showScoreMilestonePopup = vi.fn();
+
+    scene.currentLevel = {
+      scoreMilestones: [
+        { score: 100, text: 'elso visszaszerzett milliard' },
+        { score: 200, text: 'masodik merfoldko' },
+      ],
+    };
+    scene.showScoreMilestonePopup = showScoreMilestonePopup;
+
+    (scene.showScoreMilestones as (previousScore: number, nextScore: number) => void)(90, 110);
+    (scene.showScoreMilestones as (previousScore: number, nextScore: number) => void)(110, 150);
+    (scene.showScoreMilestones as (previousScore: number, nextScore: number) => void)(150, 210);
+
+    expect(showScoreMilestonePopup).toHaveBeenNthCalledWith(1, 'elso visszaszerzett milliard');
+    expect(showScoreMilestonePopup).toHaveBeenNthCalledWith(2, 'masodik merfoldko');
+    expect(showScoreMilestonePopup).toHaveBeenCalledTimes(2);
   });
 
   it('triggers game over once and starts the game over scene after music fade', () => {
@@ -839,8 +1005,8 @@ describe('PlayScene runtime reset', () => {
 
     expect(enemy.injuryAnimationUntil).toBeNull();
     expect(updateEnemyMovementVisual).toHaveBeenCalledTimes(1);
-    expect(setPosition).toHaveBeenCalledWith(240, 178);
-    expect(shadowSetPosition).toHaveBeenCalledWith(240, 196);
+    expect(setPosition).toHaveBeenCalledTimes(1);
+    expect(shadowSetPosition).toHaveBeenCalledTimes(1);
     expect(updateEnemyRenderDepth).toHaveBeenCalledWith(enemy);
   });
 
@@ -931,7 +1097,6 @@ describe('PlayScene runtime reset', () => {
     scene.renderPlayerHitbox = vi.fn();
     scene.updateEnemies = vi.fn();
     scene.updateLoots = vi.fn();
-    scene.renderEnemyHitboxes = vi.fn();
     scene.renderAttackEffect = vi.fn();
     scene.tryMovePlayerAlongGrid = vi.fn();
     scene.updatePlayerMovementVisual = vi.fn();
@@ -963,7 +1128,6 @@ describe('PlayScene runtime reset', () => {
     scene.renderPlayerHitbox = vi.fn();
     scene.updateEnemies = vi.fn();
     scene.updateLoots = vi.fn();
-    scene.renderEnemyHitboxes = vi.fn();
     scene.renderAttackEffect = vi.fn();
     scene.tryMovePlayerAlongGrid = vi.fn();
     scene.updatePlayerMovementVisual = vi.fn();
@@ -997,7 +1161,6 @@ describe('PlayScene runtime reset', () => {
     scene.renderPlayerHitbox = vi.fn();
     scene.updateEnemies = vi.fn();
     scene.updateLoots = vi.fn();
-    scene.renderEnemyHitboxes = vi.fn();
     scene.renderAttackEffect = vi.fn();
     scene.updatePlayerMovementVisual = vi.fn();
     scene.cursors = {

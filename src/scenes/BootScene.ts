@@ -1,14 +1,15 @@
 import Phaser from 'phaser';
 import {
   AUDIO_KEYS,
-  AUDIO_SETTINGS_KEYS,
   applyAudioSettingsFromRegistry,
   getAudioSystem,
+  loadAudioSettingsIntoRegistry,
 } from '../systems/AudioSystem';
 import { preloadSceneBackgrounds } from '../systems/SceneBackgrounds';
 import { getAvailableHrsAssets } from '../systems/HrsAssets';
 import { getAvailableLootAssets } from '../systems/LootAssets';
 import { getAvailableObstacleAssets } from '../systems/ObstacleAssets';
+import { getAvailableUiAssets } from '../systems/UiAssets';
 import { SCENE_KEYS } from './sceneKeys';
 
 const HERO_SPRITE_SHEETS = [
@@ -88,6 +89,10 @@ export class BootScene extends Phaser.Scene {
       this.load.image(lootAsset.key, [lootAsset.url]);
     }
 
+    for (const uiAsset of getAvailableUiAssets()) {
+      this.load.image(uiAsset.key, [uiAsset.url]);
+    }
+
     this.load.audio(AUDIO_KEYS.ATTACK, ['assets/audio/effect/Punch01.mp3']);
     this.load.audio(AUDIO_KEYS.DEATH_1, ['assets/audio/effect/death01.mp3']);
     this.load.audio(AUDIO_KEYS.DEATH_2, ['assets/audio/effect/death02.mp3']);
@@ -102,8 +107,7 @@ export class BootScene extends Phaser.Scene {
     this.registry.set('score', 0);
     this.registry.set('escapedEnemies', 0);
     this.registry.set('currentWave', 1);
-    this.registry.set(AUDIO_SETTINGS_KEYS.MUSIC_MUTED, false);
-    this.registry.set(AUDIO_SETTINGS_KEYS.SFX_MUTED, false);
+    loadAudioSettingsIntoRegistry(this);
     getAudioSystem(this).setMasterVolume(0.35);
     getAudioSystem(this).setMuted(false);
     applyAudioSettingsFromRegistry(this);

@@ -38,19 +38,26 @@ npm run preview
 
 ### Tesztek
 ```bash
-npm run test -- --run
+npm run test:run
 ```
 
 ### Coverage
 ```bash
-npm run test:coverage -- --run
+npm run test:coverage
 ```
 
 ## Projektstruktúra
 - `src/scenes/` - Phaser scene-ek
+- `src/scenes/playScene/` - a PlayScene-ből kiszervezett scene-közeli helper modulok
 - `src/systems/` - újrafelhasználható gameplay rendszerek
 - `public/` - statikus assetek és pályaadatok
 - `docs/` - architektúra, játékleírás, technikai és vizuális dokumentáció
+
+## Aktuális implementációs állapot
+- A scene flow jelenleg: `BootScene` -> `MenuScene` -> `PlayScene` -> `GameOverScene`, valamint külön `LeaderboardScene`.
+- A `PlayScene` vékonyabb orchestrator szerepet tölt be, és a HUD, world, spawning, enemy, combat, loot, hero, player timing és effects logika külön helper fájlokba van bontva a `src/scenes/playScene/` mappában.
+- A karakteranimációk sprite sheet alapon működnek: a hős idle/run/punch állapotokkal, az ellenségek pedig `enemy01`-`enemy04` walk és injured sheet családokkal.
+- A task-lezárási workflow egyszeri tesztfuttatásra a `npm run test:run` scriptet használja.
 
 ## Dokumentáció
 - [ArtDirectionAIPipeline](docs/ArtDirectionAIPipeline.md) - AI promptolási, exportálási és assetgyártási szabályok

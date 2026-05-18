@@ -21,6 +21,11 @@ export type LootSpawn = {
   image?: string;
 };
 
+export type ScoreMilestone = {
+  score: number;
+  text: string;
+};
+
 export type HrsZoneType = 'spawn' | 'goal' | 'sanctuary';
 
 export type HrsImageSide = 'left' | 'right' | 'top' | 'bottom';
@@ -53,4 +58,5 @@ export type LevelData = {
   sanctuaryZone: GridCell[];
   hrsImages: HrsImageDefinition[];
   lootSpawns: LootSpawn[];
+  scoreMilestones?: ScoreMilestone[];
 };

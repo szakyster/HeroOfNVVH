@@ -18,7 +18,7 @@ Ez a dokumentum rögzíti a Heroes of NVVH HTML5 játék megvalósításához sz
 | Szempont | Választás | Indoklás | Döntés ID |
 |---------|----------|----------|-----------|
 | **Nyelvv** | TypeScript | Típusbiztonság, jobb IDE támogatás, nagyobb projektek közül tanulható | D-002 |
-| **Engine** | Phaser 3 | Teljes 2D framework, beépített input/physics/scene/audio, nagyközösség | D-001 |
+| **Engine** | Phaser | Teljes 2D framework, beépített input/physics/scene/audio, nagyközösség | D-001 |
 | **Build tool** | Vite | Gyors dev server, optimális production build, natív ES modules | D-003 |
 | **Test framework** | Vitest | Vite-nal integrálva, gyors, Jest-kompatibilis szintaxis | D-004 |
 | **Pályatárolás** | JSON (custom) | Egyszerű, könnyen szerkeszthető, gyors loadás | D-006 |
@@ -32,8 +32,8 @@ Ez a dokumentum rögzíti a Heroes of NVVH HTML5 játék megvalósításához sz
 
 ### 3.1 Runtime (böngésző)
 
-#### Phaser 3
-- **Verzió:** 3.55+ (legutóbbi stabil)
+#### Phaser
+- **Verzió:** a projektben használt npm csomag szerint
 - **Telepítés:** `npm install phaser`
 - **Szerepe:** 
   - 2D sprite rendering,
@@ -120,9 +120,20 @@ HeroesOfNVVH/
 │   ├── scenes/
 │   │   ├── BootScene.ts
 │   │   ├── GameOverScene.ts
+│   │   ├── LeaderboardScene.ts
 │   │   ├── MenuScene.ts
 │   │   ├── PlayScene.ts
 │   │   ├── PlayScene.test.ts
+│   │   ├── playScene/
+│   │   │   ├── PlaySceneCombat.ts
+│   │   │   ├── PlaySceneEffects.ts
+│   │   │   ├── PlaySceneEnemies.ts
+│   │   │   ├── PlaySceneHero.ts
+│   │   │   ├── PlaySceneHud.ts
+│   │   │   ├── PlaySceneLoot.ts
+│   │   │   ├── PlayScenePlayer.ts
+│   │   │   ├── PlaySceneSpawning.ts
+│   │   │   └── PlaySceneWorld.ts
 │   │   └── sceneKeys.ts
 │   ├── systems/
 │   │   ├── AStarPathfinder.ts
@@ -130,15 +141,19 @@ HeroesOfNVVH/
 │   │   ├── AttackSystem.ts
 │   │   ├── AttackSystem.test.ts
 │   │   ├── AudioProfiles.ts
-│   │   ├── ICollisionProvider.ts
 │   │   ├── AudioSystem.ts
 │   │   ├── AudioSystem.test.ts
 │   │   ├── GridSystem.ts
 │   │   ├── GridSystem.test.ts
+│   │   ├── HrsAssets.ts
+│   │   ├── ICollisionProvider.ts
 │   │   ├── LevelLoader.ts
 │   │   ├── LevelLoader.test.ts
+│   │   ├── LootAssets.ts
 │   │   ├── LootSystem.ts
 │   │   ├── LootSystem.test.ts
+│   │   ├── ObstacleAssets.ts
+│   │   ├── SceneBackgrounds.ts
 │   │   ├── SimpleCollisionProvider.ts
 │   │   └── SimpleCollisionProvider.test.ts
 │   ├── types/
@@ -164,28 +179,26 @@ A 7×6-os pálya egy custom JSON formátumban tárolódik.
 
 Kapcsolódó döntés ID-k: **D-006, D-007, D-008**.
 
-### 5.1 level01.json szerkezete
+### 5.1 level-01.json szerkezete
 
 ```json
 {
+  "id": "level-01",
   "name": "Hatvanpuszta - Reptér",
-  "width": 7,
-  "height": 6,
-  "gridCellSize": 80,
-  "spawnPoint": { "gridX": 0, "gridY": 2 },
-  "goalPoint": { "gridX": 6, "gridY": 2 },
-  "depositPoint": { "gridX": 3, "gridY": 5 },
+  "grid": { "width": 7, "height": 6 },
+  "spawnZones": [{ "id": "spawn-a", "cells": [{ "x": 0, "y": 2 }] }],
+  "goalZones": [{ "id": "goal-a", "cells": [{ "x": 6, "y": 2 }] }],
+  "sanctuaryZone": [{ "x": 3, "y": 5 }],
   "obstacles": [
-    { "gridX": 2, "gridY": 1, "type": "car" },
-    { "gridX": 4, "gridY": 2, "type": "building" },
-    { "gridX": 1, "gridY": 4, "type": "car" }
+    { "x": 2, "y": 1, "image": "obstacle01.png" },
+    { "x": 4, "y": 2, "image": "obstacle02.png" }
   ],
-  "difficulty": {
-    "initialEnemyCount": 2,
-    "maxEnemies": 8,
-    "spawnInterval": 3000,
-    "gameOverThreshold": 10
-  }
+  "hrsImages": [
+    { "id": "hrs-a", "cell": { "x": 1, "y": 1 }, "image": "hrs01.png" }
+  ],
+  "lootSpawns": [
+    { "id": "loot-wallet", "type": "wallet", "value": 10, "cell": { "x": 2, "y": 4 }, "image": "money01.png" }
+  ]
 }
 ```
 
@@ -201,9 +214,9 @@ Kapcsolódó döntés ID-k: **D-006, D-007, D-008**.
 
 ```typescript
 // Pálya betöltése
-const levelData = await fetch('/maps/level01.json').then(r => r.json());
-const gridWidth = levelData.width;      // 7
-const gridHeight = levelData.height;    // 6
+const levelData = await fetch('/levels/level-01.json').then(r => r.json());
+const gridWidth = levelData.grid.width;      // 7
+const gridHeight = levelData.grid.height;    // 6
 const obstacles = levelData.obstacles;  // [...]
 ```
 
@@ -213,7 +226,7 @@ const obstacles = levelData.obstacles;  // [...]
 
 Kapcsolódó döntés ID: **D-012**.
 
-### 6.1 Választott megoldás: Sprite Sheets (PNG/WebP) + TextureAtlas
+### 6.1 Választott megoldás: Sprite Sheets (PNG/WebP)
 **Előnyei:**
 - Gyors render performance,
 - könnyű animálás,
@@ -227,10 +240,12 @@ Kapcsolódó döntés ID: **D-012**.
 **Pipeline:**
 1. Illusztrációk készítése (Aseprite, Krita, Photoshop).
 2. Sprite sheet exportálás.
-3. JSON atlas generálás (TexturePacker vagy saját script).
-4. Phaser-be: `textures.fromURL()` vagy asset preload.
+3. Phaser-be közvetlen spritesheet preload a `BootScene`-ben.
 
-**Közelítő költ:** ~10-20 PNG sprite sheet az összes elementhez.
+**Jelenlegi assetcsaládok:**
+- `PSZ01` idle / run / punch sprite sheet-ek
+- `enemy01`-`enemy04` walk / injured sprite sheet-ek
+- háttér-, loot-, obstacle- és HRS képek külön asset registry-ken keresztül
 
 **Miért ez a döntés:**
 - Az akciójáték-jelleg miatt gyors, késleltetés nélküli mozgásra és animációra van szükség.
@@ -311,7 +326,7 @@ export interface IAudioService {
 ```
 
 Első implementáció:
-- `PhaserAudioService`
+- `AudioSystem`, Phaser audio API-ra építve
 
 Jelenlegi használat:
 - a `BootScene` preloadolja a fő zenei és effekt asseteket,
@@ -377,7 +392,7 @@ Későbbi lehetséges csere:
 - `PhaserArcadeCollisionProvider`
 - azonos interfészt megvalósítva
 
-Így a `GameScene`, `Player`, `EnemyManager` és más rendszerek nem a konkrét collision motorhoz kötődnek, hanem csak az interfészhez.
+Így a `PlayScene`, a scene-helper modulok és más gameplay rendszerek nem a konkrét collision motorhoz kötődnek, hanem csak az interfészhez.
 
 ---
 
@@ -388,6 +403,9 @@ Későbbi lehetséges csere:
 ```bash
 # Development
 npm run dev
+
+# One-shot tests
+npm run test:run
 
 # Production build
 npm run build
@@ -442,9 +460,10 @@ Ez automatikus deploy-t csinál minden `main` branch push-ra.
 {
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "vite build",
     "preview": "vite preview",
     "test": "vitest",
+    "test:run": "vitest --run",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
     "lint": "eslint src --ext ts",
@@ -477,10 +496,10 @@ describe('GridUtils', () => {
 ### 11.2 Integration Teszt
 
 ```typescript
-// tests/integration/Game.test.ts
+// src/scenes/PlayScene.test.ts
 describe('Game Scene', () => {
-  it('loads level01.json and spawns obstacles', async () => {
-    // Phaser game instance, scene test
+  it('loads level-01.json and spawns obstacles', async () => {
+    // Scene orchestration + helper integration test
   });
 });
 ```
@@ -518,6 +537,10 @@ describe('Game Scene', () => {
 ---
 
 ## 13. Fejlesztési workflow
+
+- A gyors, fejlesztés közbeni watch módhoz a `npm run test` script használható.
+- Egyszeri, lezáráshoz vagy CI-jellegű futtatáshoz a szabványos parancs a `npm run test:run`.
+- A nagyobb scene-logika a `src/scenes/playScene/` segédmodulokba szerveződik, míg a közös mechanikák a `src/systems/` mappában maradnak.
 
 ### 13.1 Egy-egy feature fejlesztése
 
