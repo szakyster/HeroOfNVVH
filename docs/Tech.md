@@ -113,7 +113,9 @@ HeroesOfNVVH/
 │   │   │   └── The Hero.mp3
 │   │   └── sprites/
 │   └── levels/
-│       └── level-01.json
+│       ├── level-01.json
+│       ├── level-02.json
+│       └── ...
 ├── src/
 │   ├── main.ts
 │   ├── main.test.ts
@@ -121,6 +123,7 @@ HeroesOfNVVH/
 │   │   ├── BootScene.ts
 │   │   ├── GameOverScene.ts
 │   │   ├── LeaderboardScene.ts
+│   │   ├── LevelSelectScene.ts
 │   │   ├── MenuScene.ts
 │   │   ├── PlayScene.ts
 │   │   ├── PlayScene.test.ts
@@ -149,6 +152,8 @@ HeroesOfNVVH/
 │   │   ├── ICollisionProvider.ts
 │   │   ├── LevelLoader.ts
 │   │   ├── LevelLoader.test.ts
+│   │   ├── LevelProgressStorage.ts
+│   │   ├── LevelProgressStorage.test.ts
 │   │   ├── LootAssets.ts
 │   │   ├── LootSystem.ts
 │   │   ├── LootSystem.test.ts
@@ -175,7 +180,7 @@ HeroesOfNVVH/
 
 ## 5. Pályaformátum (JSON)
 
-A 7×6-os pálya egy custom JSON formátumban tárolódik.
+Minden pálya egy saját, custom JSON formátumban tárolódik.
 
 Kapcsolódó döntés ID-k: **D-006, D-007, D-008**.
 
@@ -185,6 +190,7 @@ Kapcsolódó döntés ID-k: **D-006, D-007, D-008**.
 {
   "id": "level-01",
   "name": "Hatvanpuszta - Reptér",
+  "targetScore": 250,
   "grid": { "width": 7, "height": 6 },
   "spawnZones": [{ "id": "spawn-a", "cells": [{ "x": 0, "y": 2 }] }],
   "goalZones": [{ "id": "goal-a", "cells": [{ "x": 6, "y": 2 }] }],
@@ -210,15 +216,35 @@ Kapcsolódó döntés ID-k: **D-006, D-007, D-008**.
 - Az **akadályok egy cellát foglalnak el teljesen**.
 - A **loot-nak is egy cellája van**.
 
-### 5.3 Kódban való felhasználás
+### 5.3 Pályaszintű progressziós mezők
+
+- `targetScore`: az adott pálya célpontszáma.
+
+Működési szabály:
+- a pálya teljesítettnek számít, ha a futam végi pontszám eléri vagy meghaladja a `targetScore` értéket,
+- ilyenkor a Game Over képernyőn megjelenik a feloldást jelző szöveg,
+- egyszerre csak a pályalistában soron következő pálya nyílik meg.
+
+### 5.4 Kódban való felhasználás
 
 ```typescript
 // Pálya betöltése
-const levelData = await fetch('/levels/level-01.json').then(r => r.json());
+const levelData = await fetch(`/levels/${selectedLevelId}.json`).then(r => r.json());
 const gridWidth = levelData.grid.width;      // 7
 const gridHeight = levelData.grid.height;    // 6
-const obstacles = levelData.obstacles;  // [...]
+const targetScore = levelData.targetScore;   // pl. 250
+const obstacles = levelData.obstacles;       // [...]
 ```
+
+### 5.5 Böngészős pályafeloldás tárolása
+
+Az eredménylista mellett a megnyitott pályák állapota is `localStorage`-ban marad meg.
+
+Javasolt tárolt adatok:
+- megnyitott pályák azonosítói,
+- utoljára játszott pálya azonosítója,
+- opcionálisan a teljesített pályák listája,
+- fejlesztői reset lehetőség külön debug útvonalon vagy kapcsolóval.
 
 ---
 

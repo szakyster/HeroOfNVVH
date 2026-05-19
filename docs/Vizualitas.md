@@ -436,11 +436,22 @@ Példák:
 - loot ikon,
 - hátizsák slot ikon,
 - pontszám jelző,
+- lakat ikon a zárolt pályákhoz,
 - help ikon,
 - eredménylista ikon,
 - hang ki/be ikon.
 
-## 13.2 HUD stílus
+## 13.2 Pályaválasztó vizuális irányelvek
+A pályaválasztó képernyőn a megnyitott és zárolt pályák közti különbségnek egy pillantásra egyértelműnek kell lennie.
+
+Kötelező vizuális szabályok:
+- a megnyitott pályák teljes fényerővel, jól olvasható címmel jelenjenek meg,
+- a zárolt pályákon látható, nagy kontrasztú lakat ikon legyen,
+- a zárolt elemek halványabbak vagy deszaturáltabbak lehetnek,
+- a pálya célpontszáma jól láthatóan szerepeljen a pályakártyán vagy listában,
+- a kiválasztott pálya vizuálisan erős fókuszt kapjon.
+
+## 13.3 HUD stílus
 A HUD legyen:
 - letisztult,
 - kontrasztos,

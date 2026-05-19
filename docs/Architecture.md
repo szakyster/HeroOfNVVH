@@ -24,9 +24,11 @@ Kapcsolódó döntés ID-k:
 - Collision: D-014
 - Audio: D-016
 - Deploy/statikus működés: D-005, D-017, D-018
+```mermaid
     subgraph Scenes[Scene réteg]
       Boot[BootScene]
       Menu[MenuScene]
+      LevelSelect[LevelSelectScene]
       Play[PlayScene]
       GameOver[GameOverScene]
       Leaderboard[LeaderboardScene]
@@ -50,12 +52,13 @@ Kapcsolódó döntés ID-k:
       COLL[SimpleCollisionProvider]
       AUDIO[AudioSystem]
       LEVEL[LevelLoader]
+      PROGRESS[LevelProgressStorage]
       ATTACK[AttackSystem]
       LOOTSYS[LootSystem]
     end
 
     subgraph Data[Adat + Asset]
-      Map[level-01.json]
+      Maps[level-01.json + további level JSON-ek]
       Sheets[Sprite sheet-ek + textúrák]
       AudioFiles[Audio fájlok]
       LS[LocalStorage]
@@ -63,9 +66,11 @@ Kapcsolódó döntés ID-k:
 
     Boot --> Sheets
     Boot --> AudioFiles
-    Boot --> Map
-    Menu --> Play
+    Boot --> Maps
+    Menu --> LevelSelect
     Menu --> Leaderboard
+    LevelSelect --> Play
+    LevelSelect --> LS
 
     Play --> Hud
     Play --> World
@@ -82,11 +87,13 @@ Kapcsolódó döntés ID-k:
     Play --> COLL
     Play --> AUDIO
     Play --> LEVEL
+    Play --> PROGRESS
     Play --> ATTACK
     Play --> LOOTSYS
 
     Menu --> AUDIO
     GameOver --> AUDIO
+    GameOver --> PROGRESS
     Leaderboard --> LS
     CM --> CP
     AS --> AP
@@ -107,7 +114,9 @@ stateDiagram-v2
     MainMenu --> Leaderboard : Eredménylista
     Leaderboard --> MainMenu : Vissza
 
-    MainMenu --> Playing : Start
+    MainMenu --> LevelSelect : Új játék / Start
+    LevelSelect --> MainMenu : Vissza
+    LevelSelect --> Playing : Pályaválasztás
 
     state Playing {
       [*] --> ActiveWaveLoop
@@ -115,8 +124,16 @@ stateDiagram-v2
     }
 
     GameOver --> MainMenu : Főmenü
-    GameOver --> Playing : Újraindítás
+    GameOver --> LevelSelect : Új játék
+    GameOver --> Playing : Retry current level
 ```
+
+Működési szabályok:
+- a `LevelSelectScene` csak a megnyitott pályákat jeleníti meg indíthatóként,
+- a zárolt pályák lakat ikonnal látszanak,
+- a pálya teljesítése a Game Over kiértékelés során történik az aktuális pálya `targetScore` mezője alapján,
+- ha a célpontszám teljesült, akkor csak a közvetlenül következő pálya nyílik meg,
+- a `Retry` mindig az utoljára játszott pályát indítja újra.
 
 ---
 
@@ -266,9 +283,11 @@ Megjegyzés:
 ```mermaid
 classDiagram
     class LevelConfig {
+      +id: string
       +name: string
       +width: number
       +height: number
+      +targetScore: number
       +gridCellSize: number
       +spawnPoint: GridPoint
       +goalPoint: GridPoint
@@ -312,10 +331,17 @@ classDiagram
       +score: number
     }
 
+    class LevelProgress {
+      +unlockedLevelIds: string[]
+      +lastPlayedLevelId: string
+      +completedLevelIds: string[]
+    }
+
     LevelConfig --> Obstacle
     LevelConfig --> GridPoint
     Enemy --> GridPoint
     Loot --> GridPoint
+    LevelProgress --> LevelConfig
 ```
 
 ---
@@ -362,15 +388,16 @@ Működési jellemzők:
 ## 12. MVP implementációs sorrend
 
 1. Projekt bootstrap (`Phaser + TS + Vite`).
-2. Scene keret: Boot / Menu / Play / GameOver / Leaderboard.
-3. Pálya és rács betöltés (`level-01.json`).
+2. Scene keret: Boot / Menu / LevelSelect / Play / GameOver / Leaderboard.
+3. Pályalista + pálya és rács betöltés (több `level-xx.json`).
 4. Player mozgás + akadályütközés (`SimpleCollisionProvider`).
 5. Enemy spawn + A* + waypoint követés.
 6. Attack rendszer + 2 HP-s enemy flow + injured animáció.
 7. Loot drop/pickup/TTL + blink.
 8. NVVH leadás + pontszám + escaped/game over.
-9. Audio wrapper + alap SFX.
-10. LocalStorage highscore + polish.
+9. Game Over kiértékelés + `targetScore` alapú pályateljesítés.
+10. LocalStorage highscore + pályafeloldás mentése.
+11. Audio wrapper + alap SFX.
 
 ---
 
@@ -379,6 +406,7 @@ Működési jellemzők:
 - Pathfinding edge case (nincs útvonal): fallback despawn/respawn stratégia.
 - Collision false positive: hitbox méretek központosított konfigurálása.
 - Asset memóriahasználat: atlas méret és frame szám limitálása.
+- Progress sérülése localStorage-ban: biztonságos fallback az első pályára.
 - Diagram és implementáció eltérés: döntési napló + architektúra dokumentum együtt frissítendő.
 
 ---

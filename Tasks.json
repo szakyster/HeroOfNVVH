@@ -142,6 +142,30 @@
       "name": "Play Scene Refactor",
       "description": "Refactor PlayScene by splitting scene responsibilities into smaller units while preserving current gameplay behavior and scene flow. Reference: Architecture.md sections 3-5 and Tech.md section 4",
       "status": "closed"
+    },
+    {
+      "id": 25,
+      "name": "Level Progression Data & Storage",
+      "description": "Extend the pálya data model with targetScore and level icon support, and implement browser persistence for unlocked levels, completed levels, and the last played level. Add safe fallback handling for missing or corrupted LocalStorage data. Reference: Decisions.md D-022, Tech.md section 5.3-5.5, JatekLeiras.md sections 2.4-2.5",
+      "status": "open"
+    },
+    {
+      "id": 26,
+      "name": "Multi-Level Content & Icon Assets",
+      "description": "Add at least one additional pálya JSON with targetScore and icon metadata, provide the required level-select icon assets, and define the ordered level list used by progression and selection flows. Reference: Tech.md section 5, JatekLeiras.md section 14, and Decisions.md D-022",
+      "status": "open"
+    },
+    {
+      "id": 27,
+      "name": "Level Select Scene & Menu Flow",
+      "description": "Create the LevelSelectScene and route the main menu Start/New Game flow through it. Show available pályák in a selectable list with their small preview icons, render locked entries with a lakat icon, and allow returning to the main menu. Reference: Architecture.md section 4, JatekLeiras.md sections 9.1-9.2, Vizualitas.md section 13.2",
+      "status": "open"
+    },
+    {
+      "id": 28,
+      "name": "Play/Game Over Completion & Regression Tests",
+      "description": "Pass the selected level into PlayScene, evaluate targetScore completion on Game Over, unlock only the next pálya in sequence, show the unlock message on the Game Over screen, make Retry restart the last played pálya, make New Game return to the pályaválasztó, and cover the full flow with Vitest tests for storage, scene navigation, locked/unlocked level behavior, level icon rendering, and Game Over unlock handling. Reference: Decisions.md D-022, Architecture.md section 4, JatekLeiras.md sections 9.7 and UC-11 to UC-13, and D-004 (Vitest)",
+      "status": "open"
     }
   ]
 }

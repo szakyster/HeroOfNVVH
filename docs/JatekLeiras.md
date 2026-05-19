@@ -4,7 +4,7 @@
 
 A játék egy egyszerű, gyors, mobiljáték-hangulatú, HTML-alapú 2.5D akciójáték, amely asztali böngészőben fut.
 
-A játékos egy főszereplőt irányít egy fix méretű, téglalap alakú pályán. A pályán három kiemelt pont található:
+A játékos egy főszereplőt irányít egy kiválasztott, fix méretű, téglalap alakú pályán. A pályán három kiemelt pont található:
 
 1. **Hatvanpuszta** – az ellenségek innen indulnak.
 2. **Reptér** – ha túl sok ellenség ide eljut, a játék véget ér.
@@ -37,16 +37,31 @@ Ez arra ösztönzi a játékost, hogy:
 - hanem kockázatot vállalva mozogjon a pályán,
 - és időben visszavigye a megszerzett értékeket.
 
+## 2.4 Pályateljesítés
+Minden pályához tartozik egy **célpontszám**.
+
+Ha a játékos egy futam végére eléri vagy meghaladja az aktuális pálya célpontszámát, akkor azt a pályát teljesítettnek kell tekinteni.
+
+## 2.5 Következő pálya feloldása
+Ha a játékos teljesíti az aktuális pályát, akkor **mindig csak a közvetlenül következő pálya** nyílik meg.
+
+Szabályok:
+- a már megnyitott pályák bármikor újrajátszhatók,
+- a még nem megnyitott pályák lakat ikonnal jelennek meg,
+- a megnyitott pályák állapotát a rendszer böngészőben menti el,
+- a fejlesztői környezetben lehet külön progress-reset opció, de ez nem része a normál játékos UI-nak.
+
 ---
 
 ## 3. Platform és technikai alapelvek
 
 - **Platform:** asztali böngésző
 - **Nézet:** 2.5D, fix kamera
-- **Pálya:** egyetlen fix méretű pálya
+- **Pálya:** több, külön választható, fix méretű pálya
 - **Stílus:** rajzfilmszerű, egyszerűen olvasható grafika
 - **Játékmenet:** arcade jellegű, rövid reakcióidővel, egyszerű szabályokkal
 - **Célérzet:** mobiljáték-hangulat, de böngészőben futtatva
+- **Mentés:** a megnyitott pályák böngészőben, localStorage-ban tárolódnak
 
 A fix kamera miatt a játékteret egyszerre látja a játékos, ezért a kezelhetőség egyszerű marad, a taktikai döntések pedig gyorsan meghozhatók.
 
@@ -55,7 +70,9 @@ A fix kamera miatt a játékteret egyszerre látja a játékos, ezért a kezelhe
 ## 4. Pálya és térbeli modell
 
 ## 4.1 Pálya felépítése
-A pálya egy fix, téglalap alakú terület.
+A játékmenet mindig egy kiválasztott, fix, téglalap alakú pályán zajlik.
+
+A rendszer több külön pályát kezel, amelyek közül a játékos a pályaválasztó képernyőn választhat a már megnyitott elemek közül.
 
 Ezen belül helyezkednek el:
 - a három fő pont:
@@ -302,7 +319,8 @@ Fontos visszajelzések:
 - loot felvételi effekt,
 - leadási effekt,
 - loot villogása eltűnés előtt,
-- game over képernyő.
+- game over képernyő,
+- célpontszám elérése esetén a következő pálya megnyílásának jelzése.
 
 ---
 
@@ -321,10 +339,28 @@ Tartalma:
 - opcionálisan hang be/ki kapcsoló.
 
 Célja:
-- gyors belépés a játékba,
+- gyors belépés a pályaválasztóba,
 - fő funkciók könnyű elérése.
 
-## 9.2 Help-ablak
+Megjegyzés:
+- a Start gomb nem közvetlenül a játékmenetet indítja, hanem a pályaválasztó képernyőt nyitja meg.
+
+## 9.2 Pályaválasztó ablak
+A pályaválasztó képernyő az elérhető pályákat listázza.
+
+Tartalma:
+- pályanév,
+- célpontszám,
+- megnyitott pályák indítható állapota,
+- zárolt pályák lakat ikonnal,
+- vissza gomb a főmenübe.
+
+Működése:
+- kezdetben csak az első pálya érhető el,
+- a teljesített pálya megnyitja a soron következő pályát,
+- a játékos bármelyik korábban megnyitott pályát újraindíthatja.
+
+## 9.3 Help-ablak
 A help-ablak röviden és érthetően bemutatja a szabályokat.
 
 Javasolt tartalom:
@@ -337,7 +373,7 @@ Javasolt tartalom:
 
 A help-ablak legyen rövid, vizuálisan tagolt, könnyen átfutható.
 
-## 9.3 Eredménylista ablak
+## 9.4 Eredménylista ablak
 Az eredménylista a korábbi legjobb eredményeket mutatja.
 
 Lehetséges adatok:
@@ -350,7 +386,7 @@ Célja:
 - visszajátszási motiváció,
 - teljesítmény összehasonlítása.
 
-## 9.4 Játék közbeni HUD
+## 9.5 Játék közbeni HUD
 A HUD nem külön ablak, hanem folyamatosan látható információs réteg.
 
 Javasolt elemek:
@@ -359,7 +395,7 @@ Javasolt elemek:
 - elszökött ellenségek száma,
 - esetleg aktuális nehézségi szint vagy eltelt idő.
 
-## 9.5 Szünet / pause ablak
+## 9.6 Szünet / pause ablak
 Opcionális, de hasznos.
 
 Tartalma:
@@ -367,14 +403,16 @@ Tartalma:
 - újrakezdés,
 - vissza a főmenübe.
 
-## 9.6 Játék vége ablak
+## 9.7 Játék vége ablak
 Megjelenik vereség esetén.
 
 Tartalma:
 - végső pontszám,
 - leadott loot mennyiség,
 - elszökött ellenségek száma,
-- újrakezdés gomb,
+- ha a pálya célpontszáma teljesült, akkor a `Elérted a célpontszámot, a következő pálya megnyílik` üzenet,
+- retry gomb az utoljára játszott pálya újraindítására,
+- új játék gomb, amely a pályaválasztóba visz,
 - főmenü gomb,
 - eredmény mentése / megjelenítése.
 
@@ -394,7 +432,9 @@ Az alábbi use-case-ek a játék fő felhasználói és rendszereseményeit írj
 1. A játékos megnyitja a játékot.
 2. A rendszer megjeleníti a nyitóablakot.
 3. A játékos a Start gombra kattint.
-4. A rendszer betölti a pályát és elindítja a játékot.
+4. A rendszer megnyitja a pályaválasztó képernyőt.
+5. A játékos kiválaszt egy már megnyitott pályát.
+6. A rendszer betölti a kiválasztott pályát és elindítja a játékot.
 
 **Eredmény:** a játék aktív állapotba kerül.
 
@@ -542,9 +582,38 @@ Az alábbi use-case-ek a játék fő felhasználói és rendszereseményeit írj
 1. A rendszer leállítja az aktív játékmenetet.
 2. Megjeleníti a játék vége ablakot.
 3. Megjeleníti a végső pontszámot és statisztikákat.
-4. Elmenti az eredményt, ha szükséges.
+4. Kiértékeli, hogy az aktuális pálya célpontszáma teljesült-e.
+5. Ha teljesült, feloldja a következő pályát.
+6. Elmenti az eredményt és a pályafeloldási állapotot, ha szükséges.
 
 **Eredmény:** a futam lezárul.
+
+## UC-12 – Következő pálya feloldása
+**Szereplő:** rendszer  
+**Cél:** a soron következő pálya megnyitása célpontszám teljesítése után.
+
+**Előfeltétel:** a futam véget ért, és a játékos elérte vagy meghaladta az aktuális pálya célpontszámát.
+
+**Fő folyamat:**
+1. A rendszer összeveti a végső pontszámot az aktuális pálya célpontszámával.
+2. A rendszer megkeresi a közvetlenül következő pályát.
+3. A rendszer azt megnyitottnak jelöli.
+4. A Game Over képernyőn megjeleníti a feloldást jelző szöveget.
+
+**Eredmény:** pontosan egy új pálya nyílik meg, ha volt még következő elem a listában.
+
+## UC-13 – Megnyitott pályák mentése
+**Szereplő:** rendszer  
+**Cél:** a pályafeloldási állapot böngészős tárolása.
+
+**Előfeltétel:** legalább az első pálya elérhető.
+
+**Fő folyamat:**
+1. A rendszer localStorage-ba menti a megnyitott pályák állapotát.
+2. A játék újraindításakor beolvassa a korábbi feloldási adatokat.
+3. A pályaválasztó ezek alapján jelzi, mely pályák indíthatók.
+
+**Eredmény:** a megnyitott pályák böngészőfrissítés vagy újranyitás után is elérhetők maradnak.
 
 ---
 
@@ -552,6 +621,7 @@ Az alábbi use-case-ek a játék fő felhasználói és rendszereseményeit írj
 
 A játék működése állapotokként is felfogható:
 - **Main Menu** – nyitóablak
+- **Level Select** – pályaválasztó
 - **Help** – súgó / szabályok
 - **Leaderboard** – eredménylista
 - **Playing** – aktív játék
@@ -594,8 +664,9 @@ A hangok ne legyenek túl hosszúak vagy realisztikusak, inkább arcade jellegű
 
 ## 14. Javasolt MVP tartalom
 
-Az első játszható verzióhoz elegendő:
-- 1 pálya,
+Az első többpályásan bővíthető játszható verzióhoz elegendő:
+- legalább 1 azonnal játszható pálya,
+- több pálya támogatásának alapjai,
 - 1 játékos karakter,
 - 1 alap ellenségtípus,
 - 3–4 akadály,
@@ -604,9 +675,11 @@ Az első játszható verzióhoz elegendő:
 - loot rendszer,
 - pontszámítás,
 - nyitóablak,
+- pályaválasztó lakat ikonnal,
 - help-ablak,
 - eredménylista,
-- game over képernyő.
+- game over képernyő,
+- böngészős pályafeloldás-mentés.
 
 Ez már teljes, játszható, tesztelhető alapverziót ad.
 
@@ -617,7 +690,6 @@ Ez már teljes, játszható, tesztelhető alapverziót ad.
 Később eldönthető kérdések:
 - a különböző lootok érjenek-e eltérő pontszámot,
 - legyen-e sprint vagy speciális mozgás,
-- legyen-e több pálya,
 - legyen-e többféle ellenség,
 - legyen-e combo vagy gyors egymás utáni támadás jutalmazása,
 - legyen-e vizuális különbség az egyes nehézségi szintek közt.
@@ -631,7 +703,7 @@ Ezek nem szükségesek az első verzióhoz.
 A játék koncepciója jól alkalmas egy egyszerű, böngészőben futó, gyors tempójú arcade játékra.
 
 A legfontosabb tervezési előnyök:
-- fix pálya,
+- pályánként fix layout,
 - fix kamera,
 - egyszerű szabályrendszer,
 - könnyen olvasható célok,
@@ -641,6 +713,6 @@ A legfontosabb tervezési előnyök:
 A játék erőssége a letisztult core loop:
 **üldözés → ütés → loot → leadás → pontszerzés**.
 
-A HUD világos megjelenítése (pont, hátizsák, elszökött ellenségek) és az akadályok/loot rácskocka-alapú elrendezése támogatja az egyértelmű játékélményt.
+A HUD világos megjelenítése (pont, hátizsák, elszökött ellenségek), a pályánkénti célpontszám és az akadályok/loot rácskocka-alapú elrendezése támogatja az egyértelmű játékélményt.
 
 Ez megfelelő alapot ad egy gyorsan elkészíthető és később bővíthető HTML-alapú játékhoz.

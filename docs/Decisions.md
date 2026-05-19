@@ -109,6 +109,20 @@ Ez a dokumentum csak azokat a pontokat tartalmazza, amelyekben már megszületet
 - **Státusz:** elfogadva
 - **Indoklás:** A több enemy-variáns növeli a vizuális változatosságot anélkül, hogy külön játékszabály-rendszerre lenne szükség. A mozgás- és sérülésanimációk azonos technikai pipeline-t követnek, ezért egyszerűen illeszthetők a meglévő rendszerbe.
 
+## D-022 – Többpályás progresszió és pályafeloldás
+- **Döntés:** a játék több, külön választható pályát kezel. A főmenü `Új játék` / `Start` művelete a pályaválasztó képernyőt nyitja meg. Kezdetben csak az első pálya elérhető, a további pályák lakat ikonnal jelennek meg.
+- **Státusz:** elfogadva
+- **Indoklás:** A pályánkénti célpontszám világos rövid távú célt ad, miközben lineáris, könnyen érthető előrehaladási rendszert biztosít.
+
+Kiegészítő szabályok:
+- minden pálya saját `targetScore` mezőt tartalmaz a pályafájlban,
+- ha a futam végén a játékos eléri ezt a célpontszámot, csak a közvetlen következő pálya nyílik meg,
+- a Game Over képernyőn külön szöveg jelzi a pályateljesítést és az új pálya megnyílását,
+- a `Retry` az utoljára játszott pályát indítja újra,
+- az `Új játék` a pályaválasztó képernyőre visz,
+- a megnyitott pályák állapota böngészőben, `localStorage`-ban mentődik,
+- progress reset csak fejlesztői célra támogatott.
+
 ---
 
 ## Nyitott megjegyzés

@@ -50,7 +50,7 @@ A tasklezárás csak akkor tekinthető késznek, ha az összes releváns lépés
 6. A tasklezárás végén ellenőrizd, van-e 1500 sornál hosszabb, nem teszt jellegű kódfájl.
 7. Ha build vagy teszt elbukik, állj meg, elemezd a hibát, és csak jelentsd vissza részletesen.
 8. Ha vannak uncommitted változások, végezz CP-t.
-9. Ha a felhasználó merge-et kér, végezz non-fast-forward merge-et.
+9. Végezz non-fast-forward merge-et.
 10. Merge után zárd le a taskot a [Tasks.json](../../../Tasks.json) fájlban.
 11. Ha a felhasználó nem mond mást, azonosítsd a következő taskot, majd a megnyitását a [task-opening-workflow](../task-opening-workflow/SKILL.md) skill szerint végezd el.
 
@@ -113,7 +113,7 @@ A tasklezárás csak akkor tekinthető késznek, ha az összes releváns lépés
 
 ### 8. Merge Rule
 
-- Ha a felhasználó merge-et kér, non-fast-forward merge-et használj.
+- Non-fast-forward merge-et használj.
 - Merge előtt ellenőrizd, hogy a branch naprakész és pusholt állapotban van-e.
 - Merge után ellenőrizd, hogy a merge sikeres volt.
 
