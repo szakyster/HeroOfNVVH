@@ -147,7 +147,7 @@
       "id": 25,
       "name": "Level Progression Data & Storage",
       "description": "Extend the pálya data model with targetScore and level icon support, and implement browser persistence for unlocked levels, completed levels, and the last played level. Add safe fallback handling for missing or corrupted LocalStorage data. Reference: Decisions.md D-022, Tech.md section 5.3-5.5, JatekLeiras.md sections 2.4-2.5",
-      "status": "open"
+      "status": "in progress"
     },
     {
       "id": 26,

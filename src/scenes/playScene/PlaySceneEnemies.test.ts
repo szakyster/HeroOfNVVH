@@ -69,6 +69,8 @@ beforeAll(async () => {
 const levelFixture: LevelData = {
   id: 'level-test',
   name: 'Teszt pálya',
+  targetScore: 100,
+  icon: 'enemy01.png',
   grid: { width: 7, height: 6 },
   obstacles: [{ x: 3, y: 3, image: 'crate.png' }],
   spawnZones: [{ id: 'spawn-a', cells: [{ x: 0, y: 0 }] }],

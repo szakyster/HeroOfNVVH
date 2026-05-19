@@ -13,6 +13,8 @@ import {
 const levelFixture: LevelData = {
   id: 'level-test',
   name: 'Teszt pálya',
+  targetScore: 100,
+  icon: 'enemy01.png',
   grid: { width: 7, height: 6 },
   obstacles: [
     { x: 1, y: 2, image: 'crate.png' },

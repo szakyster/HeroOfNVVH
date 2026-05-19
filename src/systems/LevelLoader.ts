@@ -5,6 +5,7 @@ import { hasObstacleAsset, isObstacleImageNameAllowed } from './ObstacleAssets';
 
 const HRS_IMAGE_SIDES: HrsImageSide[] = ['left', 'right', 'top', 'bottom'];
 const HRS_ZONE_TYPES: HrsZoneType[] = ['spawn', 'goal', 'sanctuary'];
+const ALLOWED_IMAGE_EXTENSION_PATTERN = /\.(png|jpe?g|webp)$/i;
 
 function isValidCell(value: unknown): value is { x: number; y: number } {
   if (!value || typeof value !== 'object') {
@@ -19,6 +20,18 @@ function assert(condition: boolean, message: string): void {
   if (!condition) {
     throw new Error(`LevelLoader validation error: ${message}`);
   }
+}
+
+function isLevelIconNameAllowed(iconName: string): boolean {
+  if (iconName.length === 0) {
+    return false;
+  }
+
+  if (iconName.includes('/') || iconName.includes('\\')) {
+    return false;
+  }
+
+  return ALLOWED_IMAGE_EXTENSION_PATTERN.test(iconName);
 }
 
 export class LevelLoader {
@@ -40,6 +53,8 @@ export class LevelLoader {
 
     assert(typeof data.id === 'string' && data.id.length > 0, 'id is required');
     assert(typeof data.name === 'string' && data.name.length > 0, 'name is required');
+    assert(Number.isInteger(data.targetScore) && (data.targetScore as number) > 0, 'targetScore must be a positive integer');
+    assert(typeof data.icon === 'string' && isLevelIconNameAllowed(data.icon), 'icon must be a direct image filename');
 
     assert(!!data.grid && typeof data.grid === 'object', 'grid is required');
     const grid = data.grid as { width?: unknown; height?: unknown };
@@ -260,6 +275,8 @@ export class LevelLoader {
     return {
       id: data.id as string,
       name: data.name as string,
+      targetScore: data.targetScore as number,
+      icon: data.icon as string,
       grid: {
         width,
         height,
