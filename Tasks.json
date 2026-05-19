@@ -129,7 +129,7 @@
       "id": 22,
       "name": "Visual FX & Feedback Polish",
       "description": "Add or refine lightweight visual feedback such as hit flashes, deposit popups, pickup highlights, scene transitions, and other final polish effects once the core art assets are in place. Reference: Vizualitas.md sections 8-10",
-      "status": "in progress"
+      "status": "closed"
     },
     {
       "id": 23,
