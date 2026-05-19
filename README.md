@@ -4,11 +4,17 @@ Heroes of NVVH egy Phaser + TypeScript alapú böngészős játékprototípus. A
 
 ## Aktuális kiadás
 
-- Verzió: `0.1.0-alpha.1`
-- Státusz: alfa / pre-release
+- Verzió: `0.1.0-beta.1`
+- Státusz: béta / pre-release
 - Publikus build: `https://szakyster.github.io/HeroOfNVVH/`
 
-Ez a kiadás már játszható és publikus linkkel elérhető, de még nem végleges. A balansz, a vizuális polish és az általános stabilitás tovább változhat.
+## Következő célkiadás
+
+- Cél: játszható béta pre-release
+- Release előkészítés: build, teljes tesztkör, coverage, release note draft és deploy ellenőrzés elkészült
+- Release trigger: GitHub tag push
+
+Ez a béta kiadás már játszható és publikus linkkel elérhető, de még nem végleges. A balansz, a vizuális polish és az általános stabilitás tovább változhat.
 
 ## Fejlesztői indulás
 
@@ -71,7 +77,7 @@ npm run test:coverage
 
 ## Deploy
 - A projekt GitHub Pages-re van előkészítve.
-- A deploy workflow a `main` ágra történő push esetén fut le.
+- A deploy workflow a a release tag esetén fut le.
 - A Vite build a GitHub Pages repository útvonalához van igazítva.
 
 ## Licenc

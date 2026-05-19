@@ -1,5 +1,24 @@
 # Changelog
 
+## Unreleased
+
+Kiadás utáni változások a következő iterációhoz.
+
+## v0.1.0-beta.1
+
+Tervezett játszható béta kiadás előkészítése.
+
+### Várható kiemelések
+- egységesebb, játékhoz illeszkedő gomb- és UI-megjelenés
+- finomított menü, leaderboard és game over navigáció gyorsbillentyűkkel
+- escaped enemy warning riasztáshang
+- további vizuális feedback és polish a jelenetekben
+
+### Ismert release kockázatok
+- a production build továbbra is nagy bundle warningot jelez
+- a PlayScene és néhány helper modul coverage-e közepes, de a minimális release küszöb fölött van
+- hibaágban továbbra is van egyszerű fallback szöveg: `Palyabetoltes hiba`
+
 ## v0.1.0-alpha.1
 
 Első publikus alfa kiadás.
