@@ -64,6 +64,10 @@ export class LeaderboardScene extends Phaser.Scene {
     this.input.keyboard?.once('keydown-ESC', () => {
       this.scene.start(SCENE_KEYS.MENU);
     });
+
+    this.input.keyboard?.once('keydown-M', () => {
+      this.scene.start(SCENE_KEYS.MENU);
+    });
   }
 
   private createBackButton(x: number, y: number): void {

@@ -206,11 +206,13 @@ describe('MenuScene', () => {
 
     leaderboardButton?.handlers.pointerdown?.();
     keyboardHandlers['keydown-SPACE']();
+    keyboardHandlers['keydown-L']();
     musicToggle?.handlers.pointerdown?.();
     sfxToggle?.handlers.pointerdown?.();
 
     expect(sceneManager.start).toHaveBeenCalledWith('LeaderboardScene');
     expect(sceneManager.start).toHaveBeenCalledWith('PlayScene');
+    expect(sceneManager.start).toHaveBeenCalledTimes(3);
     expect(updateAudioSetting).toHaveBeenCalledWith(scene, 'musicMuted', true);
     expect(updateAudioSetting).toHaveBeenCalledWith(scene, 'sfxMuted', true);
     expect(mockAudioSystem.setMusicMuted).toHaveBeenCalledWith(true);

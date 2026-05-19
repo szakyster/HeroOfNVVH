@@ -123,8 +123,10 @@ describe('LeaderboardScene', () => {
     const backButton = createdTexts.find((entry) => entry.text === 'Vissza a menübe');
     backButton?.handlers.pointerdown?.();
     keyboardHandlers['keydown-ESC']();
+    keyboardHandlers['keydown-M']();
 
     expect(sceneManager.start).toHaveBeenCalledWith('MenuScene');
+    expect(sceneManager.start).toHaveBeenCalledTimes(3);
   });
 
   it('renders saved leaderboard entries', () => {
