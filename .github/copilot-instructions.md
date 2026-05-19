@@ -22,6 +22,7 @@ When working in this project:
 - Preserve the current Phaser scene flow: `BootScene`, `MenuScene`, `PlayScene`, `GameOverScene`.
 - Prefer extending the existing audio abstraction in `src/systems/AudioSystem.ts` instead of calling Phaser audio APIs ad hoc from scenes.
 - Keep in-game UI text in Hungarian unless the task explicitly requires a different language.
+- Add a short code comment to new or modified functions.
 - Add or update Vitest tests when changing reusable systems or fixing regressions.
 - Avoid unrelated refactors while implementing a task.
 
