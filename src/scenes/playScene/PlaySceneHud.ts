@@ -1,6 +1,7 @@
 import type Phaser from 'phaser';
 import type { LevelData } from '../../types/level';
 import { DEFAULT_LOOT_CONFIG } from '../../systems/LootSystem';
+import { createSceneIconButton } from '../../systems/UiButtons';
 import { EFFECT_OFF_IMAGE_NAME, getUiAssetKey, INVENTORY_SLOT_IMAGE_NAME, MUSIC_OFF_IMAGE_NAME } from '../../systems/UiAssets';
 import { HEADLINE_FONT_FAMILY } from '../../utils/typography';
 
@@ -104,24 +105,14 @@ function createIconToggleButton(
   onPointerDown: () => void,
 ): Phaser.GameObjects.Image {
   const baseSize = 32 * 1.3;
-  const hoverScale = 1.08;
-  const button = scene.add
-    .image(x, y, getUiAssetKey(imageName))
-    .setDisplaySize(baseSize, baseSize)
-    .setOrigin(1, 0)
-    .setDepth(6)
-    .setInteractive({ useHandCursor: true });
 
-  button.setData('ui-button', true);
-  button.on('pointerdown', onPointerDown);
-  button.on('pointerover', () => {
-    button.setDisplaySize(baseSize * hoverScale, baseSize * hoverScale);
+  return createSceneIconButton(scene, {
+    x,
+    y,
+    imageKey: getUiAssetKey(imageName),
+    baseSize,
+    onSelect: onPointerDown,
   });
-  button.on('pointerout', () => {
-    button.setDisplaySize(baseSize, baseSize);
-  });
-
-  return button;
 }
 
 export function createPlaySceneHud(scene: Phaser.Scene, width: number): PlaySceneHudRefs {
@@ -178,6 +169,9 @@ export function createPlaySceneStatusTexts(
 ): PlaySceneStatusRefs {
   const audioIconsTopY = 122;
   const audioIconsSpacingY = 46;
+  const audioIconSize = 32 * 1.3;
+  const audioIconCenterX = width - 18 - audioIconSize / 2;
+  const audioIconStartY = audioIconsTopY + audioIconSize / 2;
 
   const levelInfoText = scene.add
     .text(24, height - 58, 'Pályabetöltés: folyamatban...', {
@@ -201,8 +195,14 @@ export function createPlaySceneStatusTexts(
     .setOrigin(0, 0.5)
     .setDepth(7);
 
-  const musicToggleIcon = createIconToggleButton(scene, width - 18, audioIconsTopY, MUSIC_OFF_IMAGE_NAME, callbacks.onMusicToggle);
-  const sfxToggleIcon = createIconToggleButton(scene, width - 18, audioIconsTopY + audioIconsSpacingY, EFFECT_OFF_IMAGE_NAME, callbacks.onSfxToggle);
+  const musicToggleIcon = createIconToggleButton(scene, audioIconCenterX, audioIconStartY, MUSIC_OFF_IMAGE_NAME, callbacks.onMusicToggle);
+  const sfxToggleIcon = createIconToggleButton(
+    scene,
+    audioIconCenterX,
+    audioIconStartY + audioIconsSpacingY,
+    EFFECT_OFF_IMAGE_NAME,
+    callbacks.onSfxToggle,
+  );
 
   return {
     levelInfoText,

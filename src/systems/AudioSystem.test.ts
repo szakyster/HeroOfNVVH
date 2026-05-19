@@ -90,6 +90,7 @@ describe('AudioSystem', () => {
 
     expect(getSfxProfile(AUDIO_KEYS.ATTACK).durationMs).toBeGreaterThan(0);
     expect(getSfxProfile(AUDIO_KEYS.ATTACK).loadedAudioSeekMs).toBeGreaterThan(0);
+    expect(getSfxProfile(AUDIO_KEYS.ALARM).durationMs).toBeGreaterThan(0);
     expect(getSfxProfile(AUDIO_KEYS.HIT).frequency).toBeGreaterThan(0);
     expect(DEATH_AUDIO_KEYS).toHaveLength(4);
     expect(getSfxProfile(DEATH_AUDIO_KEYS[0]).durationMs).toBeGreaterThan(0);

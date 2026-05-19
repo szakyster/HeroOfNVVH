@@ -109,6 +109,9 @@ const HERO_ATTACK_MIN_DURATION_MS =
   ((HERO_ATTACK_RELEASE_FRAME - HERO_PUNCH_START_FRAME) / HERO_ANIMATION_FRAME_RATE) * 1000;
 const HERO_ATTACK_ANIMATION_DURATION_MS =
   ((HERO_SHEET_FRAME_COUNT - HERO_PUNCH_START_FRAME) / HERO_ANIMATION_FRAME_RATE) * 1000;
+const ESCAPED_WARNING_THRESHOLD = 8;
+const ESCAPED_WARNING_ALARM_REPEAT_COUNT = 3;
+const ESCAPED_WARNING_ALARM_INTERVAL_MS = 700;
 const HERO_LOOP_ANIMATION_STATES = ['idle', 'run'] as const;
 const HERO_LOOP_ANIMATION_DIRECTIONS = ['down', 'northeast', 'right', 'southeast', 'up'] as const;
 const HERO_PUNCH_ANIMATION_DIRECTIONS = ['down', 'right', 'up'] as const;
@@ -136,10 +139,6 @@ function getHeroAnimationKey(state: HeroAnimationState, direction: HeroAnimation
 
 export class PlayScene extends Phaser.Scene {
   private readonly levelPath = `${import.meta.env.BASE_URL}levels/level-01.json`;
-
-  private readonly handleDebugGameOver = () => {
-    this.triggerGameOver();
-  };
 
   private readonly levelLoader = new LevelLoader();
 
@@ -204,6 +203,8 @@ export class PlayScene extends Phaser.Scene {
   private escapedValueBaseX?: number;
 
   private escapedValueBaseY?: number;
+
+  private isEscapedWarningActive = false;
 
   private waveValueText?: Phaser.GameObjects.Text;
 
@@ -381,13 +382,6 @@ export class PlayScene extends Phaser.Scene {
         this.levelInfoText?.setText('Palyabetoltes hiba');
         console.error('Level loading failed', error);
       });
-
-    this.input.keyboard?.off('keydown-G', this.handleDebugGameOver, this);
-    this.input.keyboard?.on('keydown-G', this.handleDebugGameOver, this);
-
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
-      this.input.keyboard?.off('keydown-G', this.handleDebugGameOver, this);
-    });
   }
 
   private resetRuntimeState(): void {
@@ -404,6 +398,7 @@ export class PlayScene extends Phaser.Scene {
     this.escapedValueWarningTween = undefined;
     this.escapedValueBaseX = undefined;
     this.escapedValueBaseY = undefined;
+    this.isEscapedWarningActive = false;
     this.waveValueText = undefined;
     this.levelInfoText = undefined;
     this.enemyInfoText = undefined;
@@ -1342,6 +1337,8 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private updateEscapedEnemyWarningState(escapedEnemies: number): void {
+    const wasWarningActive = this.isEscapedWarningActive;
+
     this.escapedValueWarningTween = syncEscapedEnemyWarningState({
       escapedEnemies,
       escapedValueText: this.escapedValueText,
@@ -1350,6 +1347,32 @@ export class PlayScene extends Phaser.Scene {
       escapedValueBaseY: this.escapedValueBaseY,
       tweens: this.tweens,
     }) as Phaser.Tweens.Tween | undefined;
+
+    this.isEscapedWarningActive = escapedEnemies >= ESCAPED_WARNING_THRESHOLD && Boolean(this.escapedValueText);
+
+    if (!wasWarningActive && this.isEscapedWarningActive) {
+      this.playEscapedWarningAlarmSequence();
+    }
+  }
+
+  private playEscapedWarningAlarmSequence(): void {
+    if (!this.audioSystem) {
+      return;
+    }
+
+    if (!this.time?.delayedCall) {
+      for (let index = 0; index < ESCAPED_WARNING_ALARM_REPEAT_COUNT; index += 1) {
+        this.audioSystem.playSfx(AUDIO_KEYS.ALARM);
+      }
+
+      return;
+    }
+
+    for (let index = 0; index < ESCAPED_WARNING_ALARM_REPEAT_COUNT; index += 1) {
+      this.time.delayedCall(index * ESCAPED_WARNING_ALARM_INTERVAL_MS, () => {
+        this.audioSystem?.playSfx(AUDIO_KEYS.ALARM);
+      });
+    }
   }
 
   private playInventoryError(now: number): void {

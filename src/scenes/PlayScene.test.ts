@@ -39,6 +39,9 @@ vi.mock('phaser', () => {
         },
         FloatBetween: () => 1,
       },
+      Time: {
+        TimerEvent: class {},
+      },
       Utils: {
         Array: {
           Shuffle: <T>(items: T[]) => items,
@@ -67,6 +70,7 @@ describe('PlayScene runtime reset', () => {
     scene.scoreValueText = { setText: () => undefined };
     scene.inventorySlotImages = [{ setAlpha: () => undefined }];
     scene.escapedValueText = { setText: () => undefined };
+    scene.isEscapedWarningActive = true;
     scene.waveValueText = { setText: () => undefined };
     scene.levelInfoText = { setText: () => undefined };
     scene.enemyInfoText = { setText: () => undefined };
@@ -101,6 +105,7 @@ describe('PlayScene runtime reset', () => {
     expect(scene.scoreValueText).toBeUndefined();
     expect(scene.inventorySlotImages).toEqual([]);
     expect(scene.escapedValueText).toBeUndefined();
+    expect(scene.isEscapedWarningActive).toBe(false);
     expect(scene.waveValueText).toBeUndefined();
     expect(scene.levelInfoText).toBeUndefined();
     expect(scene.enemyInfoText).toBeUndefined();
@@ -174,6 +179,11 @@ describe('PlayScene runtime reset', () => {
   it('turns the escaped enemy counter bright red and shakes it at 8 or above', () => {
     const warningTween = { stop: vi.fn() };
     const tweensAdd = vi.fn(() => warningTween);
+    const playSfx = vi.fn();
+    const delayedCall = vi.fn((_delay: number, callback: () => void) => {
+      callback();
+      return { remove: vi.fn() };
+    });
     const escapedValueText = {
       setText: vi.fn(),
       setColor: vi.fn(),
@@ -204,6 +214,8 @@ describe('PlayScene runtime reset', () => {
     scene.waveValueText = { setText: vi.fn() };
     scene.inventory = [];
     scene.waveNumber = 1;
+    scene.audioSystem = { playSfx };
+    scene.time = { delayedCall };
     scene.tweens = { add: tweensAdd };
 
     (scene.refreshHud as () => void)();
@@ -220,6 +232,14 @@ describe('PlayScene runtime reset', () => {
         repeat: -1,
       }),
     );
+    expect(delayedCall).toHaveBeenCalledTimes(3);
+    expect(delayedCall).toHaveBeenNthCalledWith(1, 0, expect.any(Function));
+    expect(delayedCall).toHaveBeenNthCalledWith(2, 700, expect.any(Function));
+    expect(delayedCall).toHaveBeenNthCalledWith(3, 1400, expect.any(Function));
+    expect(playSfx).toHaveBeenCalledTimes(3);
+    expect(playSfx).toHaveBeenNthCalledWith(1, 'sfx-alarm');
+    expect(playSfx).toHaveBeenNthCalledWith(2, 'sfx-alarm');
+    expect(playSfx).toHaveBeenNthCalledWith(3, 'sfx-alarm');
   });
 
   it('formats auxiliary level and enemy info texts', () => {

@@ -7,6 +7,7 @@ import {
   updateAudioSetting,
 } from '../systems/AudioSystem';
 import { addSceneBackground } from '../systems/SceneBackgrounds';
+import { createSceneIconButton, createSceneTextButton } from '../systems/UiButtons';
 import { EFFECT_OFF_IMAGE_NAME, getUiAssetKey, MUSIC_OFF_IMAGE_NAME } from '../systems/UiAssets';
 import { SCENE_KEYS } from './sceneKeys';
 
@@ -36,7 +37,7 @@ export class MenuScene extends Phaser.Scene {
       this.scene.start(SCENE_KEYS.PLAY);
     });
 
-    this.createMenuButton(width / 2 + this.primaryButtonsX, height / 2 + 106 + this.primaryButtonsOffsetY, 'Eredménylista', () => {
+    this.createMenuButton(width / 2 + this.primaryButtonsX, height / 2 + 110 + this.primaryButtonsOffsetY, 'Eredménylista', () => {
       this.scene.start(SCENE_KEYS.LEADERBOARD);
     });
 
@@ -73,49 +74,27 @@ export class MenuScene extends Phaser.Scene {
   }
 
   private createMenuButton(x: number, y: number, label: string, onSelect: () => void): Phaser.GameObjects.Text {
-    const button = this.add
-      .text(x, y, label, {
-        fontFamily: 'Verdana',
-        fontSize: '20px',
-        color: '#f4f1de',
-        backgroundColor: '#223247',
-        padding: { x: 12, y: 8 },
-      })
-      .setOrigin(0.5)
-      .setInteractive({ useHandCursor: true });
-
-    button.setData('ui-button', true);
-    button.on('pointerdown', onSelect);
-    button.on('pointerover', () => {
-      button.setStyle({ backgroundColor: '#314863' });
+    return createSceneTextButton(this, {
+      x,
+      y,
+      label,
+      width: 236,
+      height: 34,
+      fontSize: '18px',
+      onSelect,
     });
-    button.on('pointerout', () => {
-      button.setStyle({ backgroundColor: '#223247' });
-    });
-
-    return button;
   }
 
   private createAudioIconButton(x: number, y: number, imageName: string, onSelect: () => void): Phaser.GameObjects.Image {
     const baseSize = 32 * 1.3;
-    const hoverScale = 1.08;
-    const button = this.add
-      .image(x, y, getUiAssetKey(imageName))
-      .setDisplaySize(baseSize, baseSize)
-      .setOrigin(0.5)
-      .setDepth(6)
-      .setInteractive({ useHandCursor: true });
 
-    button.setData('ui-button', true);
-    button.on('pointerdown', onSelect);
-    button.on('pointerover', () => {
-      button.setDisplaySize(baseSize * hoverScale, baseSize * hoverScale);
+    return createSceneIconButton(this, {
+      x,
+      y,
+      imageKey: getUiAssetKey(imageName),
+      baseSize,
+      onSelect,
     });
-    button.on('pointerout', () => {
-      button.setDisplaySize(baseSize, baseSize);
-    });
-
-    return button;
   }
 
   private refreshAudioToggleIcons(): void {
