@@ -28,7 +28,7 @@ Ez a skill a repo [.github/copilot-instructions.md](../../copilot-instructions.m
 
 - Build parancs: `npm run build`
 - Alap tesztparancs egyszeri futásra: `npm run test:run`
-- Coverage parancs: `npm run test:coverage`
+- Coverage parancs egyszeri futásra: `npm run test:coverage -- --run`
 - Task státuszok a [Tasks.json](../../../Tasks.json) fájlban vannak.
 - A repo elvárása szerint merge esetén non-fast-forward merge-et kell használni.
 - A következő task megnyitását a [task-opening-workflow](../task-opening-workflow/SKILL.md) skill végzi.
@@ -86,7 +86,8 @@ A tasklezárás csak akkor tekinthető késznek, ha az összes releváns lépés
 
 ### 5. Coverage Check
 
-- Ha a lezárás részeként coverage információ szükséges, futtasd a `npm run test:coverage` parancsot, vagy használd a meglévő coverage riportot, ha igazoltan friss és releváns.
+- Ha a lezárás részeként coverage információ szükséges, futtasd a `npm run test:coverage -- --run` parancsot, vagy használd a meglévő coverage riportot, ha igazoltan friss és releváns.
+- Ne használd itt a sima `npm run test:coverage` parancsot, mert a Vitest watch/interactive módba léphet és billentyűzetlenyomásra várhat.
 - Ellenőrizd a feladattal érintett releváns fájlokat.
 - Ha bármely releváns fájl coverage-e 25% alatt van, ezt kötelezően jelentsd vissza a felhasználónak.
 - A 25% alatti coverage önmagában nem feltétlenül blokkoló, de explicit riportálandó.
@@ -160,7 +161,7 @@ Menj végig a teljes folyamaton kérdés nélkül, ha:
 - Git állapot: `git branch --show-current`, `git status --short`, `git rev-parse --abbrev-ref --symbolic-full-name "@{u}"`
 - Build: `npm run build`
 - Teljes teszt: `npm run test:run`
-- Coverage: `npm run test:coverage`
+- Coverage: `npm run test:coverage -- --run`
 - LOC ellenőrzés: számold meg a releváns nem teszt kódfájlok sorait, és keresd az 1500 feletti fájlokat.
 - CP: `git add -A`, `git commit -m "..."`, `git push`
 - Non-FF merge: `git merge --no-ff <branch>`

@@ -115,12 +115,13 @@ Ez a dokumentum csak azokat a pontokat tartalmazza, amelyekben már megszületet
 - **Indoklás:** A pályánkénti célpontszám világos rövid távú célt ad, miközben lineáris, könnyen érthető előrehaladási rendszert biztosít.
 
 Kiegészítő szabályok:
-- minden pálya saját `targetScore` mezőt tartalmaz a pályafájlban,
+- minden pálya saját `targetScore`, `icon` és `enemyTypes` mezőt tartalmaz a pályafájlban,
 - ha a futam végén a játékos eléri ezt a célpontszámot, csak a közvetlen következő pálya nyílik meg,
 - a Game Over képernyőn külön szöveg jelzi a pályateljesítést és az új pálya megnyílását,
 - a `Retry` az utoljára játszott pályát indítja újra,
 - az `Új játék` a pályaválasztó képernyőre visz,
 - a megnyitott pályák állapota böngészőben, `localStorage`-ban mentődik,
+- a pályák ellenfél-összetétele pályánként külön konfigurálható az `enemyTypes` lista alapján,
 - progress reset csak fejlesztői célra támogatott.
 
 ---

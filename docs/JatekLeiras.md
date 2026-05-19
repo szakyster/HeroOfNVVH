@@ -351,6 +351,7 @@ A pályaválasztó képernyő az elérhető pályákat listázza.
 Tartalma:
 - pályanév,
 - célpontszám,
+- pályánként használt ellenféltípusok rövid jelzése vagy listája,
 - megnyitott pályák indítható állapota,
 - zárolt pályák lakat ikonnal,
 - vissza gomb a főmenübe.
@@ -667,6 +668,7 @@ A hangok ne legyenek túl hosszúak vagy realisztikusak, inkább arcade jellegű
 Az első többpályásan bővíthető játszható verzióhoz elegendő:
 - legalább 1 azonnal játszható pálya,
 - több pálya támogatásának alapjai,
+- pályánként definiált ellenféltípus-lista,
 - 1 játékos karakter,
 - 1 alap ellenségtípus,
 - 3–4 akadály,
