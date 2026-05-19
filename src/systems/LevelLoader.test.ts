@@ -8,6 +8,8 @@ describe('LevelLoader', () => {
     const parsed = loader.parse({
       id: 'level-test',
       name: 'Test Level',
+      targetScore: 250,
+      icon: 'enemy01.png',
       grid: { width: 7, height: 6 },
       obstacles: [{ x: 1, y: 1, image: 'residental01.png' }],
       spawnZones: [{ id: 'spawn-1', cells: [{ x: 0, y: 0 }] }],
@@ -23,6 +25,8 @@ describe('LevelLoader', () => {
     });
 
     expect(parsed.id).toBe('level-test');
+    expect(parsed.targetScore).toBe(250);
+    expect(parsed.icon).toBe('enemy01.png');
     expect(parsed.grid.width).toBe(7);
     expect(parsed.spawnZones[0].id).toBe('spawn-1');
     expect(parsed.obstacles[0].image).toBe('residental01.png');
@@ -38,6 +42,8 @@ describe('LevelLoader', () => {
       loader.parse({
         id: 'bad-level',
         name: 'Bad Level',
+        targetScore: 100,
+        icon: 'enemy01.png',
         grid: { width: 7, height: 6 },
         obstacles: [],
         spawnZones: [{ id: 'spawn-1', cells: [{ x: 0, y: 0 }] }],
@@ -50,11 +56,47 @@ describe('LevelLoader', () => {
     ).toThrow(/scoreMilestones\[0\]\.score must be a positive integer/i);
   });
 
+  it('throws when targetScore or icon metadata is malformed', () => {
+    expect(() =>
+      loader.parse({
+        id: 'bad-level',
+        name: 'Bad Level',
+        targetScore: 0,
+        icon: 'enemy01.png',
+        grid: { width: 7, height: 6 },
+        obstacles: [],
+        spawnZones: [{ id: 'spawn-1', cells: [{ x: 0, y: 0 }] }],
+        goalZones: [{ id: 'goal-1', cells: [{ x: 6, y: 5 }] }],
+        sanctuaryZone: [{ x: 3, y: 5 }],
+        hrsImages: [],
+        lootSpawns: [{ id: 'loot-1', type: 'wallet', value: 20, cell: { x: 2, y: 4 } }],
+      }),
+    ).toThrow(/targetScore must be a positive integer/i);
+
+    expect(() =>
+      loader.parse({
+        id: 'bad-level',
+        name: 'Bad Level',
+        targetScore: 100,
+        icon: 'nested/enemy01.png',
+        grid: { width: 7, height: 6 },
+        obstacles: [],
+        spawnZones: [{ id: 'spawn-1', cells: [{ x: 0, y: 0 }] }],
+        goalZones: [{ id: 'goal-1', cells: [{ x: 6, y: 5 }] }],
+        sanctuaryZone: [{ x: 3, y: 5 }],
+        hrsImages: [],
+        lootSpawns: [{ id: 'loot-1', type: 'wallet', value: 20, cell: { x: 2, y: 4 } }],
+      }),
+    ).toThrow(/icon must be a direct image filename/i);
+  });
+
   it('throws when a cell is outside grid bounds', () => {
     expect(() =>
       loader.parse({
         id: 'bad-level',
         name: 'Bad Level',
+        targetScore: 100,
+        icon: 'enemy01.png',
         grid: { width: 7, height: 6 },
         obstacles: [{ x: 9, y: 1, image: 'residental01.png' }],
         spawnZones: [{ id: 'spawn-1', cells: [{ x: 0, y: 0 }] }],
@@ -71,6 +113,8 @@ describe('LevelLoader', () => {
       loader.parse({
         id: 'bad-level',
         name: 'Bad Level',
+        targetScore: 100,
+        icon: 'enemy01.png',
         grid: { width: 7, height: 6 },
         obstacles: [],
         spawnZones: [{ id: 'spawn-1', cells: [{ x: 0, y: 0 }] }],
@@ -87,6 +131,8 @@ describe('LevelLoader', () => {
       loader.parse({
         id: 'bad-level',
         name: 'Bad Level',
+        targetScore: 100,
+        icon: 'enemy01.png',
         grid: { width: 7, height: 6 },
         obstacles: [],
         spawnZones: [{ id: 'spawn-1', cells: [{ x: 0, y: 0 }] }],
@@ -101,6 +147,8 @@ describe('LevelLoader', () => {
       loader.parse({
         id: 'bad-level',
         name: 'Bad Level',
+        targetScore: 100,
+        icon: 'enemy01.png',
         grid: { width: 7, height: 6 },
         obstacles: [],
         spawnZones: [{ id: 'spawn-1', cells: [{ x: 0, y: 0 }] }],
@@ -117,6 +165,8 @@ describe('LevelLoader', () => {
       loader.parse({
         id: 'bad-level',
         name: 'Bad Level',
+        targetScore: 100,
+        icon: 'enemy01.png',
         grid: { width: 7, height: 6 },
         obstacles: [{ x: 1, y: 1, image: 'nested/residental01.png' }],
         spawnZones: [{ id: 'spawn-1', cells: [{ x: 0, y: 0 }] }],
@@ -133,6 +183,8 @@ describe('LevelLoader', () => {
       loader.parse({
         id: 'bad-level',
         name: 'Bad Level',
+        targetScore: 100,
+        icon: 'enemy01.png',
         grid: { width: 7, height: 6 },
         obstacles: [{ x: 1, y: 1, image: 'missing.png' }],
         spawnZones: [{ id: 'spawn-1', cells: [{ x: 0, y: 0 }] }],
@@ -149,6 +201,8 @@ describe('LevelLoader', () => {
       loader.parse({
         id: 'bad-level',
         name: 'Bad Level',
+        targetScore: 100,
+        icon: 'enemy01.png',
         grid: { width: 7, height: 6 },
         obstacles: [],
         spawnZones: [{ id: 'spawn-1', cells: [{ x: 0, y: 0 }] }],
@@ -166,6 +220,8 @@ describe('LevelLoader', () => {
       loader.parse({
         id: 'bad-level',
         name: 'Bad Level',
+        targetScore: 100,
+        icon: 'enemy01.png',
         grid: { width: 7, height: 6 },
         obstacles: [],
         spawnZones: [{ id: 'spawn-1', cells: [{ x: 0, y: 0 }] }],

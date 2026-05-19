@@ -48,6 +48,8 @@ export type ObstacleDefinition = GridCell & {
 export type LevelData = {
   id: string;
   name: string;
+  targetScore: number;
+  icon: string;
   grid: {
     width: number;
     height: number;
