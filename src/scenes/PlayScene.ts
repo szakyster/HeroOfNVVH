@@ -140,10 +140,6 @@ function getHeroAnimationKey(state: HeroAnimationState, direction: HeroAnimation
 export class PlayScene extends Phaser.Scene {
   private readonly levelPath = `${import.meta.env.BASE_URL}levels/level-01.json`;
 
-  private readonly handleDebugGameOver = () => {
-    this.triggerGameOver();
-  };
-
   private readonly levelLoader = new LevelLoader();
 
   private readonly collisionProvider = new SimpleCollisionProvider();
@@ -386,13 +382,6 @@ export class PlayScene extends Phaser.Scene {
         this.levelInfoText?.setText('Palyabetoltes hiba');
         console.error('Level loading failed', error);
       });
-
-    this.input.keyboard?.off('keydown-G', this.handleDebugGameOver, this);
-    this.input.keyboard?.on('keydown-G', this.handleDebugGameOver, this);
-
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
-      this.input.keyboard?.off('keydown-G', this.handleDebugGameOver, this);
-    });
   }
 
   private resetRuntimeState(): void {
