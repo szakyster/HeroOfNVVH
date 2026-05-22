@@ -191,6 +191,8 @@ Kapcsolódó döntés ID-k: **D-006, D-007, D-008**.
   "id": "level-01",
   "name": "Hatvanpuszta - Reptér",
   "targetScore": 250,
+  "icon": "enemy01.png",
+  "enemyTypes": ["enemy01"],
   "grid": { "width": 7, "height": 6 },
   "spawnZones": [{ "id": "spawn-a", "cells": [{ "x": 0, "y": 2 }] }],
   "goalZones": [{ "id": "goal-a", "cells": [{ "x": 6, "y": 2 }] }],
@@ -216,14 +218,17 @@ Kapcsolódó döntés ID-k: **D-006, D-007, D-008**.
 - Az **akadályok egy cellát foglalnak el teljesen**.
 - A **loot-nak is egy cellája van**.
 
-### 5.3 Pályaszintű progressziós mezők
+### 5.3 Pályaszintű progressziós és tartalmi mezők
 
 - `targetScore`: az adott pálya célpontszáma.
+- `icon`: a pályaválasztóban megjelenő kis előnézeti kép fájlneve.
+- `enemyTypes`: az adott pályán használható ellenfél-azonosítók listája.
 
 Működési szabály:
 - a pálya teljesítettnek számít, ha a futam végi pontszám eléri vagy meghaladja a `targetScore` értéket,
 - ilyenkor a Game Over képernyőn megjelenik a feloldást jelző szöveg,
-- egyszerre csak a pályalistában soron következő pálya nyílik meg.
+- egyszerre csak a pályalistában soron következő pálya nyílik meg,
+- a spawnolásért felelős rendszer csak a pályafájl `enemyTypes` listájában szereplő ellenfél-azonosítókból dolgozhat.
 
 ### 5.4 Kódban való felhasználás
 
@@ -233,6 +238,7 @@ const levelData = await fetch(`/levels/${selectedLevelId}.json`).then(r => r.jso
 const gridWidth = levelData.grid.width;      // 7
 const gridHeight = levelData.grid.height;    // 6
 const targetScore = levelData.targetScore;   // pl. 250
+const enemyTypes = levelData.enemyTypes;     // pl. ['enemy01']
 const obstacles = levelData.obstacles;       // [...]
 ```
 

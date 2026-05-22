@@ -285,9 +285,11 @@ classDiagram
     class LevelConfig {
       +id: string
       +name: string
+      +targetScore: number
+      +icon: string
+      +enemyTypes: string[]
       +width: number
       +height: number
-      +targetScore: number
       +gridCellSize: number
       +spawnPoint: GridPoint
       +goalPoint: GridPoint
