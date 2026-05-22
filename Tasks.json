@@ -153,13 +153,13 @@
       "id": 26,
       "name": "Multi-Level Content & Icon Assets",
       "description": "Add at least one additional pálya JSON with targetScore and icon metadata, provide the required level-select icon assets, and define the ordered level list used by progression and selection flows. Reference: Tech.md section 5, JatekLeiras.md section 14, and Decisions.md D-022",
-      "status": "in progress"
+      "status": "closed"
     },
     {
       "id": 27,
       "name": "Per-Level Enemy Definitions",
       "description": "Extend the pálya definition with the list of enemy types used on the given level so later level loading and selection flow can reason about level-specific enemy composition. Define the schema change, update the relevant loader validation expectations, and align the authored level JSON files with the new field. Reference: Tech.md section 5, JatekLeiras.md section 14, and Decisions.md D-022",
-      "status": "open"
+      "status": "in progress"
     },
     {
       "id": 28,
