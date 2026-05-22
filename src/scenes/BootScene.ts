@@ -13,20 +13,22 @@ import { getAvailableUiAssets } from '../systems/UiAssets';
 import { SCENE_KEYS } from './sceneKeys';
 
 const HERO_SPRITE_SHEETS = [
-  { key: 'hero-psz01-idle-down', url: 'assets/sprites/PSZ01/idle_down.png' },
-  { key: 'hero-psz01-idle-northeast', url: 'assets/sprites/PSZ01/idle_northeast.png' },
-  { key: 'hero-psz01-idle-right', url: 'assets/sprites/PSZ01/idle_right.png' },
-  { key: 'hero-psz01-idle-southeast', url: 'assets/sprites/PSZ01/idle_southeast.png' },
-  { key: 'hero-psz01-idle-up', url: 'assets/sprites/PSZ01/idle_up.png' },
-  { key: 'hero-psz01-punch-down', url: 'assets/sprites/PSZ01/punch_down.png' },
-  { key: 'hero-psz01-punch-right', url: 'assets/sprites/PSZ01/punch_right.png' },
-  { key: 'hero-psz01-punch-up', url: 'assets/sprites/PSZ01/punch_up.png' },
-  { key: 'hero-psz01-run-down', url: 'assets/sprites/PSZ01/run_down.png' },
-  { key: 'hero-psz01-run-northeast', url: 'assets/sprites/PSZ01/run_northeast.png' },
-  { key: 'hero-psz01-run-right', url: 'assets/sprites/PSZ01/run_right.png' },
-  { key: 'hero-psz01-run-southeast', url: 'assets/sprites/PSZ01/run_southeast.png' },
-  { key: 'hero-psz01-run-up', url: 'assets/sprites/PSZ01/run_up.png' },
+  { key: 'hero-psz01-idle-down', url: 'assets/sprites/PSZ01/idle_down.png', frameWidth: 256, frameHeight: 256 },
+  { key: 'hero-psz01-idle-northeast', url: 'assets/sprites/PSZ01/idle_northeast.png', frameWidth: 256, frameHeight: 256 },
+  { key: 'hero-psz01-idle-right', url: 'assets/sprites/PSZ01/idle_right.png', frameWidth: 256, frameHeight: 256 },
+  { key: 'hero-psz01-idle-southeast', url: 'assets/sprites/PSZ01/idle_southeast.png', frameWidth: 256, frameHeight: 256 },
+  { key: 'hero-psz01-idle-up', url: 'assets/sprites/PSZ01/idle_up.png', frameWidth: 256, frameHeight: 256 },
+  { key: 'hero-psz01-punch-down', url: 'assets/sprites/PSZ01/punch_down.png', frameWidth: 256, frameHeight: 256 },
+  { key: 'hero-psz01-punch-right', url: 'assets/sprites/PSZ01/punch_right.png', frameWidth: 256, frameHeight: 256 },
+  { key: 'hero-psz01-punch-up', url: 'assets/sprites/PSZ01/punch_up.png', frameWidth: 256, frameHeight: 256 },
+  { key: 'hero-psz01-run-down', url: 'assets/sprites/PSZ01/run_down.png', frameWidth: 256, frameHeight: 256 },
+  { key: 'hero-psz01-run-northeast', url: 'assets/sprites/PSZ01/run_northeast.png', frameWidth: 256, frameHeight: 256 },
+  { key: 'hero-psz01-run-right', url: 'assets/sprites/PSZ01/run_right.png', frameWidth: 256, frameHeight: 256 },
+  { key: 'hero-psz01-run-southeast', url: 'assets/sprites/PSZ01/run_southeast.png', frameWidth: 256, frameHeight: 256 },
+  { key: 'hero-psz01-run-up', url: 'assets/sprites/PSZ01/run_up.png', frameWidth: 256, frameHeight: 256 },
 ];
+
+const ENEMY_SPRITE_FRAME_SIZE = 256;
 
 const ENEMY_SPRITE_SHEETS = [
   { key: 'enemy-01-walk-down', url: 'assets/sprites/enemy01/walk_down.png' },
@@ -65,15 +67,15 @@ export class BootScene extends Phaser.Scene {
 
     for (const heroSheet of HERO_SPRITE_SHEETS) {
       this.load.spritesheet(heroSheet.key, heroSheet.url, {
-        frameWidth: 128,
-        frameHeight: 128,
+        frameWidth: heroSheet.frameWidth,
+        frameHeight: heroSheet.frameHeight,
       });
     }
 
     for (const enemySheet of ENEMY_SPRITE_SHEETS) {
       this.load.spritesheet(enemySheet.key, enemySheet.url, {
-        frameWidth: 128,
-        frameHeight: 128,
+        frameWidth: ENEMY_SPRITE_FRAME_SIZE,
+        frameHeight: ENEMY_SPRITE_FRAME_SIZE,
       });
     }
 
