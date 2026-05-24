@@ -17,10 +17,14 @@ type PlaySceneStartData = {
   levelId: string;
 };
 
+const BACK_BUTTON_LOCK_MS = 1000;
+
 export class LevelSelectScene extends Phaser.Scene {
   private readonly levelLoader = new LevelLoader();
 
   private readonly progressStorage = new LevelProgressStorage(getFirstLevelId());
+
+  private isBackButtonEnabled = false;
 
   constructor() {
     super(SCENE_KEYS.LEVEL_SELECT);
@@ -28,9 +32,11 @@ export class LevelSelectScene extends Phaser.Scene {
 
   create(): void {
     // Build the level selection view from the authored level metadata and saved progress.
+    this.isBackButtonEnabled = false;
+
     addSceneBackground(this, 'menu');
 
-    createSceneTextButton(this, {
+    const backButton = createSceneTextButton(this, {
       x: 512,
       y: 710,
       label: 'Vissza',
@@ -39,8 +45,18 @@ export class LevelSelectScene extends Phaser.Scene {
       fontSize: '18px',
       triggerEvent: 'pointerup',
       onSelect: () => {
+        if (!this.isBackButtonEnabled) {
+          return;
+        }
+
         this.openMenu();
       },
+    });
+
+    backButton.setAlpha(0.65);
+    this.time.delayedCall(BACK_BUTTON_LOCK_MS, () => {
+      this.isBackButtonEnabled = true;
+      backButton.setAlpha(1);
     });
 
     this.input.keyboard?.once('keydown-M', () => {
