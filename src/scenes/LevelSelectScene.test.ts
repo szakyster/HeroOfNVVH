@@ -5,6 +5,7 @@ type MockText = {
   handlers: Record<string, (() => void) | undefined>;
   setOrigin: ReturnType<typeof vi.fn>;
   setInteractive: ReturnType<typeof vi.fn>;
+  setAlpha: ReturnType<typeof vi.fn>;
   setDepth: ReturnType<typeof vi.fn>;
   setStyle: ReturnType<typeof vi.fn>;
   setData: ReturnType<typeof vi.fn>;
@@ -80,6 +81,7 @@ describe('LevelSelectScene', () => {
     const createdTexts: MockText[] = [];
     const createdRectangles: MockRectangle[] = [];
     const keyboardHandlers: Record<string, () => void> = {};
+    const delayedCallbacks: Array<() => void> = [];
 
     getState.mockReturnValue({
       unlockedLevelIds: ['level-01'],
@@ -88,6 +90,8 @@ describe('LevelSelectScene', () => {
     });
     loadLevel
       .mockResolvedValueOnce({ id: 'level-01', name: 'Bemelegítés', targetScore: 900, icon: 'enemy01.png' })
+      .mockResolvedValueOnce({ id: 'level-02', name: 'Az első kihívás', targetScore: 1500, icon: 'enemy02.png' })
+      .mockResolvedValueOnce({ id: 'level-01', name: 'Bemelegítés', targetScore: 900, icon: 'enemy01.png' })
       .mockResolvedValueOnce({ id: 'level-02', name: 'Az első kihívás', targetScore: 1500, icon: 'enemy02.png' });
 
     const scene = new LevelSelectScene() as unknown as Record<string, unknown>;
@@ -95,7 +99,7 @@ describe('LevelSelectScene', () => {
 
     scene.scale = { width: 1024, height: 768 };
     scene.textures = { exists: vi.fn(() => true) };
-    scene.add = {
+    const add = {
       graphics: vi.fn(() => {
         const graphics: MockGraphics = {
           setDepth: vi.fn().mockReturnThis(),
@@ -117,6 +121,7 @@ describe('LevelSelectScene', () => {
           handlers,
           setOrigin: vi.fn().mockReturnThis(),
           setInteractive: vi.fn().mockReturnThis(),
+          setAlpha: vi.fn().mockReturnThis(),
           setDepth: vi.fn().mockReturnThis(),
           setStyle: vi.fn().mockReturnThis(),
           setData: vi.fn().mockReturnThis(),
@@ -156,12 +161,18 @@ describe('LevelSelectScene', () => {
         setDepth: vi.fn().mockReturnThis(),
       })),
     };
+    scene.add = add;
     scene.input = {
       keyboard: {
         once: vi.fn((event: string, handler: () => void) => {
           keyboardHandlers[event] = handler;
         }),
       },
+    };
+    scene.time = {
+      delayedCall: vi.fn((_delay: number, callback: () => void) => {
+        delayedCallbacks.push(callback);
+      }),
     };
     scene.scene = sceneManager;
 
@@ -176,12 +187,17 @@ describe('LevelSelectScene', () => {
     expect(createdTexts.some((entry) => entry.text === 'Zárolva')).toBe(true);
     expect(createdTexts.some((entry) => entry.text === 'Indítás')).toBe(false);
     expect(createdRectangles).toHaveLength(1);
-    expect(scene.add.image).toHaveBeenCalledWith(expect.any(Number), expect.any(Number), 'level-icon:enemy01.png');
-    expect(scene.add.image).toHaveBeenCalledWith(expect.any(Number), expect.any(Number), 'level-icon:enemy02.png');
+    expect(add.image).toHaveBeenCalledWith(expect.any(Number), expect.any(Number), 'level-icon:enemy01.png');
+    expect(add.image).toHaveBeenCalledWith(expect.any(Number), expect.any(Number), 'level-icon:enemy02.png');
+    expect(createdTexts.find((entry) => entry.text === 'Vissza')?.setAlpha).toHaveBeenNthCalledWith(1, 0.65);
 
     createdRectangles[0]?.handlers.pointerover?.();
     createdRectangles[0]?.handlers.pointerout?.();
     createdRectangles[0]?.handlers.pointerup?.();
+    backButton?.handlers.pointerup?.();
+    expect(sceneManager.start).toHaveBeenCalledTimes(1);
+
+    delayedCallbacks[0]?.();
     backButton?.handlers.pointerup?.();
     keyboardHandlers['keydown-M']();
 
@@ -190,6 +206,24 @@ describe('LevelSelectScene', () => {
     expect(setLastPlayedLevel).toHaveBeenCalledWith('level-01');
     expect(sceneManager.start).toHaveBeenCalledWith('PlayScene', { levelId: 'level-01' });
     expect(sceneManager.start).toHaveBeenCalledWith('MenuScene');
+    expect(backButton?.setAlpha).toHaveBeenNthCalledWith(2, 1);
     expect(sceneManager.start).toHaveBeenCalledTimes(3);
+
+    (scene.create as () => void)();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    const secondBackButton = createdTexts.filter((entry) => entry.text === 'Vissza').at(-1);
+
+    secondBackButton?.handlers.pointerup?.();
+
+    expect(secondBackButton?.setAlpha).toHaveBeenNthCalledWith(1, 0.65);
+    expect(sceneManager.start).toHaveBeenCalledTimes(3);
+
+    delayedCallbacks[1]?.();
+    secondBackButton?.handlers.pointerup?.();
+
+    expect(secondBackButton?.setAlpha).toHaveBeenNthCalledWith(2, 1);
+    expect(sceneManager.start).toHaveBeenCalledTimes(4);
   });
 });
