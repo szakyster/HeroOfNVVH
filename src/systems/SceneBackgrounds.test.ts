@@ -33,8 +33,9 @@ describe('SceneBackgrounds', () => {
 
     SceneBackgrounds.preloadSceneBackgrounds(scene as never);
 
-    expect(image).toHaveBeenCalledTimes(4);
+    expect(image).toHaveBeenCalledTimes(5);
     expect(image).toHaveBeenCalledWith('scene-menu-bg', ['assets/backgrounds/scene-menu-bg-v01.png']);
+    expect(image).toHaveBeenCalledWith('scene-help-bg', ['assets/backgrounds/scene-help-bg-v01.png']);
     expect(image).toHaveBeenCalledWith('scene-play-bg', ['assets/backgrounds/scene-play-bg-v01.png']);
     expect(image).toHaveBeenCalledWith('scene-leaderboard-bg', ['assets/backgrounds/scene-leaderboard-bg-v01.png']);
     expect(image).toHaveBeenCalledWith('scene-game-over-bg', ['assets/backgrounds/scene-game-over-bg-v01.png']);

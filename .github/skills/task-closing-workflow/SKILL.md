@@ -29,6 +29,7 @@ Ez a skill a repo [.github/copilot-instructions.md](../../copilot-instructions.m
 - Build parancs: `npm run build`
 - Alap tesztparancs egyszeri futásra: `npm run test:run`
 - Coverage parancs egyszeri futásra: `npm run test:coverage -- --run`
+- A `public/levels/*.json` pályafájlok JSON szintaxisát tasklezáráskor külön, blokkoló ellenőrzéssel validálni kell.
 - Task státuszok a [Tasks.json](../../../Tasks.json) fájlban vannak.
 - A repo elvárása szerint merge esetén non-fast-forward merge-et kell használni.
 - A következő task megnyitását a [task-opening-workflow](../task-opening-workflow/SKILL.md) skill végzi.
@@ -45,14 +46,15 @@ A tasklezárás csak akkor tekinthető késznek, ha az összes releváns lépés
 1. Azonosítsd a lezárandó taskot.
 2. Nézd meg a git branch-et és a worktree állapotát.
 3. Futtasd a buildet.
-4. Futtasd a releváns teszteket.
-5. Ha kell, futtasd a coverage-et és ellenőrizd, hogy van-e releváns 25% alatti lefedettség.
-6. A tasklezárás végén ellenőrizd, van-e 1500 sornál hosszabb, nem teszt jellegű kódfájl.
-7. Ha build vagy teszt elbukik, állj meg, elemezd a hibát, és csak jelentsd vissza részletesen.
-8. Ha vannak uncommitted változások, végezz CP-t.
-9. Végezz non-fast-forward merge-et.
-10. Merge után zárd le a taskot a [Tasks.json](../../../Tasks.json) fájlban.
-11. Ha a felhasználó nem mond mást, azonosítsd a következő taskot, majd a megnyitását a [task-opening-workflow](../task-opening-workflow/SKILL.md) skill szerint végezd el.
+4. Ellenőrizd a pálya JSON-ok szintaktikáját.
+5. Futtasd a releváns teszteket.
+6. Ha kell, futtasd a coverage-et és ellenőrizd, hogy van-e releváns 25% alatti lefedettség.
+7. A tasklezárás végén ellenőrizd, van-e 1500 sornál hosszabb, nem teszt jellegű kódfájl.
+8. Ha build, JSON szintaxis ellenőrzés vagy teszt elbukik, állj meg, elemezd a hibát, és csak jelentsd vissza részletesen.
+9. Ha vannak uncommitted változások, végezz CP-t.
+10. Végezz non-fast-forward merge-et.
+11. Merge után zárd le a taskot a [Tasks.json](../../../Tasks.json) fájlban.
+12. Ha a felhasználó nem mond mást, azonosítsd a következő taskot, majd a megnyitását a [task-opening-workflow](../task-opening-workflow/SKILL.md) skill szerint végezd el.
 
 ## Detailed Rules
 
@@ -84,7 +86,14 @@ A tasklezárás csak akkor tekinthető késznek, ha az összes releváns lépés
 - Ha a teszt hibás, a workflow itt megáll.
 - A hibát részletezd, de ne kezdj nem kapcsolódó javításba külön kérés nélkül.
 
-### 5. Coverage Check
+### 5. Level JSON Syntax Check
+
+- Ellenőrizd a `public/levels/*.json` fájlok JSON szintaktikáját külön lépésben.
+- Ez blokkoló ellenőrzés: ha bármely pályafájl parse hibát ad, a tasklezárás itt megáll.
+- Az ellenőrzés csak a szintaxisra vonatkozik; a szemantikus validáció továbbra is a build, tesztek és runtime logika része.
+- A hibát konkrét fájlnévvel és a lényegi parse üzenettel kell visszajelezni.
+
+### 6. Coverage Check
 
 - Ha a lezárás részeként coverage információ szükséges, futtasd a `npm run test:coverage -- --run` parancsot, vagy használd a meglévő coverage riportot, ha igazoltan friss és releváns.
 - Ne használd itt a sima `npm run test:coverage` parancsot, mert a Vitest watch/interactive módba léphet és billentyűzetlenyomásra várhat.
@@ -92,7 +101,7 @@ A tasklezárás csak akkor tekinthető késznek, ha az összes releváns lépés
 - Ha bármely releváns fájl coverage-e 25% alatt van, ezt kötelezően jelentsd vissza a felhasználónak.
 - A 25% alatti coverage önmagában nem feltétlenül blokkoló, de explicit riportálandó.
 
-### 6. CP Rule
+### 7. CP Rule
 
 - Ha vannak uncommitted változások, végezz CP-t.
 - A CP végrehajtásához elsősorban a [CP promptot](../../prompts/cp.prompt.md) használd.
@@ -105,26 +114,26 @@ A tasklezárás csak akkor tekinthető késznek, ha az összes releváns lépés
 - A commit message legyen konkrét, a változtatás tartalmához illeszkedő.
 - Ne használj semmitmondó commit message-et.
 
-### 7. File Length Check
+### 8. File Length Check
 
 - A tasklezárás legvégén nézd meg a releváns, nem teszt jellegű kódfájlokat.
 - Ha bármely ilyen fájl 1500 sornál hosszabb, ezt kötelezően jelezd a felhasználónak.
 - A jelzésben nevezd meg az érintett fájlt, és adj rövid, konkrét refaktorjavaslatot.
 - Ez önmagában nem feltétlenül blokkoló, de explicit riportálandó.
 
-### 8. Merge Rule
+### 9. Merge Rule
 
 - Non-fast-forward merge-et használj.
 - Merge előtt ellenőrizd, hogy a branch naprakész és pusholt állapotban van-e.
 - Merge után ellenőrizd, hogy a merge sikeres volt.
 
-### 9. Tasks.json Update
+### 10. Tasks.json Update
 
 - Merge után zárd le a megfelelő taskot a [Tasks.json](../../../Tasks.json) fájlban.
 - A lezárt task státusza legyen `closed`, hacsak a projektfájl meglévő konvenciója mást nem indokol.
 - Csak a megfelelő task bejegyzést módosítsd.
 
-### 10. Open Next Task
+### 11. Open Next Task
 
 - Ha a felhasználó nem mond mást, nyisd meg a következő taskot.
 - A következő task jellemzően az első logikusan következő, még nem `closed` állapotú feladat.
@@ -142,6 +151,7 @@ A tasklezárás csak akkor tekinthető késznek, ha az összes releváns lépés
 Állj meg és jelents vissza, ha:
 
 - a build elbukik,
+- a pálya JSON szintaxis ellenőrzés elbukik,
 - a releváns tesztek elbuknak,
 - nem azonosítható egyértelműen a lezárandó task,
 - merge konfliktus vagy git blokkoló hiba van,
@@ -153,6 +163,7 @@ Menj végig a teljes folyamaton kérdés nélkül, ha:
 
 - a lezárandó task egyértelmű,
 - a build és a tesztek sikeresek,
+- a pálya JSON-ok szintaktikailag érvényesek,
 - a git műveletek végrehajthatók,
 - a felhasználó nem tiltja a merge-et vagy a következő task megnyitását.
 
@@ -160,6 +171,7 @@ Menj végig a teljes folyamaton kérdés nélkül, ha:
 
 - Git állapot: `git branch --show-current`, `git status --short`, `git rev-parse --abbrev-ref --symbolic-full-name "@{u}"`
 - Build: `npm run build`
+- Pálya JSON szintaxis: PowerShellben például `Get-ChildItem public/levels/*.json | ForEach-Object { Get-Content $_.FullName -Raw | ConvertFrom-Json | Out-Null }`
 - Teljes teszt: `npm run test:run`
 - Coverage: `npm run test:coverage -- --run`
 - LOC ellenőrzés: számold meg a releváns nem teszt kódfájlok sorait, és keresd az 1500 feletti fájlokat.
@@ -173,7 +185,7 @@ Mindig a lehető legkisebb kockázatú, nem interaktív git parancsokat preferá
 A skill végén a válasz tartalmazza:
 
 - sikerült-e a tasklezárás,
-- milyen build és teszt parancsok futottak,
+- milyen build, JSON szintaxis és teszt parancsok futottak,
 - volt-e 25% alatti releváns coverage,
 - volt-e 1500 sornál hosszabb releváns kódfájl, és ha igen, mi rá a refaktorjavaslat,
 - történt-e CP, és mi lett a commit message,

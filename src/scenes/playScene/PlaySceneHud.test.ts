@@ -2,12 +2,14 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   ESCAPED_WARNING_COLOR,
   HEADER_EMPHASIS_COLOR,
+  TARGET_SCORE_REACHED_COLOR,
   formatAudioToggleTexts,
   formatEnemyInfoText,
   formatLevelInfoText,
   formatPlaySceneHudValues,
   syncInventorySlotImages,
   syncEscapedEnemyWarningState,
+  syncScoreValueColor,
 } from './PlaySceneHud';
 
 describe('PlaySceneHud helpers', () => {
@@ -77,12 +79,12 @@ describe('PlaySceneHud helpers', () => {
       },
     );
 
-    expect(musicToggleIcon.setAlpha).toHaveBeenCalledWith(0.9);
-    expect(musicToggleIcon.setTint).toHaveBeenCalledWith(0x8f8f8f);
-    expect(musicToggleIcon.clearTint).not.toHaveBeenCalled();
-    expect(sfxToggleIcon.setAlpha).toHaveBeenCalledWith(1);
-    expect(sfxToggleIcon.clearTint).toHaveBeenCalledTimes(1);
-    expect(sfxToggleIcon.setTint).not.toHaveBeenCalled();
+    expect(musicToggleIcon.setAlpha).toHaveBeenCalledWith(1);
+    expect(musicToggleIcon.clearTint).toHaveBeenCalledTimes(1);
+    expect(musicToggleIcon.setTint).not.toHaveBeenCalled();
+    expect(sfxToggleIcon.setAlpha).toHaveBeenCalledWith(0.9);
+    expect(sfxToggleIcon.setTint).toHaveBeenCalledWith(0x8f8f8f);
+    expect(sfxToggleIcon.clearTint).not.toHaveBeenCalled();
 
     syncAudioToggleTexts(
       {
@@ -95,10 +97,32 @@ describe('PlaySceneHud helpers', () => {
       },
     );
 
-    expect(musicToggleIcon.setAlpha).toHaveBeenCalledWith(1);
-    expect(musicToggleIcon.clearTint).toHaveBeenCalledTimes(1);
-    expect(sfxToggleIcon.setAlpha).toHaveBeenCalledWith(0.9);
-    expect(sfxToggleIcon.setTint).toHaveBeenCalledWith(0x8f8f8f);
+    expect(musicToggleIcon.setAlpha).toHaveBeenCalledWith(0.9);
+    expect(musicToggleIcon.setTint).toHaveBeenCalledWith(0x8f8f8f);
+    expect(sfxToggleIcon.setAlpha).toHaveBeenCalledWith(1);
+    expect(sfxToggleIcon.clearTint).toHaveBeenCalledTimes(1);
+  });
+
+  it('turns the score green once the target score has been reached', () => {
+    const scoreValueText = {
+      setColor: vi.fn(),
+    };
+
+    syncScoreValueColor({
+      score: 900,
+      targetScore: 900,
+      scoreValueText,
+    });
+
+    expect(scoreValueText.setColor).toHaveBeenCalledWith(TARGET_SCORE_REACHED_COLOR);
+
+    syncScoreValueColor({
+      score: 850,
+      targetScore: 900,
+      scoreValueText,
+    });
+
+    expect(scoreValueText.setColor).toHaveBeenCalledWith(HEADER_EMPHASIS_COLOR);
   });
 
   it('starts the escaped warning tween at high escaped counts', () => {

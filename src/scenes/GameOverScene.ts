@@ -137,7 +137,7 @@ export class GameOverScene extends Phaser.Scene {
     createSceneTextButton(this, {
       x: textAnchor.x,
       y: textAnchor.y + GameOverScene.TEXT_ROW_OFFSETS.retryButton,
-      label: 'Retry',
+      label: 'Újra',
       width: 176,
       height: 36,
       fontSize: '18px',
@@ -171,7 +171,7 @@ export class GameOverScene extends Phaser.Scene {
       .text(
         textAnchor.x,
         textAnchor.y + GameOverScene.TEXT_ROW_OFFSETS.controls,
-        'R: retry | N: új játék | L: eredménylista | M: főmenü',
+        'R: újra | N: új játék | L: eredménylista | M: főmenü',
         {
           fontFamily: 'Verdana',
           fontSize: '14px',

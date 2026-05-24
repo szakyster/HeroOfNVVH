@@ -38,6 +38,7 @@ import {
   formatPlaySceneHudValues,
   syncInventorySlotImages,
   syncEscapedEnemyWarningState,
+  syncScoreValueColor,
 } from './playScene/PlaySceneHud';
 import {
   ActiveEnemy,
@@ -1355,6 +1356,11 @@ export class PlayScene extends Phaser.Scene {
     });
 
     this.scoreValueText?.setText(hudValues.scoreText);
+    syncScoreValueColor({
+      score,
+      targetScore: this.currentLevel?.targetScore ?? Number.MAX_SAFE_INTEGER,
+      scoreValueText: this.scoreValueText,
+    });
     syncInventorySlotImages(this.inventorySlotImages, this.inventory.length, DEFAULT_LOOT_CONFIG.maxInventory);
     this.escapedValueText?.setText(hudValues.escapedText);
     this.updateEscapedEnemyWarningState(escapedEnemies);

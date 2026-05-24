@@ -1,7 +1,7 @@
 {
   "id": "level-01",
   "name": "Bemelegítés",
-  "targetScore": 900,
+  "targetScore": 400,
   "icon": "enemy01.png",
   "enemyTypes": ["enemy01", "enemy02"],
   "grid": {
@@ -67,8 +67,7 @@
     }
   ],
   "lootSpawns": [
-    { "id": "loot-1", "type": "wallet", "value": 10, "image": "money01.png", "cell": { "x": 2, "y": 4 } },
-    { "id": "loot-2", "type": "phone", "value": 20, "image": "ferrari01.png", "cell": { "x": 4, "y": 2 } }
+    { "id": "loot-1", "type": "wallet", "value": 10, "image": "money01.png", "cell": { "x": 2, "y": 4 } }
   ],
   "scoreMilestones": [
 

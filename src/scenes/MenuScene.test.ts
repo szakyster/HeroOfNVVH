@@ -192,31 +192,36 @@ describe('MenuScene', () => {
     const startButton = createdTexts.find((entry) => entry.text === 'Játék indítása');
     const leaderboardButton = createdTexts.find((entry) => entry.text === 'Eredménylista');
     const titleTexts = createdTexts.filter((entry) => entry.text === 'Heroes of NVVH');
-    const [musicToggle, sfxToggle] = createdImages;
+    const [musicToggle, sfxToggle, helpToggle] = createdImages;
 
     expect(startButton).toBeDefined();
     expect(leaderboardButton).toBeDefined();
     expect(titleTexts).toHaveLength(0);
-    expect(createdImages).toHaveLength(2);
-    expect(createdGraphics).toHaveLength(4);
-    expect(musicToggle?.texture).toBe('ui:musicoff.png');
-    expect(sfxToggle?.texture).toBe('ui:effectoff.png');
-    expect(musicToggle?.setTint).toHaveBeenCalledWith(0x8f8f8f);
-    expect(sfxToggle?.setTint).toHaveBeenCalledWith(0x8f8f8f);
+    expect(createdImages).toHaveLength(3);
+    expect(createdGraphics).toHaveLength(5);
+    expect(musicToggle?.texture).toBe('ui:musicon.png');
+    expect(sfxToggle?.texture).toBe('ui:effecton.png');
+    expect(helpToggle?.texture).toBe('ui:help.png');
+    expect(musicToggle?.clearTint).toHaveBeenCalled();
+    expect(sfxToggle?.clearTint).toHaveBeenCalled();
 
     leaderboardButton?.handlers.pointerdown?.();
     keyboardHandlers['keydown-SPACE']();
     keyboardHandlers['keydown-L']();
     musicToggle?.handlers.pointerdown?.();
     sfxToggle?.handlers.pointerdown?.();
+    helpToggle?.handlers.pointerdown?.();
 
     expect(sceneManager.start).toHaveBeenCalledWith('LeaderboardScene');
     expect(sceneManager.start).toHaveBeenCalledWith('LevelSelectScene');
-    expect(sceneManager.start).toHaveBeenCalledTimes(3);
+    expect(sceneManager.start).toHaveBeenCalledWith('HelpScene');
+    expect(sceneManager.start).toHaveBeenCalledTimes(4);
     expect(updateAudioSetting).toHaveBeenCalledWith(scene, 'musicMuted', true);
     expect(updateAudioSetting).toHaveBeenCalledWith(scene, 'sfxMuted', true);
     expect(mockAudioSystem.setMusicMuted).toHaveBeenCalledWith(true);
     expect(mockAudioSystem.setSfxMuted).toHaveBeenCalledWith(true);
+    expect(musicToggle?.setTint).toHaveBeenCalledWith(0x8f8f8f);
+    expect(sfxToggle?.setTint).toHaveBeenCalledWith(0x8f8f8f);
     expect(musicToggle?.clearTint).toHaveBeenCalled();
     expect(sfxToggle?.clearTint).toHaveBeenCalled();
   });

@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 
 export const SCENE_BACKGROUND_KEYS = {
   menu: 'scene-menu-bg',
+  help: 'scene-help-bg',
   play: 'scene-play-bg',
   leaderboard: 'scene-leaderboard-bg',
   gameOver: 'scene-game-over-bg',
@@ -11,6 +12,7 @@ type SceneBackgroundName = keyof typeof SCENE_BACKGROUND_KEYS;
 
 const SCENE_BACKGROUND_FILES: Record<SceneBackgroundName, string> = {
   menu: 'assets/backgrounds/scene-menu-bg-v01.png',
+  help: 'assets/backgrounds/scene-help-bg-v01.png',
   play: 'assets/backgrounds/scene-play-bg-v01.png',
   leaderboard: 'assets/backgrounds/scene-leaderboard-bg-v01.png',
   gameOver: 'assets/backgrounds/scene-game-over-bg-v01.png',
@@ -18,6 +20,7 @@ const SCENE_BACKGROUND_FILES: Record<SceneBackgroundName, string> = {
 
 const FALLBACK_COLORS: Record<SceneBackgroundName, number> = {
   menu: 0x112233,
+  help: 0x112233,
   play: 0x14323d,
   leaderboard: 0x15232f,
   gameOver: 0x3d1120,

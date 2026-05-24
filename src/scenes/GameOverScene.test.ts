@@ -166,12 +166,12 @@ describe('GameOverScene', () => {
     expect(createdGraphics.length).toBeGreaterThan(0);
     expect(createdTexts.some((entry) => entry.text.includes('Aktuális helyezés: 1.'))).toBe(true);
     expect(createdTexts.some((entry) => entry.text.includes('a következő pálya megnyílt.'))).toBe(true);
-    expect(createdTexts.some((entry) => entry.text === 'Retry')).toBe(true);
+    expect(createdTexts.some((entry) => entry.text === 'Újra')).toBe(true);
     expect(createdTexts.some((entry) => entry.text === 'Új játék')).toBe(true);
     expect(createdTexts.some((entry) => entry.text === 'Főmenü')).toBe(true);
 
     textEventHandlers.get('Főmenü:pointerup')?.();
-    textEventHandlers.get('Retry:pointerup')?.();
+    textEventHandlers.get('Újra:pointerup')?.();
     textEventHandlers.get('Új játék:pointerup')?.();
 
     keyboardHandlers['keydown-R']();

@@ -8,7 +8,7 @@ import {
 } from '../systems/AudioSystem';
 import { addSceneBackground } from '../systems/SceneBackgrounds';
 import { createSceneIconButton, createSceneTextButton } from '../systems/UiButtons';
-import { EFFECT_OFF_IMAGE_NAME, getUiAssetKey, MUSIC_OFF_IMAGE_NAME } from '../systems/UiAssets';
+import { EFFECT_ON_IMAGE_NAME, getUiAssetKey, HELP_IMAGE_NAME, MUSIC_ON_IMAGE_NAME } from '../systems/UiAssets';
 import { SCENE_KEYS } from './sceneKeys';
 
 export class MenuScene extends Phaser.Scene {
@@ -20,7 +20,7 @@ export class MenuScene extends Phaser.Scene {
 
   private readonly primaryButtonsX = -110;
 
-  private readonly audioIconsSpacingX = 56;
+  private readonly audioIconsSpacingX = 63;
 
   constructor() {
     super(SCENE_KEYS.MENU);
@@ -43,20 +43,24 @@ export class MenuScene extends Phaser.Scene {
     });
 
     const primaryButtonsCenterY = height / 2 + 89.5 + this.primaryButtonsOffsetY;
-    const audioIconsBaseX = width / 2 + 66;
+    const audioIconsBaseX = width / 2 + 55;
 
-    this.musicToggleIcon = this.createAudioIconButton(audioIconsBaseX, primaryButtonsCenterY, MUSIC_OFF_IMAGE_NAME, () => {
+    this.musicToggleIcon = this.createAudioIconButton(audioIconsBaseX, primaryButtonsCenterY, MUSIC_ON_IMAGE_NAME, () => {
       const nextValue = !Boolean(this.registry.get(AUDIO_SETTINGS_KEYS.MUSIC_MUTED));
       updateAudioSetting(this, AUDIO_SETTINGS_KEYS.MUSIC_MUTED, nextValue);
       audioSystem.setMusicMuted(nextValue);
       this.refreshAudioToggleIcons();
     });
 
-    this.sfxToggleIcon = this.createAudioIconButton(audioIconsBaseX + this.audioIconsSpacingX, primaryButtonsCenterY, EFFECT_OFF_IMAGE_NAME, () => {
+    this.sfxToggleIcon = this.createAudioIconButton(audioIconsBaseX + this.audioIconsSpacingX, primaryButtonsCenterY, EFFECT_ON_IMAGE_NAME, () => {
       const nextValue = !Boolean(this.registry.get(AUDIO_SETTINGS_KEYS.SFX_MUTED));
       updateAudioSetting(this, AUDIO_SETTINGS_KEYS.SFX_MUTED, nextValue);
       audioSystem.setSfxMuted(nextValue);
       this.refreshAudioToggleIcons();
+    });
+
+    this.createAudioIconButton(audioIconsBaseX + this.audioIconsSpacingX * 2, primaryButtonsCenterY, HELP_IMAGE_NAME, () => {
+      this.scene.start(SCENE_KEYS.HELP);
     });
 
     this.refreshAudioToggleIcons();
@@ -87,6 +91,7 @@ export class MenuScene extends Phaser.Scene {
   }
 
   private createAudioIconButton(x: number, y: number, imageName: string, onSelect: () => void): Phaser.GameObjects.Image {
+    // Reuse the circular menu icon style for audio and utility shortcuts.
     const baseSize = 32 * 1.3;
 
     return createSceneIconButton(this, {
@@ -99,20 +104,21 @@ export class MenuScene extends Phaser.Scene {
   }
 
   private refreshAudioToggleIcons(): void {
+    // Highlight enabled audio and dim toggles that are currently muted.
     if (this.registry.get(AUDIO_SETTINGS_KEYS.MUSIC_MUTED)) {
-      this.musicToggleIcon?.clearTint();
-      this.musicToggleIcon?.setAlpha(1);
-    } else {
       this.musicToggleIcon?.setTint(0x8f8f8f);
       this.musicToggleIcon?.setAlpha(0.9);
+    } else {
+      this.musicToggleIcon?.clearTint();
+      this.musicToggleIcon?.setAlpha(1);
     }
 
     if (this.registry.get(AUDIO_SETTINGS_KEYS.SFX_MUTED)) {
-      this.sfxToggleIcon?.clearTint();
-      this.sfxToggleIcon?.setAlpha(1);
-    } else {
       this.sfxToggleIcon?.setTint(0x8f8f8f);
       this.sfxToggleIcon?.setAlpha(0.9);
+    } else {
+      this.sfxToggleIcon?.clearTint();
+      this.sfxToggleIcon?.setAlpha(1);
     }
   }
 }
