@@ -24,6 +24,14 @@ type MockGraphics = {
   strokeCircle: ReturnType<typeof vi.fn>;
 };
 
+type MockRectangle = {
+  handlers: Record<string, (() => void) | undefined>;
+  setOrigin: ReturnType<typeof vi.fn>;
+  setFillStyle: ReturnType<typeof vi.fn>;
+  setInteractive: ReturnType<typeof vi.fn>;
+  on: ReturnType<typeof vi.fn>;
+};
+
 const loadLevel = vi.fn();
 const getState = vi.fn();
 const setLastPlayedLevel = vi.fn();
@@ -70,6 +78,7 @@ beforeEach(() => {
 describe('LevelSelectScene', () => {
   it('renders unlocked and locked levels, starts unlocked levels, and returns to the menu', async () => {
     const createdTexts: MockText[] = [];
+    const createdRectangles: MockRectangle[] = [];
     const keyboardHandlers: Record<string, () => void> = {};
 
     getState.mockReturnValue({
@@ -125,6 +134,22 @@ describe('LevelSelectScene', () => {
         createdTexts.push(button);
         return button;
       }),
+      rectangle: vi.fn(() => {
+        const handlers: Record<string, (() => void) | undefined> = {};
+        const rectangle: MockRectangle = {
+          handlers,
+          setOrigin: vi.fn().mockReturnThis(),
+          setFillStyle: vi.fn().mockReturnThis(),
+          setInteractive: vi.fn().mockReturnThis(),
+          on: vi.fn(function (this: MockRectangle, event: string, handler: () => void) {
+            this.handlers[event] = handler;
+            return this;
+          }),
+        };
+
+        createdRectangles.push(rectangle);
+        return rectangle;
+      }),
       image: vi.fn(() => ({
         setDisplaySize: vi.fn().mockReturnThis(),
         setOrigin: vi.fn().mockReturnThis(),
@@ -144,19 +169,22 @@ describe('LevelSelectScene', () => {
     await Promise.resolve();
     await Promise.resolve();
 
-    const startButtons = createdTexts.filter((entry) => entry.text === 'Indítás');
     const backButton = createdTexts.find((entry) => entry.text === 'Vissza');
 
-    expect(createdTexts.some((entry) => entry.text === 'Pályaválasztó')).toBe(true);
     expect(createdTexts.some((entry) => entry.text === 'Bemelegítés')).toBe(true);
     expect(createdTexts.some((entry) => entry.text === 'Az első kihívás')).toBe(true);
     expect(createdTexts.some((entry) => entry.text === 'Zárolva')).toBe(true);
-    expect(startButtons).toHaveLength(1);
+    expect(createdTexts.some((entry) => entry.text === 'Indítás')).toBe(false);
+    expect(createdRectangles).toHaveLength(1);
 
-    startButtons[0]?.handlers.pointerup?.();
+    createdRectangles[0]?.handlers.pointerover?.();
+    createdRectangles[0]?.handlers.pointerout?.();
+    createdRectangles[0]?.handlers.pointerup?.();
     backButton?.handlers.pointerup?.();
-    keyboardHandlers['keydown-ESC']();
+    keyboardHandlers['keydown-M']();
 
+    expect(createdRectangles[0]?.setFillStyle).toHaveBeenNthCalledWith(1, 0xf6d878, 0.12);
+    expect(createdRectangles[0]?.setFillStyle).toHaveBeenNthCalledWith(2, 0x000000, 0.001);
     expect(setLastPlayedLevel).toHaveBeenCalledWith('level-01');
     expect(sceneManager.start).toHaveBeenCalledWith('PlayScene', { levelId: 'level-01' });
     expect(sceneManager.start).toHaveBeenCalledWith('MenuScene');

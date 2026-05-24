@@ -30,26 +30,9 @@ export class LevelSelectScene extends Phaser.Scene {
     // Build the level selection view from the authored level metadata and saved progress.
     addSceneBackground(this, 'menu');
 
-    this.add
-      .text(512, 128, 'Pályaválasztó', {
-        fontFamily: 'Verdana',
-        fontSize: '34px',
-        fontStyle: 'bold',
-        color: '#f4f1de',
-      })
-      .setOrigin(0.5);
-
-    this.add
-      .text(512, 172, 'Válaszd ki az elérhető pályát.', {
-        fontFamily: 'Verdana',
-        fontSize: '18px',
-        color: '#f2cc8f',
-      })
-      .setOrigin(0.5);
-
     createSceneTextButton(this, {
       x: 512,
-      y: 676,
+      y: 710,
       label: 'Vissza',
       width: 180,
       height: 36,
@@ -60,10 +43,13 @@ export class LevelSelectScene extends Phaser.Scene {
       },
     });
 
-    this.input.keyboard?.once('keydown-ESC', () => {
+    this.input.keyboard?.once('keydown-M', () => {
       this.openMenu();
     });
 
+    this.input.keyboard?.once('keydown-ESC', () => {
+      this.openMenu();
+    });
     void this.renderLevelEntries();
   }
 
@@ -90,7 +76,7 @@ export class LevelSelectScene extends Phaser.Scene {
           isCompleted: progressState.completedLevelIds.includes(level.id),
         };
 
-        this.renderLevelRow(level, state, 242 + index * 126);
+        this.renderLevelRow(level, state, 242 + index * 108);
       });
     } catch (error) {
       loadingText.setText('Pályabetöltési hiba');
@@ -102,16 +88,18 @@ export class LevelSelectScene extends Phaser.Scene {
     // Each row shows the preview icon, the target score, and whether the level is available.
     const left = 252;
     const top = y - 44;
+    const width = 520;
+    const height = 88;
     const panelColor = state.isUnlocked ? 0x17324a : 0x30333b;
     const borderColor = state.isUnlocked ? 0xe6c15a : 0x7b7f87;
 
     this.add.graphics()
       .fillStyle(0x08131d, 0.38)
-      .fillRoundedRect(left + 4, top + 6, 520, 88, 16)
+      .fillRoundedRect(left + 4, top + 6, width, height, 16)
       .fillStyle(panelColor, 0.94)
-      .fillRoundedRect(left, top, 520, 88, 16)
+      .fillRoundedRect(left, top, width, height, 16)
       .lineStyle(2, borderColor, 1)
-      .strokeRoundedRect(left, top, 520, 88, 16)
+      .strokeRoundedRect(left, top, width, height, 16)
       .lineStyle(2, state.isUnlocked ? 0x79c7c5 : 0x595f69, 0.9)
       .strokeRoundedRect(left + 8, top + 8, 504, 72, 12);
 
@@ -135,21 +123,22 @@ export class LevelSelectScene extends Phaser.Scene {
       .setOrigin(0, 0.5);
 
     if (state.isUnlocked) {
-      createSceneTextButton(this, {
-        x: left + 430,
-        y,
-        label: 'Indítás',
-        width: 130,
-        height: 36,
-        fontSize: '18px',
-        triggerEvent: 'pointerup',
-        onSelect: () => {
+      const interactiveOverlay = this.add
+        .rectangle(left + width / 2, top + height / 2, width, height, 0x000000, 0.001)
+        .setOrigin(0.5)
+        .setInteractive({ useHandCursor: true })
+        .on('pointerover', () => {
+          interactiveOverlay.setFillStyle(0xf6d878, 0.12);
+        })
+        .on('pointerout', () => {
+          interactiveOverlay.setFillStyle(0x000000, 0.001);
+        })
+        .on('pointerup', () => {
           this.startLevel(level.id);
-        },
-      });
+        });
 
       this.add
-        .text(left + 350, y + 30, state.isCompleted ? 'Teljesítve' : 'Elérhető', {
+        .text(left + 445, y, state.isCompleted ? 'Teljesítve' : 'Elérhető', {
           fontFamily: 'Verdana',
           fontSize: '14px',
           color: state.isCompleted ? '#81b29a' : '#f4f1de',
@@ -160,7 +149,7 @@ export class LevelSelectScene extends Phaser.Scene {
     }
 
     this.add
-      .text(left + 410, y - 4, '🔒', {
+      .text(left + 400, y - 4, '🔒', {
         fontFamily: 'Verdana',
         fontSize: '24px',
         color: '#c9ced6',
