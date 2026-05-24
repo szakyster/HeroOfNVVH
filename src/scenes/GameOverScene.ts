@@ -1,12 +1,17 @@
 import Phaser from 'phaser';
 import { AUDIO_KEYS, getAudioSystem } from '../systems/AudioSystem';
 import { LeaderboardStorage } from '../systems/LeaderboardStorage';
+import { getFirstLevelId, getNextLevelId } from '../systems/LevelCatalog';
+import { LevelProgressStorage } from '../systems/LevelProgressStorage';
 import { addSceneBackground } from '../systems/SceneBackgrounds';
 import { createSceneTextButton } from '../systems/UiButtons';
 import { SCENE_KEYS } from './sceneKeys';
 
 type GameOverData = {
   score?: number;
+  levelId?: string;
+  levelName?: string;
+  targetScore?: number;
 };
 
 export class GameOverScene extends Phaser.Scene {
@@ -16,11 +21,16 @@ export class GameOverScene extends Phaser.Scene {
     scoreValue: +6,
     scoreTail: 50,
     result: 104,
-    menuButton: 168,
-    controls: 210,
+    progression: 158,
+    retryButton: 214,
+    newGameButton: 256,
+    menuButton: 298,
+    controls: 346,
   };
 
   private readonly leaderboardStorage = new LeaderboardStorage();
+
+  private readonly progressStorage = new LevelProgressStorage(getFirstLevelId());
 
   constructor() {
     super(SCENE_KEYS.GAME_OVER);
@@ -29,11 +39,22 @@ export class GameOverScene extends Phaser.Scene {
   create(data: GameOverData): void {
     //const { width, height } = this.scale;
     const score = data.score ?? 0;
+    const levelId = data.levelId ?? this.progressStorage.getState().lastPlayedLevelId;
+    const targetScore = data.targetScore ?? Number.MAX_SAFE_INTEGER;
     const audioSystem = getAudioSystem(this);
     const savedEntry = score > 0 ? this.saveScore(score) : null;
     const textAnchor = {
       x: 260,
       y: 280,
+    };
+    const progressionMessage = this.resolveProgressionMessage(levelId, targetScore, score);
+    const retryLevel = () => {
+      const retryLevelId = data.levelId ?? this.progressStorage.getState().lastPlayedLevelId;
+      this.scene.start(SCENE_KEYS.PLAY, { levelId: retryLevelId });
+    };
+    const openLevelSelect = () => {
+      audioSystem.playMusic(AUDIO_KEYS.MENU, true);
+      this.scene.start(SCENE_KEYS.LEVEL_SELECT);
     };
     const openMenu = () => {
       audioSystem.playMusic(AUDIO_KEYS.MENU, true);
@@ -97,6 +118,44 @@ export class GameOverScene extends Phaser.Scene {
       )
       .setOrigin(0.5);
 
+    if (progressionMessage) {
+      this.add
+        .text(
+          textAnchor.x,
+          textAnchor.y + GameOverScene.TEXT_ROW_OFFSETS.progression,
+          progressionMessage,
+          {
+            fontFamily: 'Verdana',
+            fontSize: '20px',
+            color: '#81b29a',
+            align: 'center',
+          },
+        )
+        .setOrigin(0.5);
+    }
+
+    createSceneTextButton(this, {
+      x: textAnchor.x,
+      y: textAnchor.y + GameOverScene.TEXT_ROW_OFFSETS.retryButton,
+      label: 'Retry',
+      width: 176,
+      height: 36,
+      fontSize: '18px',
+      triggerEvent: 'pointerup',
+      onSelect: retryLevel,
+    });
+
+    createSceneTextButton(this, {
+      x: textAnchor.x,
+      y: textAnchor.y + GameOverScene.TEXT_ROW_OFFSETS.newGameButton,
+      label: 'Új játék',
+      width: 176,
+      height: 36,
+      fontSize: '18px',
+      triggerEvent: 'pointerup',
+      onSelect: openLevelSelect,
+    });
+
     createSceneTextButton(this, {
       x: textAnchor.x,
       y: textAnchor.y + GameOverScene.TEXT_ROW_OFFSETS.menuButton,
@@ -112,7 +171,7 @@ export class GameOverScene extends Phaser.Scene {
       .text(
         textAnchor.x,
         textAnchor.y + GameOverScene.TEXT_ROW_OFFSETS.controls,
-        'R: új játék | L: eredménylista | M: főmenü',
+        'R: retry | N: új játék | L: eredménylista | M: főmenü',
         {
           fontFamily: 'Verdana',
           fontSize: '14px',
@@ -122,7 +181,11 @@ export class GameOverScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     this.input.keyboard?.once('keydown-R', () => {
-      this.scene.start(SCENE_KEYS.PLAY);
+      retryLevel();
+    });
+
+    this.input.keyboard?.once('keydown-N', () => {
+      openLevelSelect();
     });
 
     this.input.keyboard?.once('keydown-L', () => {
@@ -142,5 +205,27 @@ export class GameOverScene extends Phaser.Scene {
     }
 
     return { rank: rank + 1 };
+  }
+
+  private resolveProgressionMessage(levelId: string, targetScore: number, score: number): string | null {
+    if (score < targetScore) {
+      return null;
+    }
+
+    const previousState = this.progressStorage.getState();
+    const nextLevelId = getNextLevelId(levelId);
+    const nextLevelWasUnlocked = nextLevelId ? previousState.unlockedLevelIds.includes(nextLevelId) : false;
+
+    this.progressStorage.markLevelCompleted(levelId);
+
+    if (nextLevelId) {
+      this.progressStorage.unlockLevel(nextLevelId);
+    }
+
+    if (nextLevelId && !nextLevelWasUnlocked) {
+      return 'Elérted a célpontszámot,\na következő pálya megnyílt.';
+    }
+
+    return 'Elérted a célpontszámot,\na pálya teljesítve.';
   }
 }

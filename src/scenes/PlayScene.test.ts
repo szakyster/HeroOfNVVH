@@ -722,6 +722,12 @@ describe('PlayScene runtime reset', () => {
     scene.scene = { start };
     scene.registry = { get: vi.fn(() => 275) };
     scene.isGameOver = false;
+    scene.selectedLevelId = 'level-02';
+    scene.currentLevel = {
+      id: 'level-02',
+      name: 'Az első kihívás',
+      targetScore: 1500,
+    };
 
     (scene.triggerGameOver as () => void)();
     (scene.triggerGameOver as () => void)();
@@ -731,7 +737,12 @@ describe('PlayScene runtime reset', () => {
     expect(playSfx).toHaveBeenCalledWith('sfx-error');
     expect(fadeOutMusic).toHaveBeenCalledTimes(1);
     expect(fadeOutMusic).toHaveBeenCalledWith(900, expect.any(Function));
-    expect(start).toHaveBeenCalledWith('GameOverScene', { score: 275 });
+    expect(start).toHaveBeenCalledWith('GameOverScene', {
+      score: 275,
+      levelId: 'level-02',
+      levelName: 'Az első kihívás',
+      targetScore: 1500,
+    });
   });
 
   it('increments escaped enemies and triggers game over at the threshold', () => {

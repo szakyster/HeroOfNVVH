@@ -88,7 +88,7 @@ describe('LevelSelectScene', () => {
     });
     loadLevel
       .mockResolvedValueOnce({ id: 'level-01', name: 'Bemelegítés', targetScore: 900, icon: 'enemy01.png' })
-      .mockResolvedValueOnce({ id: 'level-02', name: 'Az első kihívás', targetScore: 1500, icon: 'enemy01.png' });
+      .mockResolvedValueOnce({ id: 'level-02', name: 'Az első kihívás', targetScore: 1500, icon: 'enemy02.png' });
 
     const scene = new LevelSelectScene() as unknown as Record<string, unknown>;
     const sceneManager = { start: vi.fn() };
@@ -176,6 +176,8 @@ describe('LevelSelectScene', () => {
     expect(createdTexts.some((entry) => entry.text === 'Zárolva')).toBe(true);
     expect(createdTexts.some((entry) => entry.text === 'Indítás')).toBe(false);
     expect(createdRectangles).toHaveLength(1);
+    expect(scene.add.image).toHaveBeenCalledWith(expect.any(Number), expect.any(Number), 'level-icon:enemy01.png');
+    expect(scene.add.image).toHaveBeenCalledWith(expect.any(Number), expect.any(Number), 'level-icon:enemy02.png');
 
     createdRectangles[0]?.handlers.pointerover?.();
     createdRectangles[0]?.handlers.pointerout?.();

@@ -142,6 +142,13 @@ type PlaySceneData = {
   levelId?: string;
 };
 
+type GameOverSceneData = {
+  score: number;
+  levelId: string;
+  levelName: string;
+  targetScore: number;
+};
+
 export class PlayScene extends Phaser.Scene {
   private selectedLevelId = getFirstLevelId();
 
@@ -1410,8 +1417,15 @@ export class PlayScene extends Phaser.Scene {
     this.isGameOver = true;
     this.audioSystem?.playSfx(AUDIO_KEYS.ERROR);
     const currentScore = this.registry.get('score') ?? 0;
+    const gameOverData: GameOverSceneData = {
+      score: currentScore,
+      levelId: this.currentLevel?.id ?? this.selectedLevelId,
+      levelName: this.currentLevel?.name ?? this.selectedLevelId,
+      targetScore: this.currentLevel?.targetScore ?? Number.MAX_SAFE_INTEGER,
+    };
+
     this.audioSystem?.fadeOutMusic(900, () => {
-      this.scene.start(SCENE_KEYS.GAME_OVER, { score: currentScore });
+      this.scene.start(SCENE_KEYS.GAME_OVER, gameOverData);
     });
   }
 }
