@@ -2,14 +2,16 @@ import type Phaser from 'phaser';
 import type { LevelData } from '../../types/level';
 import { DEFAULT_LOOT_CONFIG } from '../../systems/LootSystem';
 import { createSceneIconButton } from '../../systems/UiButtons';
-import { EFFECT_OFF_IMAGE_NAME, getUiAssetKey, INVENTORY_SLOT_IMAGE_NAME, MUSIC_OFF_IMAGE_NAME } from '../../systems/UiAssets';
+import { EFFECT_ON_IMAGE_NAME, getUiAssetKey, INVENTORY_SLOT_IMAGE_NAME, MUSIC_ON_IMAGE_NAME } from '../../systems/UiAssets';
 import { HEADLINE_FONT_FAMILY } from '../../utils/typography';
 
 export const HEADER_EMPHASIS_COLOR = '#f4e6a2';
 export const ESCAPED_WARNING_COLOR = '#ff4d4f';
+export const TARGET_SCORE_REACHED_COLOR = '#80ed99';
 
 type SetTextLike = {
   setText?: (value: string) => unknown;
+  setColor?: (value: string) => unknown;
 };
 
 type SetIconLike = {
@@ -133,7 +135,7 @@ export function createPlaySceneHud(scene: Phaser.Scene, width: number): PlayScen
   const valueY = 63;
   const columns = [0, 0.24, 0.52, 0.8].map((ratio) => contentLeft + contentWidth * ratio);
 
-  addHudLabel(scene, columns[0], metricY, 'Pont');
+  addHudLabel(scene, columns[0], metricY, 'Vagyon');
   const scoreValueText = addHudValue(scene, columns[0], valueY);
 
   addHudLabel(scene, columns[1], metricY, 'Hátizsák');
@@ -195,12 +197,12 @@ export function createPlaySceneStatusTexts(
     .setOrigin(0, 0.5)
     .setDepth(7);
 
-  const musicToggleIcon = createIconToggleButton(scene, audioIconCenterX, audioIconStartY, MUSIC_OFF_IMAGE_NAME, callbacks.onMusicToggle);
+  const musicToggleIcon = createIconToggleButton(scene, audioIconCenterX, audioIconStartY, MUSIC_ON_IMAGE_NAME, callbacks.onMusicToggle);
   const sfxToggleIcon = createIconToggleButton(
     scene,
     audioIconCenterX,
     audioIconStartY + audioIconsSpacingY,
-    EFFECT_OFF_IMAGE_NAME,
+    EFFECT_ON_IMAGE_NAME,
     callbacks.onSfxToggle,
   );
 
@@ -213,14 +215,14 @@ export function createPlaySceneStatusTexts(
 }
 
 function syncAudioToggleIcon(icon: SetIconLike | undefined, isMuted: boolean): void {
-  icon?.setAlpha?.(isMuted ? 1 : 0.9);
+  icon?.setAlpha?.(isMuted ? 0.9 : 1);
 
   if (isMuted) {
-    icon?.clearTint?.();
+    icon?.setTint?.(0x8f8f8f);
     return;
   }
 
-  icon?.setTint?.(0x8f8f8f);
+  icon?.clearTint?.();
 }
 
 export function syncInventorySlotImages(
@@ -294,6 +296,19 @@ export function syncAudioToggleTexts(
 ): void {
   syncAudioToggleIcon(refs.musicToggleIcon, args.musicMuted);
   syncAudioToggleIcon(refs.sfxToggleIcon, args.sfxMuted);
+}
+
+export function syncScoreValueColor(args: {
+  score: number;
+  targetScore: number;
+  scoreValueText?: SetTextLike;
+}): void {
+  // Highlight the current wealth once the level target has been reached.
+  if (!args.scoreValueText) {
+    return;
+  }
+
+  args.scoreValueText.setColor?.(args.score >= args.targetScore ? TARGET_SCORE_REACHED_COLOR : HEADER_EMPHASIS_COLOR);
 }
 
 export function syncEscapedEnemyWarningState(args: {

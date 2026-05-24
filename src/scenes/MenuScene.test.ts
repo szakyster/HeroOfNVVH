@@ -199,11 +199,11 @@ describe('MenuScene', () => {
     expect(titleTexts).toHaveLength(0);
     expect(createdImages).toHaveLength(3);
     expect(createdGraphics).toHaveLength(5);
-    expect(musicToggle?.texture).toBe('ui:musicoff.png');
-    expect(sfxToggle?.texture).toBe('ui:effectoff.png');
+    expect(musicToggle?.texture).toBe('ui:musicon.png');
+    expect(sfxToggle?.texture).toBe('ui:effecton.png');
     expect(helpToggle?.texture).toBe('ui:help.png');
-    expect(musicToggle?.setTint).toHaveBeenCalledWith(0x8f8f8f);
-    expect(sfxToggle?.setTint).toHaveBeenCalledWith(0x8f8f8f);
+    expect(musicToggle?.clearTint).toHaveBeenCalled();
+    expect(sfxToggle?.clearTint).toHaveBeenCalled();
 
     leaderboardButton?.handlers.pointerdown?.();
     keyboardHandlers['keydown-SPACE']();
@@ -220,6 +220,8 @@ describe('MenuScene', () => {
     expect(updateAudioSetting).toHaveBeenCalledWith(scene, 'sfxMuted', true);
     expect(mockAudioSystem.setMusicMuted).toHaveBeenCalledWith(true);
     expect(mockAudioSystem.setSfxMuted).toHaveBeenCalledWith(true);
+    expect(musicToggle?.setTint).toHaveBeenCalledWith(0x8f8f8f);
+    expect(sfxToggle?.setTint).toHaveBeenCalledWith(0x8f8f8f);
     expect(musicToggle?.clearTint).toHaveBeenCalled();
     expect(sfxToggle?.clearTint).toHaveBeenCalled();
   });

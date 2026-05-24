@@ -47,6 +47,7 @@ beforeEach(() => {
 describe('HelpScene', () => {
   it('renders the help copy and wires back and start navigation', () => {
     const createdTexts: MockText[] = [];
+    const keyboardHandlers: Record<string, (() => void) | undefined> = {};
     const scene = new HelpScene() as unknown as Record<string, unknown>;
     const sceneManager = { start: vi.fn() };
 
@@ -85,6 +86,13 @@ describe('HelpScene', () => {
         return item;
       }),
     };
+    scene.input = {
+      keyboard: {
+        once: vi.fn((event: string, handler: () => void) => {
+          keyboardHandlers[event] = handler;
+        }),
+      },
+    };
     scene.scene = sceneManager;
 
     (scene.create as () => void)();
@@ -94,12 +102,16 @@ describe('HelpScene', () => {
 
     expect(createdTexts.some((entry) => entry.text === 'Segítség')).toBe(false);
     expect(createdTexts.some((entry) => entry.text.includes('Szerezd vissza a Nemzeti Vagyont'))).toBe(true);
+    expect(createdTexts.some((entry) => entry.text.includes('SPACE: játék indítás | ESC/M: főmenü'))).toBe(true);
 
     backButton?.handlers.pointerdown?.();
     startButton?.handlers.pointerdown?.();
+    keyboardHandlers['keydown-SPACE']?.();
+    keyboardHandlers['keydown-ESC']?.();
+    keyboardHandlers['keydown-M']?.();
 
     expect(sceneManager.start).toHaveBeenCalledWith('MenuScene');
     expect(sceneManager.start).toHaveBeenCalledWith('LevelSelectScene');
-    expect(sceneManager.start).toHaveBeenCalledTimes(2);
+    expect(sceneManager.start).toHaveBeenCalledTimes(5);
   });
 });

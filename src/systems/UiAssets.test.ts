@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
-  EFFECT_OFF_IMAGE_NAME,
+  EFFECT_ON_IMAGE_NAME,
   getAvailableUiAssets,
   getUiAssetKey,
   hasUiAsset,
   HELP_IMAGE_NAME,
   INVENTORY_SLOT_IMAGE_NAME,
-  MUSIC_OFF_IMAGE_NAME,
+  MUSIC_ON_IMAGE_NAME,
   isUiImageNameAllowed,
 } from './UiAssets';
 
@@ -21,12 +21,12 @@ describe('UiAssets', () => {
   it('exposes the inventory bag asset registry', () => {
     expect(getUiAssetKey(INVENTORY_SLOT_IMAGE_NAME)).toBe('ui:bag01.png');
     expect(hasUiAsset(INVENTORY_SLOT_IMAGE_NAME)).toBe(true);
-    expect(getUiAssetKey(EFFECT_OFF_IMAGE_NAME)).toBe('ui:effectoff.png');
-    expect(hasUiAsset(EFFECT_OFF_IMAGE_NAME)).toBe(true);
+    expect(getUiAssetKey(EFFECT_ON_IMAGE_NAME)).toBe('ui:effecton.png');
+    expect(hasUiAsset(EFFECT_ON_IMAGE_NAME)).toBe(true);
     expect(getUiAssetKey(HELP_IMAGE_NAME)).toBe('ui:help.png');
     expect(hasUiAsset(HELP_IMAGE_NAME)).toBe(true);
-    expect(getUiAssetKey(MUSIC_OFF_IMAGE_NAME)).toBe('ui:musicoff.png');
-    expect(hasUiAsset(MUSIC_OFF_IMAGE_NAME)).toBe(true);
+    expect(getUiAssetKey(MUSIC_ON_IMAGE_NAME)).toBe('ui:musicon.png');
+    expect(hasUiAsset(MUSIC_ON_IMAGE_NAME)).toBe(true);
     expect(getAvailableUiAssets()).toEqual([
       {
         imageName: INVENTORY_SLOT_IMAGE_NAME,
@@ -34,9 +34,9 @@ describe('UiAssets', () => {
         url: expect.stringContaining('/assets/sprites/bag01.png'),
       },
       {
-        imageName: EFFECT_OFF_IMAGE_NAME,
-        key: 'ui:effectoff.png',
-        url: expect.stringContaining('/assets/sprites/effectoff.png'),
+        imageName: EFFECT_ON_IMAGE_NAME,
+        key: 'ui:effecton.png',
+        url: expect.stringContaining('/assets/sprites/effecton.png'),
       },
       {
         imageName: HELP_IMAGE_NAME,
@@ -44,9 +44,9 @@ describe('UiAssets', () => {
         url: expect.stringContaining('/assets/sprites/help.png'),
       },
       {
-        imageName: MUSIC_OFF_IMAGE_NAME,
-        key: 'ui:musicoff.png',
-        url: expect.stringContaining('/assets/sprites/musicoff.png'),
+        imageName: MUSIC_ON_IMAGE_NAME,
+        key: 'ui:musicon.png',
+        url: expect.stringContaining('/assets/sprites/musicon.png'),
       },
     ]);
   });

@@ -142,7 +142,7 @@ describe('PlayScene runtime reset', () => {
 
   it('refreshes HUD texts from registry values and inventory state', () => {
     const scene = new PlayScene() as unknown as Record<string, unknown>;
-    const scoreValueText = { setText: vi.fn() };
+    const scoreValueText = { setText: vi.fn(), setColor: vi.fn() };
     const inventorySlotImages = Array.from({ length: 4 }, () => ({
       setAlpha: vi.fn(),
       setTint: vi.fn(),
@@ -172,11 +172,13 @@ describe('PlayScene runtime reset', () => {
     scene.waveValueText = waveValueText;
     scene.inventory = [{ type: 'wallet', value: 10 }, { type: 'phone', value: 20 }];
     scene.waveNumber = 4;
+    scene.currentLevel = { targetScore: 100 };
     scene.tweens = { add: vi.fn() };
 
     (scene.refreshHud as () => void)();
 
     expect(scoreValueText.setText).toHaveBeenCalledWith('150 M Ft');
+    expect(scoreValueText.setColor).toHaveBeenCalledWith('#80ed99');
   expect(inventorySlotImages[0].setAlpha).toHaveBeenCalledWith(1);
   expect(inventorySlotImages[2].setTint).toHaveBeenCalledWith(0x7f7f7f);
     expect(escapedValueText.setText).toHaveBeenCalledWith('3/10');

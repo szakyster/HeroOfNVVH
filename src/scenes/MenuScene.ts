@@ -8,7 +8,7 @@ import {
 } from '../systems/AudioSystem';
 import { addSceneBackground } from '../systems/SceneBackgrounds';
 import { createSceneIconButton, createSceneTextButton } from '../systems/UiButtons';
-import { EFFECT_OFF_IMAGE_NAME, getUiAssetKey, HELP_IMAGE_NAME, MUSIC_OFF_IMAGE_NAME } from '../systems/UiAssets';
+import { EFFECT_ON_IMAGE_NAME, getUiAssetKey, HELP_IMAGE_NAME, MUSIC_ON_IMAGE_NAME } from '../systems/UiAssets';
 import { SCENE_KEYS } from './sceneKeys';
 
 export class MenuScene extends Phaser.Scene {
@@ -45,14 +45,14 @@ export class MenuScene extends Phaser.Scene {
     const primaryButtonsCenterY = height / 2 + 89.5 + this.primaryButtonsOffsetY;
     const audioIconsBaseX = width / 2 + 55;
 
-    this.musicToggleIcon = this.createAudioIconButton(audioIconsBaseX, primaryButtonsCenterY, MUSIC_OFF_IMAGE_NAME, () => {
+    this.musicToggleIcon = this.createAudioIconButton(audioIconsBaseX, primaryButtonsCenterY, MUSIC_ON_IMAGE_NAME, () => {
       const nextValue = !Boolean(this.registry.get(AUDIO_SETTINGS_KEYS.MUSIC_MUTED));
       updateAudioSetting(this, AUDIO_SETTINGS_KEYS.MUSIC_MUTED, nextValue);
       audioSystem.setMusicMuted(nextValue);
       this.refreshAudioToggleIcons();
     });
 
-    this.sfxToggleIcon = this.createAudioIconButton(audioIconsBaseX + this.audioIconsSpacingX, primaryButtonsCenterY, EFFECT_OFF_IMAGE_NAME, () => {
+    this.sfxToggleIcon = this.createAudioIconButton(audioIconsBaseX + this.audioIconsSpacingX, primaryButtonsCenterY, EFFECT_ON_IMAGE_NAME, () => {
       const nextValue = !Boolean(this.registry.get(AUDIO_SETTINGS_KEYS.SFX_MUTED));
       updateAudioSetting(this, AUDIO_SETTINGS_KEYS.SFX_MUTED, nextValue);
       audioSystem.setSfxMuted(nextValue);
@@ -104,21 +104,21 @@ export class MenuScene extends Phaser.Scene {
   }
 
   private refreshAudioToggleIcons(): void {
-    // Keep only the mute toggles visually tied to the registry-backed audio state.
+    // Highlight enabled audio and dim toggles that are currently muted.
     if (this.registry.get(AUDIO_SETTINGS_KEYS.MUSIC_MUTED)) {
-      this.musicToggleIcon?.clearTint();
-      this.musicToggleIcon?.setAlpha(1);
-    } else {
       this.musicToggleIcon?.setTint(0x8f8f8f);
       this.musicToggleIcon?.setAlpha(0.9);
+    } else {
+      this.musicToggleIcon?.clearTint();
+      this.musicToggleIcon?.setAlpha(1);
     }
 
     if (this.registry.get(AUDIO_SETTINGS_KEYS.SFX_MUTED)) {
-      this.sfxToggleIcon?.clearTint();
-      this.sfxToggleIcon?.setAlpha(1);
-    } else {
       this.sfxToggleIcon?.setTint(0x8f8f8f);
       this.sfxToggleIcon?.setAlpha(0.9);
+    } else {
+      this.sfxToggleIcon?.clearTint();
+      this.sfxToggleIcon?.setAlpha(1);
     }
   }
 }
