@@ -4,6 +4,7 @@ import {
   getAvailableUiAssets,
   getUiAssetKey,
   hasUiAsset,
+  HELP_IMAGE_NAME,
   INVENTORY_SLOT_IMAGE_NAME,
   MUSIC_OFF_IMAGE_NAME,
   isUiImageNameAllowed,
@@ -22,6 +23,8 @@ describe('UiAssets', () => {
     expect(hasUiAsset(INVENTORY_SLOT_IMAGE_NAME)).toBe(true);
     expect(getUiAssetKey(EFFECT_OFF_IMAGE_NAME)).toBe('ui:effectoff.png');
     expect(hasUiAsset(EFFECT_OFF_IMAGE_NAME)).toBe(true);
+    expect(getUiAssetKey(HELP_IMAGE_NAME)).toBe('ui:help.png');
+    expect(hasUiAsset(HELP_IMAGE_NAME)).toBe(true);
     expect(getUiAssetKey(MUSIC_OFF_IMAGE_NAME)).toBe('ui:musicoff.png');
     expect(hasUiAsset(MUSIC_OFF_IMAGE_NAME)).toBe(true);
     expect(getAvailableUiAssets()).toEqual([
@@ -34,6 +37,11 @@ describe('UiAssets', () => {
         imageName: EFFECT_OFF_IMAGE_NAME,
         key: 'ui:effectoff.png',
         url: expect.stringContaining('/assets/sprites/effectoff.png'),
+      },
+      {
+        imageName: HELP_IMAGE_NAME,
+        key: 'ui:help.png',
+        url: expect.stringContaining('/assets/sprites/help.png'),
       },
       {
         imageName: MUSIC_OFF_IMAGE_NAME,

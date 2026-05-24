@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { BootScene } from './scenes/BootScene';
 import { GameOverScene } from './scenes/GameOverScene';
+import { HelpScene } from './scenes/HelpScene';
 import { LeaderboardScene } from './scenes/LeaderboardScene';
 import { LevelSelectScene } from './scenes/LevelSelectScene';
 import { MenuScene } from './scenes/MenuScene';
@@ -27,7 +28,7 @@ const config: Phaser.Types.Core.GameConfig = {
     pixelArt: false,
     antialias: true,
   },
-  scene: [BootScene, MenuScene, LevelSelectScene, PlayScene, GameOverScene, LeaderboardScene],
+  scene: [BootScene, MenuScene, HelpScene, LevelSelectScene, PlayScene, GameOverScene, LeaderboardScene],
 };
 
 // Initialize the Phaser game

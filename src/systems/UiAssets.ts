@@ -4,6 +4,7 @@ const PUBLIC_BASE_URL = import.meta.env.BASE_URL ?? '/';
 
 export const INVENTORY_SLOT_IMAGE_NAME = 'bag01.png';
 export const EFFECT_OFF_IMAGE_NAME = 'effectoff.png';
+export const HELP_IMAGE_NAME = 'help.png';
 export const MUSIC_OFF_IMAGE_NAME = 'musicoff.png';
 
 export type UiAssetEntry = {
@@ -28,7 +29,7 @@ export function getUiAssetKey(imageName: string): string {
   return `${UI_ASSET_KEY_PREFIX}${imageName}`;
 }
 
-const UI_IMAGE_NAMES = [INVENTORY_SLOT_IMAGE_NAME, EFFECT_OFF_IMAGE_NAME, MUSIC_OFF_IMAGE_NAME];
+const UI_IMAGE_NAMES = [INVENTORY_SLOT_IMAGE_NAME, EFFECT_OFF_IMAGE_NAME, HELP_IMAGE_NAME, MUSIC_OFF_IMAGE_NAME];
 
 const uiAssetRegistry = UI_IMAGE_NAMES.map((imageName) => ({
   imageName,
