@@ -2,8 +2,8 @@
   "id": "level-02",
   "name": "Az első kihívás",
   "targetScore": 1200,
-  "icon": "enemy02.png",
-  "enemyTypes": ["enemy01", "enemy02", "enemy03"],
+  "icon": "enemy01.png",
+  "enemyTypes": ["enemy01"],
   "obstacles": [
     { "x": 2, "y": 1, "image": "residental01.png" },
     { "x": 4, "y": 1, "image": "residental01.png" },

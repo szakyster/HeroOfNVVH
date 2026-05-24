@@ -2,24 +2,23 @@
   "id": "level-03",
   "name": "Fokozódó nyomás",
   "targetScore": 1200,
-  "icon": "enemy01.png",
-  "enemyTypes": ["enemy01", "enemy02", "enemy03"],
+  "icon": "enemy03.png",
+  "enemyTypes": ["enemy01", "enemy03"],
   "obstacles": [
-    { "x": 2, "y": 0, "image": "tree01.png" },
-    { "x": 3, "y": 0, "image": "tree01.png" },
-    { "x": 1, "y": 3, "image": "residental01.png" },
-    { "x": 3, "y": 1, "image": "office01.png" },
-    { "x": 5, "y": 1, "image": "car01.png" },
-    { "x": 2, "y": 3, "image": "tree01.png" },
-    { "x": 4, "y": 3, "image": "residental01.png" },
-    { "x": 1, "y": 4, "image": "car01.png" }
+    { "x": 3, "y": 1, "image": "tree01.png" },
+    { "x": 2, "y": 2, "image": "residental01.png" },
+    { "x": 3, "y": 2, "image": "residental01.png" },
+    { "x": 5, "y": 2, "image": "office01.png" },
+    { "x": 6, "y": 2, "image": "tree01.png" },
+    { "x": 5, "y": 3, "image": "car01.png" },
+    { "x": 2, "y": 5, "image": "residental01.png" }
   ],
   "spawnZones": [
     {
       "id": "hatvanpuszta-main",
       "cells": [
-        { "x": 0, "y": 0 },
-        { "x": 1, "y": 0 }
+        { "x": 4, "y": 0 },
+        { "x": 6, "y": 0 }
       ]
     }
   ],
@@ -27,14 +26,13 @@
     {
       "id": "repter-main",
       "cells": [
-        { "x": 6, "y": 5 },
-        { "x": 5, "y": 5 }
+        { "x": 6, "y": 5 }
       ]
     }
   ],
   "sanctuaryZone": [
-    { "x": 2, "y": 5 },
-    { "x": 3, "y": 5 }
+    { "x": 0, "y": 5 },
+    { "x": 1, "y": 5}
   ],
   "hrsImages": [
     {
@@ -43,8 +41,8 @@
       "zoneId": "hatvanpuszta-main",
       "image": "hatvanpuszta01.png",
       "side": "left",
-      "offsetX": 80,
-      "offsetY": 20,
+      "offsetX": 0,
+      "offsetY": -20,
       "scale": 0.8
     },
     {
@@ -62,7 +60,8 @@
       "zoneType": "sanctuary",
       "image": "nvvh01.png",
       "side": "bottom",
-      "offsetY": -80,
+      "offsetY": -140,
+      "offsetX": -160,
       "scale": 0.75
     }
   ],

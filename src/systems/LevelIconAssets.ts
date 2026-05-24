@@ -1,6 +1,5 @@
 const LEVEL_ICON_ASSET_KEY_PREFIX = 'level-icon:';
 const ALLOWED_IMAGE_EXTENSION_PATTERN = /\.(png|jpe?g|webp)$/i;
-const LEVEL_ICON_IMAGE_NAMES = ['enemy01.png', 'enemy02.png'];
 const PUBLIC_BASE_URL = import.meta.env.BASE_URL ?? '/';
 
 export type LevelIconAssetEntry = {
@@ -27,11 +26,33 @@ export function getLevelIconAssetKey(imageName: string): string {
   return `${LEVEL_ICON_ASSET_KEY_PREFIX}${imageName}`;
 }
 
-const levelIconAssetRegistry = LEVEL_ICON_IMAGE_NAMES.map((imageName) => ({
-  imageName,
-  key: getLevelIconAssetKey(imageName),
-  url: `${PUBLIC_BASE_URL}assets/sprites/${imageName}`,
-})).sort((left, right) => left.imageName.localeCompare(right.imageName));
+const levelIconAssetRegistry: LevelIconAssetEntry[] = [
+  {
+    imageName: 'enemy01.png',
+    key: getLevelIconAssetKey('enemy01.png'),
+    url: `${PUBLIC_BASE_URL}assets/sprites/enemy01.png`,
+  },
+  {
+    imageName: 'enemy02.png',
+    key: getLevelIconAssetKey('enemy02.png'),
+    url: `${PUBLIC_BASE_URL}assets/sprites/enemy02.png`,
+  },
+  {
+    imageName: 'enemy03.png',
+    key: getLevelIconAssetKey('enemy03.png'),
+    url: `${PUBLIC_BASE_URL}assets/sprites/enemy03.png`,
+  },
+  {
+    imageName: 'enemy04.png',
+    key: getLevelIconAssetKey('enemy04.png'),
+    url: `${PUBLIC_BASE_URL}assets/sprites/enemy04/walk_down.png`,
+  },
+  {
+    imageName: 'PSZ01Run.png',
+    key: getLevelIconAssetKey('PSZ01Run.png'),
+    url: `${PUBLIC_BASE_URL}assets/sprites/PSZ01Run.png`,
+  },
+].sort((left, right) => left.imageName.localeCompare(right.imageName));
 
 const levelIconAssetRegistryByName = new Map(levelIconAssetRegistry.map((entry) => [entry.imageName, entry]));
 

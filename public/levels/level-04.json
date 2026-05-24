@@ -2,26 +2,24 @@
   "id": "level-04",
   "name": "Szűk keresztmetszet",
   "targetScore": 1600,
-  "icon": "enemy02.png",
+  "icon": "enemy04.png",
   "enemyTypes": ["enemy01", "enemy02", "enemy03", "enemy04"],
   "obstacles": [
-    { "x": 2, "y": 0, "image": "office01.png" },
-    { "x": 4, "y": 0, "image": "tree01.png" },
+    { "x": 4, "y": 0, "image": "office01.png" },
+    { "x": 3, "y": 1, "image": "tree01.png" },
     { "x": 1, "y": 1, "image": "car01.png" },
-    { "x": 3, "y": 1, "image": "residental01.png" },
-    { "x": 5, "y": 1, "image": "tree01.png" },
-    { "x": 2, "y": 2, "image": "office01.png" },
-    { "x": 4, "y": 2, "image": "car01.png" },
-    { "x": 1, "y": 3, "image": "tree01.png" },
-    { "x": 5, "y": 3, "image": "residental01.png" },
-    { "x": 3, "y": 4, "image": "tree01.png" }
+    { "x": 4, "y": 1, "image": "car01.png" },
+    { "x": 6, "y": 1, "image": "residental01.png" },
+    { "x": 3, "y": 2, "image": "tree01.png" },
+    { "x": 3, "y": 3, "image": "office01.png" },
+    { "x": 6, "y": 5, "image": "car01.png" }
   ],
   "spawnZones": [
     {
       "id": "hatvanpuszta-main",
       "cells": [
-        { "x": 0, "y": 0 },
-        { "x": 1, "y": 0 }
+        { "x": 0, "y": 2 },
+        { "x": 0, "y": 3 }
       ]
     }
   ],
@@ -29,14 +27,13 @@
     {
       "id": "repter-main",
       "cells": [
-        { "x": 6, "y": 4 },
-        { "x": 6, "y": 5 }
+        { "x": 6, "y": 3 }
       ]
     }
   ],
   "sanctuaryZone": [
-    { "x": 0, "y": 5 },
-    { "x": 1, "y": 5 }
+    { "x": 1, "y": 5 },
+    { "x": 2, "y": 5 }
   ],
   "hrsImages": [
     {
@@ -46,7 +43,7 @@
       "image": "hatvanpuszta01.png",
       "side": "left",
       "offsetX": 80,
-      "offsetY": 20,
+      "offsetY": -60,
       "scale": 0.8
     },
     {
@@ -64,7 +61,7 @@
       "zoneType": "sanctuary",
       "image": "nvvh01.png",
       "side": "bottom",
-      "offsetY": -70,
+      "offsetY": -100,
       "scale": 0.75
     }
   ],
