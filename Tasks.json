@@ -159,13 +159,13 @@
       "id": 27,
       "name": "Per-Level Enemy Definitions",
       "description": "Extend the pálya definition with the list of enemy types used on the given level so later level loading and selection flow can reason about level-specific enemy composition. Define the schema change, update the relevant loader validation expectations, and align the authored level JSON files with the new field. Reference: Tech.md section 5, JatekLeiras.md section 14, and Decisions.md D-022",
-      "status": "in progress"
+      "status": "closed"
     },
     {
       "id": 28,
       "name": "Level Select Scene & Menu Flow",
       "description": "Create the LevelSelectScene and route the main menu Start/New Game flow through it. Show available pályák in a selectable list with their small preview icons, render locked entries with a lakat icon, and allow returning to the main menu. Reference: Architecture.md section 4, JatekLeiras.md sections 9.1-9.2, Vizualitas.md section 13.2",
-      "status": "open"
+      "status": "in progress"
     },
     {
       "id": 29,
