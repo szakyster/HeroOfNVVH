@@ -13,7 +13,7 @@ export class HelpScene extends Phaser.Scene {
 
   create(): void {
     // Render a lightweight help screen with the core navigation actions.
-    const { height } = this.scale;
+    const { width, height } = this.scale;
     const openLevelSelect = () => {
       this.scene.start(SCENE_KEYS.LEVEL_SELECT);
     };
@@ -45,6 +45,15 @@ export class HelpScene extends Phaser.Scene {
         color: '#81b29a',
       })
       .setOrigin(0.5);
+
+    this.add
+      .text(width - 24, height - 20, 'Kapcsolat: szakyster.honvvh@gmail.com', {
+        fontFamily: 'Verdana',
+        fontSize: '14px',
+        color: '#f4f1de',
+        align: 'right',
+      })
+      .setOrigin(1, 1);
 
     this.input.keyboard?.once('keydown-SPACE', openLevelSelect);
     this.input.keyboard?.once('keydown-ESC', openMenu);

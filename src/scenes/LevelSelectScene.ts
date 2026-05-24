@@ -19,6 +19,11 @@ type PlaySceneStartData = {
 
 const BACK_BUTTON_LOCK_MS = 1000;
 
+function getLevelRowCenterY(index: number, totalLevels: number): number {
+  // Pull the list upward as it grows so six authored levels still fit on the fixed screen height.
+  return 242 - Math.max(0, totalLevels - 2) * 30 + index * 90;
+}
+
 export class LevelSelectScene extends Phaser.Scene {
   private readonly levelLoader = new LevelLoader();
 
@@ -92,7 +97,7 @@ export class LevelSelectScene extends Phaser.Scene {
           isCompleted: progressState.completedLevelIds.includes(level.id),
         };
 
-        this.renderLevelRow(level, state, 242 + index * 108);
+        this.renderLevelRow(level, state, getLevelRowCenterY(index, levels.length));
       });
     } catch (error) {
       loadingText.setText('Pályabetöltési hiba');

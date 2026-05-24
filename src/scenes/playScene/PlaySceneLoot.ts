@@ -1,7 +1,7 @@
 import type Phaser from 'phaser';
 import type { CollisionRect } from '../../systems/ICollisionProvider';
 
-export type LootValue = 10 | 20 | 50;
+export type LootValue = number;
 
 export type InventoryItem = {
   type: string;

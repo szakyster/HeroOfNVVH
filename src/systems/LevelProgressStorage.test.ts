@@ -23,13 +23,13 @@ function createStorageMock(initialState: Record<string, string> = {}) {
 describe('LevelProgressStorage', () => {
   it('returns a first-level fallback when storage is unavailable or empty', () => {
     expect(new LevelProgressStorage('level-01', LEVEL_PROGRESS_STORAGE_KEY, null).getState()).toEqual({
-      unlockedLevelIds: ['level-01'],
+      unlockedLevelIds: ['level-01', 'level-02', 'level-03', 'level-04', 'level-05', 'level-06'],
       completedLevelIds: [],
       lastPlayedLevelId: 'level-01',
     });
 
     expect(new LevelProgressStorage('level-01', LEVEL_PROGRESS_STORAGE_KEY, createStorageMock()).getState()).toEqual({
-      unlockedLevelIds: ['level-01'],
+      unlockedLevelIds: ['level-01', 'level-02', 'level-03', 'level-04', 'level-05', 'level-06'],
       completedLevelIds: [],
       lastPlayedLevelId: 'level-01',
     });
@@ -41,7 +41,7 @@ describe('LevelProgressStorage', () => {
     });
 
     expect(new LevelProgressStorage('level-01', LEVEL_PROGRESS_STORAGE_KEY, storage).getState()).toEqual({
-      unlockedLevelIds: ['level-01'],
+      unlockedLevelIds: ['level-01', 'level-02', 'level-03', 'level-04', 'level-05', 'level-06'],
       completedLevelIds: [],
       lastPlayedLevelId: 'level-01',
     });
@@ -57,8 +57,8 @@ describe('LevelProgressStorage', () => {
     });
 
     expect(new LevelProgressStorage('level-01', LEVEL_PROGRESS_STORAGE_KEY, storage).getState()).toEqual({
-      unlockedLevelIds: ['level-01', 'level-02'],
-      completedLevelIds: ['level-02'],
+      unlockedLevelIds: ['level-01', 'level-02', 'level-03', 'level-04', 'level-05', 'level-06'],
+      completedLevelIds: ['level-03', 'level-02'],
       lastPlayedLevelId: 'level-01',
     });
   });
@@ -68,13 +68,13 @@ describe('LevelProgressStorage', () => {
     const progress = new LevelProgressStorage('level-01', LEVEL_PROGRESS_STORAGE_KEY, storage);
 
     expect(progress.unlockLevel('level-02')).toEqual({
-      unlockedLevelIds: ['level-01', 'level-02'],
+      unlockedLevelIds: ['level-01', 'level-02', 'level-03', 'level-04', 'level-05', 'level-06'],
       completedLevelIds: [],
       lastPlayedLevelId: 'level-01',
     });
 
     expect(progress.setLastPlayedLevel('level-02')).toEqual({
-      unlockedLevelIds: ['level-01', 'level-02'],
+      unlockedLevelIds: ['level-01', 'level-02', 'level-03', 'level-04', 'level-05', 'level-06'],
       completedLevelIds: [],
       lastPlayedLevelId: 'level-02',
     });
@@ -85,13 +85,13 @@ describe('LevelProgressStorage', () => {
     const progress = new LevelProgressStorage('level-01', LEVEL_PROGRESS_STORAGE_KEY, storage);
 
     expect(progress.markLevelCompleted('level-02')).toEqual({
-      unlockedLevelIds: ['level-01', 'level-02'],
+      unlockedLevelIds: ['level-01', 'level-02', 'level-03', 'level-04', 'level-05', 'level-06'],
       completedLevelIds: ['level-02'],
       lastPlayedLevelId: 'level-02',
     });
 
     expect(progress.getState()).toEqual({
-      unlockedLevelIds: ['level-01', 'level-02'],
+      unlockedLevelIds: ['level-01', 'level-02', 'level-03', 'level-04', 'level-05', 'level-06'],
       completedLevelIds: ['level-02'],
       lastPlayedLevelId: 'level-02',
     });
@@ -108,12 +108,12 @@ describe('LevelProgressStorage', () => {
     const progress = new LevelProgressStorage('level-01', LEVEL_PROGRESS_STORAGE_KEY, storage);
 
     expect(progress.reset()).toEqual({
-      unlockedLevelIds: ['level-01'],
+      unlockedLevelIds: ['level-01', 'level-02', 'level-03', 'level-04', 'level-05', 'level-06'],
       completedLevelIds: [],
       lastPlayedLevelId: 'level-01',
     });
     expect(progress.getState()).toEqual({
-      unlockedLevelIds: ['level-01'],
+      unlockedLevelIds: ['level-01', 'level-02', 'level-03', 'level-04', 'level-05', 'level-06'],
       completedLevelIds: [],
       lastPlayedLevelId: 'level-01',
     });

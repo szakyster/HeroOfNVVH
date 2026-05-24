@@ -37,6 +37,15 @@ const loadLevel = vi.fn();
 const getState = vi.fn();
 const setLastPlayedLevel = vi.fn();
 
+const levelByPath = {
+  '/levels/level-01.json': { id: 'level-01', name: 'Bemelegítés', targetScore: 900, icon: 'enemy01.png' },
+  '/levels/level-02.json': { id: 'level-02', name: 'Az első kihívás', targetScore: 1500, icon: 'enemy02.png' },
+  '/levels/level-03.json': { id: 'level-03', name: 'Fokozódó nyomás', targetScore: 2200, icon: 'enemy01.png' },
+  '/levels/level-04.json': { id: 'level-04', name: 'Szűk keresztmetszet', targetScore: 3600, icon: 'enemy02.png' },
+  '/levels/level-05.json': { id: 'level-05', name: 'Légihíd blokád', targetScore: 5400, icon: 'enemy01.png' },
+  '/levels/level-06.json': { id: 'level-06', name: 'Végső visszaszerzés', targetScore: 7800, icon: 'enemy02.png' },
+} as const;
+
 vi.mock('phaser', () => {
   class MockScene {
     constructor(_config?: unknown) {}
@@ -74,6 +83,7 @@ beforeAll(async () => {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  loadLevel.mockImplementation(async (path: string) => levelByPath[path as keyof typeof levelByPath]);
 });
 
 describe('LevelSelectScene', () => {
@@ -88,12 +98,6 @@ describe('LevelSelectScene', () => {
       completedLevelIds: [],
       lastPlayedLevelId: 'level-01',
     });
-    loadLevel
-      .mockResolvedValueOnce({ id: 'level-01', name: 'Bemelegítés', targetScore: 900, icon: 'enemy01.png' })
-      .mockResolvedValueOnce({ id: 'level-02', name: 'Az első kihívás', targetScore: 1500, icon: 'enemy02.png' })
-      .mockResolvedValueOnce({ id: 'level-01', name: 'Bemelegítés', targetScore: 900, icon: 'enemy01.png' })
-      .mockResolvedValueOnce({ id: 'level-02', name: 'Az első kihívás', targetScore: 1500, icon: 'enemy02.png' });
-
     const scene = new LevelSelectScene() as unknown as Record<string, unknown>;
     const sceneManager = { start: vi.fn() };
 
@@ -184,6 +188,7 @@ describe('LevelSelectScene', () => {
 
     expect(createdTexts.some((entry) => entry.text === 'Bemelegítés')).toBe(true);
     expect(createdTexts.some((entry) => entry.text === 'Az első kihívás')).toBe(true);
+    expect(createdTexts.some((entry) => entry.text === 'Fokozódó nyomás')).toBe(true);
     expect(createdTexts.some((entry) => entry.text === 'Zárolva')).toBe(true);
     expect(createdTexts.some((entry) => entry.text === 'Indítás')).toBe(false);
     expect(createdRectangles).toHaveLength(1);
@@ -213,7 +218,8 @@ describe('LevelSelectScene', () => {
     await Promise.resolve();
     await Promise.resolve();
 
-    const secondBackButton = createdTexts.filter((entry) => entry.text === 'Vissza').at(-1);
+    const backButtons = createdTexts.filter((entry) => entry.text === 'Vissza');
+    const secondBackButton = backButtons[backButtons.length - 1];
 
     secondBackButton?.handlers.pointerup?.();
 

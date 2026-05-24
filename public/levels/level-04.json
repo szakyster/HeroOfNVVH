@@ -1,0 +1,83 @@
+{
+  "id": "level-04",
+  "name": "Szűk keresztmetszet",
+  "targetScore": 1600,
+  "icon": "enemy02.png",
+  "enemyTypes": ["enemy01", "enemy02", "enemy03", "enemy04"],
+  "obstacles": [
+    { "x": 2, "y": 0, "image": "office01.png" },
+    { "x": 4, "y": 0, "image": "tree01.png" },
+    { "x": 1, "y": 1, "image": "car01.png" },
+    { "x": 3, "y": 1, "image": "residental01.png" },
+    { "x": 5, "y": 1, "image": "tree01.png" },
+    { "x": 2, "y": 2, "image": "office01.png" },
+    { "x": 4, "y": 2, "image": "car01.png" },
+    { "x": 1, "y": 3, "image": "tree01.png" },
+    { "x": 5, "y": 3, "image": "residental01.png" },
+    { "x": 3, "y": 4, "image": "tree01.png" }
+  ],
+  "spawnZones": [
+    {
+      "id": "hatvanpuszta-main",
+      "cells": [
+        { "x": 0, "y": 0 },
+        { "x": 1, "y": 0 }
+      ]
+    }
+  ],
+  "goalZones": [
+    {
+      "id": "repter-main",
+      "cells": [
+        { "x": 6, "y": 4 },
+        { "x": 6, "y": 5 }
+      ]
+    }
+  ],
+  "sanctuaryZone": [
+    { "x": 0, "y": 5 },
+    { "x": 1, "y": 5 }
+  ],
+  "hrsImages": [
+    {
+      "id": "hrs-hatvanpuszta",
+      "zoneType": "spawn",
+      "zoneId": "hatvanpuszta-main",
+      "image": "hatvanpuszta01.png",
+      "side": "left",
+      "offsetX": 80,
+      "offsetY": 20,
+      "scale": 0.8
+    },
+    {
+      "id": "hrs-repter",
+      "zoneType": "goal",
+      "zoneId": "repter-main",
+      "image": "repter01.png",
+      "side": "right",
+      "offsetX": -150,
+      "offsetY": 25,
+      "scale": 0.75
+    },
+    {
+      "id": "hrs-sanctuary",
+      "zoneType": "sanctuary",
+      "image": "nvvh01.png",
+      "side": "bottom",
+      "offsetY": -70,
+      "scale": 0.75
+    }
+  ],
+  "lootSpawns": [
+    { "id": "loot-1", "type": "wallet", "value": 10, "image": "money01.png", "cell": { "x": 0, "y": 2 } },
+    { "id": "loot-2", "type": "phone", "value": 20, "image": "ferrari01.png", "cell": { "x": 3, "y": 2 } },
+    { "id": "loot-3", "type": "bag", "value": 50, "image": "helicopter01.png", "cell": { "x": 6, "y": 0 } },
+    { "id": "loot-4", "type": "phone", "value": 20, "image": "ferrari01.png", "cell": { "x": 4, "y": 4 } },
+    { "id": "loot-5", "type": "wallet", "value": 10, "image": "money01.png", "cell": { "x": 2, "y": 4 } }
+  ],
+  "scoreMilestones": [
+    { "score": 800, "text": "Már mindenki az utunkat állja." },
+    { "score": 1200, "text": "Ez a korházaktól hiányzik." },
+    { "score": 1500, "text": "Még egy nagy kör, és meglesz." }
+  ]
+}

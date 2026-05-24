@@ -1,4 +1,4 @@
-import { ENEMY_TYPE_IDS } from '../types/level';
+import { ENEMY_TYPE_IDS, FIXED_LEVEL_GRID } from '../types/level';
 import type { EnemyTypeId, HrsImageDefinition, HrsImageSide, HrsZoneType, LevelData, ScoreMilestone } from '../types/level';
 import { hasHrsAsset, isHrsImageNameAllowed } from './HrsAssets';
 import { hasLootAsset, isLootImageNameAllowed } from './LootAssets';
@@ -63,11 +63,6 @@ export class LevelLoader {
     assert(typeof data.icon === 'string' && isLevelIconNameAllowed(data.icon), 'icon must be a direct image filename');
     assert(Array.isArray(data.enemyTypes) && data.enemyTypes.length > 0, 'enemyTypes must be a non-empty array');
 
-    assert(!!data.grid && typeof data.grid === 'object', 'grid is required');
-    const grid = data.grid as { width?: unknown; height?: unknown };
-    assert(Number.isInteger(grid.width) && (grid.width as number) > 0, 'grid.width must be a positive integer');
-    assert(Number.isInteger(grid.height) && (grid.height as number) > 0, 'grid.height must be a positive integer');
-
     assert(Array.isArray(data.obstacles), 'obstacles must be an array');
     assert(Array.isArray(data.spawnZones), 'spawnZones must be an array');
     assert(Array.isArray(data.goalZones), 'goalZones must be an array');
@@ -76,8 +71,7 @@ export class LevelLoader {
     assert(Array.isArray(data.lootSpawns), 'lootSpawns must be an array');
     assert(data.scoreMilestones === undefined || Array.isArray(data.scoreMilestones), 'scoreMilestones must be an array when provided');
 
-    const width = grid.width as number;
-    const height = grid.height as number;
+    const { width, height } = FIXED_LEVEL_GRID;
 
     const validateCellInBounds = (cell: unknown, context: string): { x: number; y: number } => {
       assert(isValidCell(cell), `${context} must contain valid x/y integers`);
@@ -101,16 +95,17 @@ export class LevelLoader {
       const candidate = obstacle as { x?: unknown; y?: unknown; image?: unknown };
       const validCell = validateCellInBounds(candidate, `obstacles[${index}]`);
       assert(typeof candidate.image === 'string' && candidate.image.length > 0, `obstacles[${index}].image is required`);
+      const obstacleImage = candidate.image as string;
       assert(
-        isObstacleImageNameAllowed(candidate.image),
+        isObstacleImageNameAllowed(obstacleImage),
         `obstacles[${index}].image must be a direct filename from the obstacles folder`,
       );
       assert(
-        hasObstacleAsset(candidate.image),
+        hasObstacleAsset(obstacleImage),
         `obstacles[${index}].image must reference an existing file in the obstacles folder root`,
       );
 
-      return { x: validCell.x, y: validCell.y, image: candidate.image };
+      return { x: validCell.x, y: validCell.y, image: obstacleImage };
     });
 
     const sanctuaryZone = sanctuaryData.map((cell: unknown, index: number) => {
@@ -169,12 +164,13 @@ export class LevelLoader {
         `hrsImages[${index}].zoneType must be one of ${HRS_ZONE_TYPES.join(', ')}`,
       );
       assert(typeof candidate.image === 'string' && candidate.image.length > 0, `hrsImages[${index}].image is required`);
+      const hrsImageName = candidate.image as string;
       assert(
-        isHrsImageNameAllowed(candidate.image),
+        isHrsImageNameAllowed(hrsImageName),
         `hrsImages[${index}].image must be a direct filename from the hrs folder`,
       );
       assert(
-        hasHrsAsset(candidate.image),
+        hasHrsAsset(hrsImageName),
         `hrsImages[${index}].image must reference an existing file in the hrs folder root`,
       );
       assert(
@@ -187,12 +183,12 @@ export class LevelLoader {
 
       if (zoneType === 'spawn') {
         assert(zoneId !== undefined, `hrsImages[${index}].zoneId is required for spawn zones`);
-        assert(spawnZoneIds.has(zoneId), `hrsImages[${index}].zoneId must reference an existing spawn zone`);
+        assert(spawnZoneIds.has(zoneId as string), `hrsImages[${index}].zoneId must reference an existing spawn zone`);
       }
 
       if (zoneType === 'goal') {
         assert(zoneId !== undefined, `hrsImages[${index}].zoneId is required for goal zones`);
-        assert(goalZoneIds.has(zoneId), `hrsImages[${index}].zoneId must reference an existing goal zone`);
+        assert(goalZoneIds.has(zoneId as string), `hrsImages[${index}].zoneId must reference an existing goal zone`);
       }
 
       if (zoneType === 'sanctuary') {
@@ -220,7 +216,7 @@ export class LevelLoader {
         id: candidate.id as string,
         zoneType,
         zoneId,
-        image: candidate.image as string,
+        image: hrsImageName,
         side: candidate.side as HrsImageSide,
         offsetX: candidate.offsetX as number | undefined,
         offsetY: candidate.offsetY as number | undefined,
@@ -233,7 +229,10 @@ export class LevelLoader {
       const candidate = loot as { id?: unknown; type?: unknown; value?: unknown; cell?: unknown; image?: unknown };
       assert(typeof candidate.id === 'string' && candidate.id.length > 0, `lootSpawns[${lootIndex}].id is required`);
       assert(typeof candidate.type === 'string' && candidate.type.length > 0, `lootSpawns[${lootIndex}].type is required`);
-      assert(candidate.value === 10 || candidate.value === 20 || candidate.value === 50, `lootSpawns[${lootIndex}].value must be one of 10, 20, 50`);
+      assert(
+        Number.isInteger(candidate.value) && (candidate.value as number) > 0,
+        `lootSpawns[${lootIndex}].value must be a positive integer`,
+      );
       assert(
         candidate.image === undefined || typeof candidate.image === 'string',
         `lootSpawns[${lootIndex}].image must be a string when provided`,
@@ -253,7 +252,7 @@ export class LevelLoader {
       return {
         id: candidate.id as string,
         type: candidate.type as string,
-        value: candidate.value as 10 | 20 | 50,
+        value: candidate.value as number,
         image: candidate.image as string | undefined,
         cell: {
           x: validCell.x,
@@ -273,10 +272,11 @@ export class LevelLoader {
         typeof candidate.text === 'string' && candidate.text.trim().length > 0,
         `scoreMilestones[${index}].text is required`,
       );
+      const milestoneText = candidate.text as string;
 
       return {
         score: candidate.score as number,
-        text: candidate.text.trim(),
+        text: milestoneText.trim(),
       };
     }).sort((left, right) => left.score - right.score);
 
@@ -286,7 +286,7 @@ export class LevelLoader {
         `enemyTypes[${index}] must be one of ${ENEMY_TYPE_IDS.join(', ')}`,
       );
 
-      return enemyType;
+      return enemyType as EnemyTypeId;
     });
 
     assert(new Set(enemyTypes).size === enemyTypes.length, 'enemyTypes must not contain duplicates');
@@ -297,10 +297,7 @@ export class LevelLoader {
       targetScore: data.targetScore as number,
       icon: data.icon as string,
       enemyTypes,
-      grid: {
-        width,
-        height,
-      },
+      grid: FIXED_LEVEL_GRID,
       obstacles,
       spawnZones,
       goalZones,

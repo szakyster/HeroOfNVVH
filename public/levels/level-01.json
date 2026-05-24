@@ -3,11 +3,7 @@
   "name": "Bemelegítés",
   "targetScore": 400,
   "icon": "enemy01.png",
-  "enemyTypes": ["enemy01", "enemy02"],
-  "grid": {
-    "width": 7,
-    "height": 6
-  },
+  "enemyTypes": ["enemy01"],
   "obstacles": [
     { "x": 2, "y": 1, "image": "residental01.png" },
     { "x": 4, "y": 1, "image": "residental01.png" },
@@ -70,6 +66,7 @@
     { "id": "loot-1", "type": "wallet", "value": 10, "image": "money01.png", "cell": { "x": 2, "y": 4 } }
   ],
   "scoreMilestones": [
-
+    { "score": 20, "text": "Üdv a fedélzetem" },
+    { "score": 360, "text": "Mostmár mehet terepre" }
   ]
 }
