@@ -165,13 +165,13 @@
       "id": 28,
       "name": "Level Select Scene & Menu Flow",
       "description": "Create the LevelSelectScene and route the main menu Start/New Game flow through it. Show available pályák in a selectable list with their small preview icons, render locked entries with a lakat icon, and allow returning to the main menu. Reference: Architecture.md section 4, JatekLeiras.md sections 9.1-9.2, Vizualitas.md section 13.2",
-      "status": "in progress"
+      "status": "closed"
     },
     {
       "id": 29,
       "name": "Play/Game Over Completion & Regression Tests",
       "description": "Pass the selected level into PlayScene, evaluate targetScore completion on Game Over, unlock only the next pálya in sequence, show the unlock message on the Game Over screen, make Retry restart the last played pálya, make New Game return to the pályaválasztó, and cover the full flow with Vitest tests for storage, scene navigation, locked/unlocked level behavior, level icon rendering, and Game Over unlock handling. Reference: Decisions.md D-022, Architecture.md section 4, JatekLeiras.md sections 9.7 and UC-11 to UC-13, and D-004 (Vitest)",
-      "status": "open"
+      "status": "in progress"
     },
     {
       "id": 30,
