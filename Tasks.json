@@ -171,13 +171,13 @@
       "id": 29,
       "name": "Play/Game Over Completion & Regression Tests",
       "description": "Pass the selected level into PlayScene, evaluate targetScore completion on Game Over, unlock only the next pálya in sequence, show the unlock message on the Game Over screen, make Retry restart the last played pálya, make New Game return to the pályaválasztó, and cover the full flow with Vitest tests for storage, scene navigation, locked/unlocked level behavior, level icon rendering, and Game Over unlock handling. Reference: Decisions.md D-022, Architecture.md section 4, JatekLeiras.md sections 9.7 and UC-11 to UC-13, and D-004 (Vitest)",
-      "status": "in progress"
+      "status": "closed"
     },
     {
       "id": 30,
       "name": "BootScene Development",
       "description": "Extend and refine BootScene responsibilities around startup flow, preload feedback, shared bootstrap defaults, and scene handoff behavior while keeping the existing scene lifecycle stable. Reference: Architecture.md section 4 and Tech.md sections 4 and 6",
-      "status": "open"
+      "status": "in progress"
     },
     {
       "id": 31,
