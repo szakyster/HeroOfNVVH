@@ -1,4 +1,5 @@
-import type { HrsImageDefinition, HrsImageSide, HrsZoneType, LevelData, ScoreMilestone } from '../types/level';
+import { ENEMY_TYPE_IDS } from '../types/level';
+import type { EnemyTypeId, HrsImageDefinition, HrsImageSide, HrsZoneType, LevelData, ScoreMilestone } from '../types/level';
 import { hasHrsAsset, isHrsImageNameAllowed } from './HrsAssets';
 import { hasLootAsset, isLootImageNameAllowed } from './LootAssets';
 import { hasObstacleAsset, isObstacleImageNameAllowed } from './ObstacleAssets';
@@ -34,6 +35,11 @@ function isLevelIconNameAllowed(iconName: string): boolean {
   return ALLOWED_IMAGE_EXTENSION_PATTERN.test(iconName);
 }
 
+// Keep level enemy declarations aligned with the supported sprite-sheet families.
+function isEnemyTypeId(value: unknown): value is EnemyTypeId {
+  return typeof value === 'string' && ENEMY_TYPE_IDS.includes(value as EnemyTypeId);
+}
+
 export class LevelLoader {
   async load(levelPath: string): Promise<LevelData> {
     const response = await fetch(levelPath);
@@ -55,6 +61,7 @@ export class LevelLoader {
     assert(typeof data.name === 'string' && data.name.length > 0, 'name is required');
     assert(Number.isInteger(data.targetScore) && (data.targetScore as number) > 0, 'targetScore must be a positive integer');
     assert(typeof data.icon === 'string' && isLevelIconNameAllowed(data.icon), 'icon must be a direct image filename');
+    assert(Array.isArray(data.enemyTypes) && data.enemyTypes.length > 0, 'enemyTypes must be a non-empty array');
 
     assert(!!data.grid && typeof data.grid === 'object', 'grid is required');
     const grid = data.grid as { width?: unknown; height?: unknown };
@@ -81,6 +88,7 @@ export class LevelLoader {
     };
 
     const obstacleData = data.obstacles as unknown[];
+    const enemyTypeData = data.enemyTypes as unknown[];
     const sanctuaryData = data.sanctuaryZone as unknown[];
     const hrsImagesData = (data.hrsImages as unknown[] | undefined) ?? [];
     const spawnZoneData = data.spawnZones as unknown[];
@@ -272,11 +280,23 @@ export class LevelLoader {
       };
     }).sort((left, right) => left.score - right.score);
 
+    const enemyTypes = enemyTypeData.map((enemyType: unknown, index: number): EnemyTypeId => {
+      assert(
+        isEnemyTypeId(enemyType),
+        `enemyTypes[${index}] must be one of ${ENEMY_TYPE_IDS.join(', ')}`,
+      );
+
+      return enemyType;
+    });
+
+    assert(new Set(enemyTypes).size === enemyTypes.length, 'enemyTypes must not contain duplicates');
+
     return {
       id: data.id as string,
       name: data.name as string,
       targetScore: data.targetScore as number,
       icon: data.icon as string,
+      enemyTypes,
       grid: {
         width,
         height,
