@@ -211,7 +211,7 @@ describe('MenuScene', () => {
     sfxToggle?.handlers.pointerdown?.();
 
     expect(sceneManager.start).toHaveBeenCalledWith('LeaderboardScene');
-    expect(sceneManager.start).toHaveBeenCalledWith('PlayScene');
+    expect(sceneManager.start).toHaveBeenCalledWith('LevelSelectScene');
     expect(sceneManager.start).toHaveBeenCalledTimes(3);
     expect(updateAudioSetting).toHaveBeenCalledWith(scene, 'musicMuted', true);
     expect(updateAudioSetting).toHaveBeenCalledWith(scene, 'sfxMuted', true);

@@ -59,6 +59,15 @@ beforeAll(async () => {
 });
 
 describe('PlayScene runtime reset', () => {
+  it('accepts a selected level id when the scene starts', () => {
+    const scene = new PlayScene() as unknown as Record<string, unknown>;
+
+    (scene.init as (data: { levelId: string }) => void)({ levelId: 'level-02' });
+
+    expect(scene.selectedLevelId).toBe('level-02');
+    expect(scene.levelPath).toContain('/levels/level-02.json');
+  });
+
   it('clears transient gameplay state before a new run starts', () => {
     const scene = new PlayScene() as unknown as Record<string, unknown>;
 

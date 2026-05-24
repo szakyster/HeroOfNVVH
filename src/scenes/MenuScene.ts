@@ -27,6 +27,7 @@ export class MenuScene extends Phaser.Scene {
   }
 
   create(): void {
+    // Route the main menu start action through the dedicated level selection scene.
     const { width, height } = this.scale;
     const audioSystem = getAudioSystem(this);
     applyAudioSettingsFromRegistry(this);
@@ -34,7 +35,7 @@ export class MenuScene extends Phaser.Scene {
     addSceneBackground(this, 'menu');
 
     this.createMenuButton(width / 2 + this.primaryButtonsX, height / 2 + 73 + this.primaryButtonsOffsetY, 'Játék indítása', () => {
-      this.scene.start(SCENE_KEYS.PLAY);
+      this.scene.start(SCENE_KEYS.LEVEL_SELECT);
     });
 
     this.createMenuButton(width / 2 + this.primaryButtonsX, height / 2 + 110 + this.primaryButtonsOffsetY, 'Eredménylista', () => {
@@ -65,7 +66,7 @@ export class MenuScene extends Phaser.Scene {
     }
 
     this.input.keyboard?.once('keydown-SPACE', () => {
-      this.scene.start(SCENE_KEYS.PLAY);
+      this.scene.start(SCENE_KEYS.LEVEL_SELECT);
     });
 
     this.input.keyboard?.once('keydown-L', () => {
