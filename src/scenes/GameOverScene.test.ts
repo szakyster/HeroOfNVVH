@@ -26,6 +26,9 @@ const mockAudioSystem = {
 };
 
 const saveEntry = vi.fn();
+const getState = vi.fn();
+const markLevelCompleted = vi.fn();
+const unlockLevel = vi.fn();
 
 vi.mock('phaser', () => {
   class MockScene {
@@ -54,6 +57,16 @@ vi.mock('../systems/LeaderboardStorage', () => ({
   }),
 }));
 
+vi.mock('../systems/LevelProgressStorage', () => ({
+  LevelProgressStorage: vi.fn().mockImplementation(function MockLevelProgressStorage() {
+    return {
+      getState,
+      markLevelCompleted,
+      unlockLevel,
+    };
+  }),
+}));
+
 let GameOverScene: typeof import('./GameOverScene').GameOverScene;
 
 beforeAll(async () => {
@@ -71,11 +84,17 @@ afterEach(() => {
 });
 
 describe('GameOverScene', () => {
-  it('saves positive scores and wires replay, leaderboard, and menu actions', () => {
+  it('saves positive scores, unlocks the next level, and wires retry, new game, leaderboard, and menu actions', () => {
     const createdTexts: MockText[] = [];
     const createdGraphics: MockGraphics[] = [];
     const keyboardHandlers: Record<string, () => void> = {};
     const textEventHandlers = new Map<string, () => void>();
+
+    getState.mockReturnValue({
+      unlockedLevelIds: ['level-01'],
+      completedLevelIds: [],
+      lastPlayedLevelId: 'level-01',
+    });
 
     saveEntry.mockReturnValue([
       { score: 120, createdAt: '2026-05-09T12:00:00.000Z' },
@@ -132,32 +151,51 @@ describe('GameOverScene', () => {
       },
     };
 
-    (scene.create as (data: { score: number }) => void)({ score: 120 });
+    (scene.create as (data: { score: number; levelId: string; targetScore: number }) => void)({
+      score: 120,
+      levelId: 'level-01',
+      targetScore: 100,
+    });
 
     expect(saveEntry).toHaveBeenCalledWith({
       score: 120,
       createdAt: '2026-05-09T12:00:00.000Z',
     });
-    expect(createdGraphics).toHaveLength(1);
+    expect(markLevelCompleted).toHaveBeenCalledWith('level-01');
+    expect(unlockLevel).toHaveBeenCalledWith('level-02');
+    expect(createdGraphics.length).toBeGreaterThan(0);
     expect(createdTexts.some((entry) => entry.text.includes('Aktuális helyezés: 1.'))).toBe(true);
+    expect(createdTexts.some((entry) => entry.text.includes('a következő pálya megnyílt.'))).toBe(true);
+    expect(createdTexts.some((entry) => entry.text === 'Retry')).toBe(true);
+    expect(createdTexts.some((entry) => entry.text === 'Új játék')).toBe(true);
     expect(createdTexts.some((entry) => entry.text === 'Főmenü')).toBe(true);
 
     textEventHandlers.get('Főmenü:pointerup')?.();
+    textEventHandlers.get('Retry:pointerup')?.();
+    textEventHandlers.get('Új játék:pointerup')?.();
 
     keyboardHandlers['keydown-R']();
+    keyboardHandlers['keydown-N']();
     keyboardHandlers['keydown-L']();
     keyboardHandlers['keydown-M']();
 
-    expect(sceneManager.start).toHaveBeenCalledWith('PlayScene');
+    expect(sceneManager.start).toHaveBeenCalledWith('PlayScene', { levelId: 'level-01' });
+    expect(sceneManager.start).toHaveBeenCalledWith('LevelSelectScene');
     expect(sceneManager.start).toHaveBeenCalledWith('LeaderboardScene');
     expect(mockAudioSystem.playMusic).toHaveBeenCalledWith('music-menu', true);
     expect(sceneManager.start).toHaveBeenCalledWith('MenuScene');
-    expect(sceneManager.start).toHaveBeenCalledTimes(4);
+    expect(sceneManager.start).toHaveBeenCalledTimes(7);
   });
 
-  it('does not save zero-score rounds', () => {
+  it('does not unlock progression when the target score is not reached', () => {
     const createdTexts: MockText[] = [];
     const createdGraphics: MockGraphics[] = [];
+
+    getState.mockReturnValue({
+      unlockedLevelIds: ['level-01'],
+      completedLevelIds: [],
+      lastPlayedLevelId: 'level-01',
+    });
 
     const scene = new GameOverScene() as unknown as Record<string, unknown>;
   const sceneManager = { start: vi.fn() };
@@ -198,10 +236,17 @@ describe('GameOverScene', () => {
     scene.scene = sceneManager;
     scene.input = { keyboard: { once: vi.fn() } };
 
-    (scene.create as (data: { score: number }) => void)({ score: 0 });
+    (scene.create as (data: { score: number; levelId: string; targetScore: number }) => void)({
+      score: 0,
+      levelId: 'level-01',
+      targetScore: 100,
+    });
 
     expect(saveEntry).not.toHaveBeenCalled();
-    expect(createdGraphics).toHaveLength(1);
+    expect(markLevelCompleted).not.toHaveBeenCalled();
+    expect(unlockLevel).not.toHaveBeenCalled();
+    expect(createdGraphics.length).toBeGreaterThan(0);
     expect(createdTexts.some((entry) => entry.text === 'Ez a kör nem került fel az \neredménylistára.')).toBe(true);
+    expect(createdTexts.some((entry) => entry.text.includes('a következő pálya megnyílt.'))).toBe(false);
   });
 });

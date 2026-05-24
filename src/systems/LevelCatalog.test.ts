@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getFirstLevelId, getLevelPath, getOrderedLevelCatalog } from './LevelCatalog';
+import { getFirstLevelId, getLevelPath, getNextLevelId, getOrderedLevelCatalog } from './LevelCatalog';
 
 describe('LevelCatalog', () => {
   it('exposes the ordered level progression list', () => {
@@ -20,5 +20,11 @@ describe('LevelCatalog', () => {
     expect(getLevelPath('level-01')).toEqual(expect.stringContaining('/levels/level-01.json'));
     expect(getLevelPath('level-02')).toEqual(expect.stringContaining('/levels/level-02.json'));
     expect(getLevelPath('missing-level')).toBeUndefined();
+  });
+
+  it('resolves only the immediate next level in the authored order', () => {
+    expect(getNextLevelId('level-01')).toBe('level-02');
+    expect(getNextLevelId('level-02')).toBeUndefined();
+    expect(getNextLevelId('missing-level')).toBeUndefined();
   });
 });
