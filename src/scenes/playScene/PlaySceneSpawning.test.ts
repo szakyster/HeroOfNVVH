@@ -14,6 +14,7 @@ const levelFixture: LevelData = {
   name: 'Teszt pálya',
   targetScore: 100,
   icon: 'enemy01.png',
+  enemyTypes: ['enemy01'],
   grid: { width: 7, height: 6 },
   obstacles: [],
   spawnZones: [{ id: 'spawn-a', cells: [{ x: 0, y: 0 }, { x: 1, y: 0 }] }],

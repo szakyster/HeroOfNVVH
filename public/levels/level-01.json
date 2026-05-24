@@ -3,6 +3,7 @@
   "name": "Bemelegítés",
   "targetScore": 900,
   "icon": "enemy01.png",
+  "enemyTypes": ["enemy01", "enemy02"],
   "grid": {
     "width": 7,
     "height": 6
