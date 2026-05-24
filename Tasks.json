@@ -177,13 +177,13 @@
       "id": 30,
       "name": "BootScene Development",
       "description": "Extend and refine BootScene responsibilities around startup flow, preload feedback, shared bootstrap defaults, and scene handoff behavior while keeping the existing scene lifecycle stable. Reference: Architecture.md section 4 and Tech.md sections 4 and 6",
-      "status": "in progress"
+      "status": "closed"
     },
     {
       "id": 31,
       "name": "Help Scene & Menu Integration",
       "description": "Implement the Help scene with concise gameplay instructions, controls, and core rules, then integrate it into the menu flow with proper navigation back to the main menu. Reference: JatekLeiras.md section 9.3, Architecture.md section 4, and Vizualitas.md sections 11 and 13",
-      "status": "open"
+      "status": "in progress"
     },
     {
       "id": 32,
