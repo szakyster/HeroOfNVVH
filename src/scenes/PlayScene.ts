@@ -17,6 +17,7 @@ import {
   getAudioSystem,
   updateAudioSetting,
 } from '../systems/AudioSystem';
+import { getFirstLevelId, getLevelPath } from '../systems/LevelCatalog';
 import { LevelLoader } from '../systems/LevelLoader';
 import {
   DEFAULT_LOOT_CONFIG,
@@ -137,8 +138,14 @@ function getHeroAnimationKey(state: HeroAnimationState, direction: HeroAnimation
   return `${getHeroSheetKey(state, direction)}-loop`;
 }
 
+type PlaySceneData = {
+  levelId?: string;
+};
+
 export class PlayScene extends Phaser.Scene {
-  private readonly levelPath = `${import.meta.env.BASE_URL}levels/level-01.json`;
+  private selectedLevelId = getFirstLevelId();
+
+  private levelPath = getLevelPath(getFirstLevelId()) ?? `${import.meta.env.BASE_URL}levels/level-01.json`;
 
   private readonly levelLoader = new LevelLoader();
 
@@ -278,7 +285,18 @@ export class PlayScene extends Phaser.Scene {
     super(SCENE_KEYS.PLAY);
   }
 
+  init(data?: PlaySceneData): void {
+    // Resolve the requested level once so the scene always loads a valid authored JSON file.
+    const requestedLevelId = typeof data?.levelId === 'string' ? data.levelId : getFirstLevelId();
+    const fallbackLevelId = getFirstLevelId();
+    const resolvedLevelPath = getLevelPath(requestedLevelId) ?? getLevelPath(fallbackLevelId);
+
+    this.selectedLevelId = resolvedLevelPath ? requestedLevelId : fallbackLevelId;
+    this.levelPath = resolvedLevelPath ?? `${import.meta.env.BASE_URL}levels/level-01.json`;
+  }
+
   create(): void {
+    // Recreate the play state from scratch for the currently selected authored level.
     const { width, height } = this.scale;
     this.resetRuntimeState();
     this.audioSystem = getAudioSystem(this);

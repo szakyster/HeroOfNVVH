@@ -5,6 +5,7 @@ import {
   getAudioSystem,
   loadAudioSettingsIntoRegistry,
 } from '../systems/AudioSystem';
+import { getAvailableLevelIconAssets } from '../systems/LevelIconAssets';
 import { preloadSceneBackgrounds } from '../systems/SceneBackgrounds';
 import { getAvailableHrsAssets } from '../systems/HrsAssets';
 import { getAvailableLootAssets } from '../systems/LootAssets';
@@ -63,6 +64,7 @@ export class BootScene extends Phaser.Scene {
   }
 
   preload(): void {
+    // Preload shared scene and preview assets before handing control to the menu flow.
     preloadSceneBackgrounds(this);
 
     for (const heroSheet of HERO_SPRITE_SHEETS) {
@@ -95,6 +97,10 @@ export class BootScene extends Phaser.Scene {
       this.load.image(uiAsset.key, [uiAsset.url]);
     }
 
+    for (const levelIconAsset of getAvailableLevelIconAssets()) {
+      this.load.image(levelIconAsset.key, [levelIconAsset.url]);
+    }
+
     this.load.audio(AUDIO_KEYS.ATTACK, ['assets/audio/effect/Punch01.mp3']);
     this.load.audio(AUDIO_KEYS.ALARM, ['assets/audio/alarm.mp3']);
     this.load.audio(AUDIO_KEYS.DEATH_1, ['assets/audio/effect/death01.mp3']);
@@ -106,6 +112,7 @@ export class BootScene extends Phaser.Scene {
   }
 
   create(): void {
+    // Seed the shared registry once so all scenes start from the same defaults.
     // Shared bootstrap defaults for scene state.
     this.registry.set('score', 0);
     this.registry.set('escapedEnemies', 0);
