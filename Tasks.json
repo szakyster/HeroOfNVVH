@@ -183,13 +183,13 @@
       "id": 31,
       "name": "Help Scene & Menu Integration",
       "description": "Implement the Help scene with concise gameplay instructions, controls, and core rules, then integrate it into the menu flow with proper navigation back to the main menu. Reference: JatekLeiras.md section 9.3, Architecture.md section 4, and Vizualitas.md sections 11 and 13",
-      "status": "in progress"
+      "status": "closed"
     },
     {
       "id": 32,
       "name": "Final Level Content Authoring",
       "description": "Create the final authored pálya set with production-ready JSON content, targetScore values, obstacle layouts, spawn and goal placement, loot positions, and per-level enemy composition so the multi-level progression has complete playable content. Reference: JatekLeiras.md sections 2.4-2.5, 4, and 14, Tech.md section 5, Decisions.md D-006 to D-008 and D-022, and Architecture.md section 6",
-      "status": "open"
+      "status": "in progress"
     },
     {
       "id": 33,
