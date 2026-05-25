@@ -38,12 +38,12 @@ const getState = vi.fn();
 const setLastPlayedLevel = vi.fn();
 
 const levelByPath = {
-  '/levels/level-01.json': { id: 'level-01', name: 'Bemelegítés', targetScore: 900, icon: 'enemy01.png' },
-  '/levels/level-02.json': { id: 'level-02', name: 'Az első kihívás', targetScore: 1500, icon: 'enemy02.png' },
-  '/levels/level-03.json': { id: 'level-03', name: 'Fokozódó nyomás', targetScore: 2200, icon: 'enemy01.png' },
-  '/levels/level-04.json': { id: 'level-04', name: 'Szűk keresztmetszet', targetScore: 3600, icon: 'enemy02.png' },
-  '/levels/level-05.json': { id: 'level-05', name: 'Légihíd blokád', targetScore: 5400, icon: 'enemy01.png' },
-  '/levels/level-06.json': { id: 'level-06', name: 'Végső visszaszerzés', targetScore: 7800, icon: 'enemy02.png' },
+  '/levels/level-01.json': { id: 'level-01', name: 'Bemelegítés', targetScore: 900, icon: 'level-01.png' },
+  '/levels/level-02.json': { id: 'level-02', name: 'Az első kihívás', targetScore: 1500, icon: 'level-02.png' },
+  '/levels/level-03.json': { id: 'level-03', name: 'Fokozódó nyomás', targetScore: 2200, icon: 'level-03.png' },
+  '/levels/level-04.json': { id: 'level-04', name: 'Szűk keresztmetszet', targetScore: 3600, icon: 'level-04.png' },
+  '/levels/level-05.json': { id: 'level-05', name: 'Légihíd blokád', targetScore: 5400, icon: 'level-05.png' },
+  '/levels/level-06.json': { id: 'level-06', name: 'Végső visszaszerzés', targetScore: 7800, icon: 'level-06.png' },
 } as const;
 
 vi.mock('phaser', () => {
@@ -192,8 +192,8 @@ describe('LevelSelectScene', () => {
     expect(createdTexts.some((entry) => entry.text === 'Zárolva')).toBe(true);
     expect(createdTexts.some((entry) => entry.text === 'Indítás')).toBe(false);
     expect(createdRectangles).toHaveLength(1);
-    expect(add.image).toHaveBeenCalledWith(expect.any(Number), expect.any(Number), 'level-icon:enemy01.png');
-    expect(add.image).toHaveBeenCalledWith(expect.any(Number), expect.any(Number), 'level-icon:enemy02.png');
+    expect(add.image).toHaveBeenCalledWith(expect.any(Number), expect.any(Number), 'level-icon:level-01.png');
+    expect(add.image).toHaveBeenCalledWith(expect.any(Number), expect.any(Number), 'level-icon:level-02.png');
     expect(createdTexts.find((entry) => entry.text === 'Vissza')?.setAlpha).toHaveBeenNthCalledWith(1, 0.65);
 
     createdRectangles[0]?.handlers.pointerover?.();

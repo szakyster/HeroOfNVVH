@@ -1,29 +1,29 @@
 {
   "id": "level-06",
   "name": "Végső visszaszerzés",
-  "targetScore": 7800,
-  "icon": "enemy02.png",
+  "targetScore": 2800,
+  "icon": "level-06.png",
   "enemyTypes": ["enemy01", "enemy02", "enemy03", "enemy04"],
   "obstacles": [
-    { "x": 2, "y": 0, "image": "office01.png" },
-    { "x": 4, "y": 0, "image": "residental01.png" },
-    { "x": 1, "y": 1, "image": "tree01.png" },
-    { "x": 3, "y": 1, "image": "car01.png" },
-    { "x": 5, "y": 1, "image": "tree01.png" },
-    { "x": 2, "y": 2, "image": "residental01.png" },
-    { "x": 4, "y": 2, "image": "office01.png" },
-    { "x": 1, "y": 3, "image": "car01.png" },
-    { "x": 3, "y": 3, "image": "tree01.png" },
-    { "x": 5, "y": 3, "image": "residental01.png" },
-    { "x": 2, "y": 4, "image": "tree01.png" },
-    { "x": 4, "y": 4, "image": "car01.png" }
+    { "x": 0, "y": 1, "image": "residental01.png" },
+    { "x": 1, "y": 1, "image": "residental02.png" },
+    { "x": 2, "y": 1, "image": "residental01.png" },
+    { "x": 3, "y": 1, "image": "residental01.png" },
+
+    { "x": 3, "y": 3, "image": "residental03.png" },
+    { "x": 4, "y": 3, "image": "residental02.png" },
+    { "x": 5, "y": 3, "image": "residental02.png" },
+    { "x": 6, "y": 3, "image": "office01.png" },
+
+    { "x": 1, "y": 4, "image": "car01.png" }
+
   ],
   "spawnZones": [
     {
       "id": "hatvanpuszta-main",
       "cells": [
-        { "x": 0, "y": 0 },
-        { "x": 1, "y": 0 }
+        { "x": 4, "y": 0 },
+        { "x": 5, "y": 0 }
       ]
     }
   ],
@@ -31,8 +31,7 @@
     {
       "id": "repter-main",
       "cells": [
-        { "x": 6, "y": 5 },
-        { "x": 5, "y": 5 }
+        { "x": 4, "y": 5 }
       ]
     }
   ],
@@ -47,7 +46,7 @@
       "zoneId": "hatvanpuszta-main",
       "image": "hatvanpuszta01.png",
       "side": "left",
-      "offsetX": 80,
+      "offsetX": 320,
       "offsetY": 20,
       "scale": 0.8
     },
@@ -72,11 +71,11 @@
   ],
   "lootSpawns": [
     { "id": "loot-1", "type": "bag", "value": 50, "image": "helicopter01.png", "cell": { "x": 6, "y": 0 } },
-    { "id": "loot-2", "type": "wallet", "value": 10, "image": "money01.png", "cell": { "x": 0, "y": 2 } },
+    { "id": "loot-2", "type": "wallet", "value": 40, "image": "money01.png", "cell": { "x": 0, "y": 2 } },
     { "id": "loot-3", "type": "phone", "value": 20, "image": "ferrari01.png", "cell": { "x": 6, "y": 2 } },
     { "id": "loot-4", "type": "phone", "value": 20, "image": "ferrari01.png", "cell": { "x": 0, "y": 4 } },
     { "id": "loot-5", "type": "wallet", "value": 10, "image": "money01.png", "cell": { "x": 3, "y": 5 } },
-    { "id": "loot-6", "type": "bag", "value": 50, "image": "helicopter01.png", "cell": { "x": 5, "y": 4 } },
+    { "id": "loot-6", "type": "bag", "value": 70, "image": "helicopter01.png", "cell": { "x": 5, "y": 4 } },
     { "id": "loot-7", "type": "phone", "value": 20, "image": "ferrari01.png", "cell": { "x": 6, "y": 4 } }
   ],
   "scoreMilestones": [

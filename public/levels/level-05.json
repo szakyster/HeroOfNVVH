@@ -1,22 +1,24 @@
 {
   "id": "level-05",
   "name": "Légihíd blokád",
-  "targetScore": 5400,
-  "icon": "enemy01.png",
+  "targetScore": 1400,
+  "icon": "level-05.png",
   "enemyTypes": ["enemy01", "enemy02", "enemy03", "enemy04"],
   "obstacles": [
-    { "x": 1, "y": 0, "image": "tree01.png" },
-    { "x": 3, "y": 0, "image": "residental01.png" },
-    { "x": 5, "y": 0, "image": "office01.png" },
-    { "x": 2, "y": 1, "image": "car01.png" },
+    { "x": 0, "y": 2, "image": "residental01.png" },
+    { "x": 1, "y": 2, "image": "residental02.png" },
+    { "x": 0, "y": 4, "image": "car01.png" },
+
+    { "x": 2, "y": 0, "image": "residental02.png" },
+
+
     { "x": 4, "y": 1, "image": "tree01.png" },
-    { "x": 1, "y": 2, "image": "residental01.png" },
-    { "x": 3, "y": 2, "image": "tree01.png" },
-    { "x": 5, "y": 2, "image": "car01.png" },
-    { "x": 2, "y": 3, "image": "office01.png" },
-    { "x": 4, "y": 3, "image": "residental01.png" },
-    { "x": 1, "y": 4, "image": "tree01.png" },
-    { "x": 5, "y": 4, "image": "tree01.png" }
+    { "x": 4, "y": 2, "image": "tree02.png" },
+    { "x": 4, "y": 3, "image": "tree03.png" },
+    { "x": 4, "y": 4, "image": "tree02.png" },
+
+    { "x": 5, "y": 1, "image": "tree03.png" },
+    { "x": 5, "y": 3, "image": "tree01.png" }
   ],
   "spawnZones": [
     {
@@ -31,14 +33,13 @@
     {
       "id": "repter-main",
       "cells": [
-        { "x": 6, "y": 4 },
-        { "x": 6, "y": 5 }
+        { "x": 5, "y": 2 }
       ]
     }
   ],
   "sanctuaryZone": [
-    { "x": 3, "y": 5 },
-    { "x": 4, "y": 5 }
+    { "x": 0, "y": 5 },
+    { "x": 1, "y": 5 }
   ],
   "hrsImages": [
     {
@@ -66,7 +67,8 @@
       "zoneType": "sanctuary",
       "image": "nvvh01.png",
       "side": "bottom",
-      "offsetY": -70,
+      "offsetX": -150,
+      "offsetY": -150,
       "scale": 0.75
     }
   ],

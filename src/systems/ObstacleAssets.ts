@@ -54,7 +54,7 @@ export function createObstacleAssetRegistry(assetUrls: Record<string, string>): 
     .sort((left, right) => left.imageName.localeCompare(right.imageName));
 }
 
-const OBSTACLE_IMAGE_NAMES = ['car01.png', 'office01.png', 'residental01.png', 'tree01.png'];
+const OBSTACLE_IMAGE_NAMES = ['car01.png', 'office01.png', 'residental01.png', 'residental02.png', 'residental03.png', 'tree01.png', 'tree02.png', 'tree03.png'];
 
 const obstacleAssetRegistry = OBSTACLE_IMAGE_NAMES.map((imageName) => ({
   imageName,

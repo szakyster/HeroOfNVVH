@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   createObstacleAssetRegistry,
+  getAvailableObstacleAssets,
   getObstacleAssetKey,
+  hasObstacleAsset,
   isObstacleImageNameAllowed,
 } from './ObstacleAssets';
 
@@ -33,5 +35,36 @@ describe('ObstacleAssets', () => {
         url: '/assets/obstacles/residental02.png',
       },
     ]);
+  });
+
+  it('exposes the authored obstacle asset registry including the extra tree variants', () => {
+    expect(hasObstacleAsset('residental02.png')).toBe(true);
+    expect(hasObstacleAsset('residental03.png')).toBe(true);
+    expect(hasObstacleAsset('tree02.png')).toBe(true);
+    expect(hasObstacleAsset('tree03.png')).toBe(true);
+    expect(getAvailableObstacleAssets()).toEqual(
+      expect.arrayContaining([
+        {
+          imageName: 'residental02.png',
+          key: getObstacleAssetKey('residental02.png'),
+          url: expect.stringContaining('/assets/obstacles/residental02.png'),
+        },
+        {
+          imageName: 'residental03.png',
+          key: getObstacleAssetKey('residental03.png'),
+          url: expect.stringContaining('/assets/obstacles/residental03.png'),
+        },
+        {
+          imageName: 'tree02.png',
+          key: getObstacleAssetKey('tree02.png'),
+          url: expect.stringContaining('/assets/obstacles/tree02.png'),
+        },
+        {
+          imageName: 'tree03.png',
+          key: getObstacleAssetKey('tree03.png'),
+          url: expect.stringContaining('/assets/obstacles/tree03.png'),
+        },
+      ]),
+    );
   });
 });
