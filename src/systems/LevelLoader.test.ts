@@ -21,7 +21,10 @@ describe('LevelLoader', () => {
         { id: 'hrs-sanctuary', zoneType: 'sanctuary', image: 'nvvh01.png', side: 'bottom' },
       ],
       lootSpawns: [{ id: 'loot-1', value: 20, image: 'money01.png' }],
-      scoreMilestones: [{ score: 1000, text: 'elso visszaszerzett milliard' }],
+      scoreMilestones: [
+        { score: 0, text: 'udv a fedelzeten' },
+        { score: 1000, text: 'elso visszaszerzett milliard' },
+      ],
     });
 
     expect(parsed.id).toBe('level-test');
@@ -34,7 +37,10 @@ describe('LevelLoader', () => {
     expect(parsed.hrsImages).toHaveLength(3);
     expect(parsed.lootSpawns[0].value).toBe(20);
     expect(parsed.lootSpawns[0].image).toBe('money01.png');
-    expect(parsed.scoreMilestones).toEqual([{ score: 1000, text: 'elso visszaszerzett milliard' }]);
+    expect(parsed.scoreMilestones).toEqual([
+      { score: 0, text: 'udv a fedelzeten' },
+      { score: 1000, text: 'elso visszaszerzett milliard' },
+    ]);
   });
 
   it('throws when a score milestone is malformed', () => {
@@ -51,9 +57,9 @@ describe('LevelLoader', () => {
         sanctuaryZone: [{ x: 3, y: 5 }],
         hrsImages: [],
         lootSpawns: [{ id: 'loot-1', value: 20 }],
-        scoreMilestones: [{ score: 0, text: '' }],
+        scoreMilestones: [{ score: -1, text: '' }],
       }),
-    ).toThrow(/scoreMilestones\[0\]\.score must be a positive integer/i);
+    ).toThrow(/scoreMilestones\[0\]\.score must be a non-negative integer/i);
   });
 
   it('throws when targetScore, icon, or enemy metadata is malformed', () => {

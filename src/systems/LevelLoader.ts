@@ -257,8 +257,8 @@ export class LevelLoader {
       assert(!!milestone && typeof milestone === 'object', `scoreMilestones[${index}] must be object`);
       const candidate = milestone as { score?: unknown; text?: unknown };
       assert(
-        Number.isInteger(candidate.score) && (candidate.score as number) > 0,
-        `scoreMilestones[${index}].score must be a positive integer`,
+        Number.isInteger(candidate.score) && (candidate.score as number) >= 0,
+        `scoreMilestones[${index}].score must be a non-negative integer`,
       );
       assert(
         typeof candidate.text === 'string' && candidate.text.trim().length > 0,

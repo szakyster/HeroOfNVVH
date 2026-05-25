@@ -403,6 +403,7 @@ export class PlayScene extends Phaser.Scene {
         this.spawnPlayer(level);
         this.startEnemyWave(level);
         this.refreshLevelInfo();
+        this.showInitialScoreMilestones();
       })
       .catch((error: unknown) => {
         this.levelInfoText?.setText('Palyabetoltes hiba');
@@ -1174,6 +1175,12 @@ export class PlayScene extends Phaser.Scene {
         this.showScoreMilestonePopup(milestone.text);
       }
     }
+  }
+
+  // Show any milestone that should already be active at the scene's starting score.
+  private showInitialScoreMilestones(): void {
+    const currentScore = this.registry.get('score') ?? 0;
+    this.showScoreMilestones(-1, currentScore);
   }
 
   private showScoreMilestonePopup(text: string): void {

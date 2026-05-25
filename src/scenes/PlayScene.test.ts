@@ -711,6 +711,25 @@ describe('PlayScene runtime reset', () => {
     expect(showScoreMilestonePopup).toHaveBeenCalledTimes(2);
   });
 
+  it('shows zero-score milestone immediately at scene start', () => {
+    const scene = new PlayScene() as unknown as Record<string, unknown>;
+    const showScoreMilestonePopup = vi.fn();
+
+    scene.currentLevel = {
+      scoreMilestones: [
+        { score: 0, text: 'udv a fedelzeten' },
+        { score: 100, text: 'elso visszaszerzett milliard' },
+      ],
+    };
+    scene.showScoreMilestonePopup = showScoreMilestonePopup;
+    scene.registry = { get: vi.fn(() => 0) };
+
+    (scene.showInitialScoreMilestones as () => void)();
+
+    expect(showScoreMilestonePopup).toHaveBeenCalledWith('udv a fedelzeten');
+    expect(showScoreMilestonePopup).toHaveBeenCalledTimes(1);
+  });
+
   it('triggers game over once and starts the game over scene after music fade', () => {
     const playSfx = vi.fn();
     const fadeOutMusic = vi.fn((_duration: number, onComplete?: () => void) => {
