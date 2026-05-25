@@ -226,9 +226,8 @@ export class LevelLoader {
 
     const lootSpawns = lootSpawnData.map((loot: unknown, lootIndex: number) => {
       assert(!!loot && typeof loot === 'object', `lootSpawns[${lootIndex}] must be object`);
-      const candidate = loot as { id?: unknown; type?: unknown; value?: unknown; cell?: unknown; image?: unknown };
+      const candidate = loot as { id?: unknown; value?: unknown; image?: unknown };
       assert(typeof candidate.id === 'string' && candidate.id.length > 0, `lootSpawns[${lootIndex}].id is required`);
-      assert(typeof candidate.type === 'string' && candidate.type.length > 0, `lootSpawns[${lootIndex}].type is required`);
       assert(
         Number.isInteger(candidate.value) && (candidate.value as number) > 0,
         `lootSpawns[${lootIndex}].value must be a positive integer`,
@@ -247,17 +246,10 @@ export class LevelLoader {
           `lootSpawns[${lootIndex}].image must reference an existing file in the loots folder root`,
         );
       }
-      const validCell = validateCellInBounds(candidate.cell, `lootSpawns[${lootIndex}].cell`);
-
       return {
         id: candidate.id as string,
-        type: candidate.type as string,
         value: candidate.value as number,
         image: candidate.image as string | undefined,
-        cell: {
-          x: validCell.x,
-          y: validCell.y,
-        },
       };
     });
 

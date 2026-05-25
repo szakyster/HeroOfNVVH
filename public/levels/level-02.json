@@ -65,9 +65,9 @@
     }
   ],
   "lootSpawns": [
-    { "id": "loot-1", "type": "wallet", "value": 10, "image": "money01.png", "cell": { "x": 2, "y": 4 } },
-    { "id": "loot-2", "type": "phone", "value": 20, "image": "ferrari01.png", "cell": { "x": 4, "y": 2 } },
-    { "id": "loot-3", "type": "bag", "value": 50, "image": "helicopter01.png", "cell": { "x": 6, "y": 1 } }
+    { "id": "loot-1", "value": 10, "image": "money01.png" },
+    { "id": "loot-2", "value": 20, "image": "ferrari01.png" },
+    { "id": "loot-3", "value": 50, "image": "helicopter01.png" }
   ],
   "scoreMilestones": [
     { "score": 100, "text": "Andika! Megtaláltak" },

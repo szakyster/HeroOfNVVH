@@ -70,13 +70,13 @@
     }
   ],
   "lootSpawns": [
-    { "id": "loot-1", "type": "bag", "value": 50, "image": "helicopter01.png", "cell": { "x": 6, "y": 0 } },
-    { "id": "loot-2", "type": "wallet", "value": 40, "image": "money01.png", "cell": { "x": 0, "y": 2 } },
-    { "id": "loot-3", "type": "phone", "value": 20, "image": "ferrari01.png", "cell": { "x": 6, "y": 2 } },
-    { "id": "loot-4", "type": "phone", "value": 20, "image": "ferrari01.png", "cell": { "x": 0, "y": 4 } },
-    { "id": "loot-5", "type": "wallet", "value": 10, "image": "money01.png", "cell": { "x": 3, "y": 5 } },
-    { "id": "loot-6", "type": "bag", "value": 70, "image": "helicopter01.png", "cell": { "x": 5, "y": 4 } },
-    { "id": "loot-7", "type": "phone", "value": 20, "image": "ferrari01.png", "cell": { "x": 6, "y": 4 } }
+    { "id": "loot-1", "value": 50, "image": "helicopter01.png" },
+    { "id": "loot-2", "value": 40, "image": "money01.png" },
+    { "id": "loot-3", "value": 20, "image": "ferrari01.png" },
+    { "id": "loot-4", "value": 20, "image": "ferrari01.png" },
+    { "id": "loot-5", "value": 10, "image": "money01.png" },
+    { "id": "loot-6", "value": 70, "image": "helicopter01.png" },
+    { "id": "loot-7", "value": 20, "image": "ferrari01.png" }
   ],
   "scoreMilestones": [
     { "score": 1200, "text": "Most indul az igazi harc." },

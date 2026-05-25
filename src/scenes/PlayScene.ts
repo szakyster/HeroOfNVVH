@@ -1014,7 +1014,6 @@ export class PlayScene extends Phaser.Scene {
 
     const loot: ActiveLoot = {
       id: `${template.id}-${this.droppedLootCount}`,
-      type: template.type,
       value: template.value,
       body,
       shadow,
@@ -1104,7 +1103,7 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private pickUpLoot(loot: ActiveLoot): void {
-    this.inventory.push({ type: loot.type, value: loot.value });
+    this.inventory.push({ value: loot.value });
     this.audioSystem?.playSfx(AUDIO_KEYS.PICKUP);
     this.showInventoryPickupAnimation(loot.body.x, loot.body.y, this.inventory.length - 1);
     this.destroyLoot(loot, false);

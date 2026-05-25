@@ -66,14 +66,14 @@
     }
   ],
   "lootSpawns": [
-    { "id": "loot-1", "type": "wallet", "value": 10, "image": "money01.png", "cell": { "x": 2, "y": 4 } },
-    { "id": "loot-2", "type": "phone", "value": 20, "image": "ferrari01.png", "cell": { "x": 4, "y": 2 } },
-    { "id": "loot-3", "type": "phone", "value": 40, "image": "ferrari01.png", "cell": { "x": 6, "y": 1 } },
-    { "id": "loot-4", "type": "bag", "value": 60, "image": "helicopter01.png", "cell": { "x": 6, "y": 0 } }
+    { "id": "loot-1", "value": 10, "image": "money01.png" },
+    { "id": "loot-2", "value": 20, "image": "ferrari01.png" },
+    { "id": "loot-3", "value": 40, "image": "ferrari01.png" },
+    { "id": "loot-4", "value": 60, "image": "wc01.png" }
   ],
   "scoreMilestones": [
     { "score": 500, "text": "Már figyelnek ránk." },
-    { "score": 1000, "text": "Szorul a hurok, de jön a vagyon." },
+    { "score": 1000, "text": "Szorul a hurok,\nde jön a vagyon." },
     { "score": 1150, "text": "A nyomás nő, az iram marad." }
   ]
 }

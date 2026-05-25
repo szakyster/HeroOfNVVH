@@ -63,7 +63,7 @@
     }
   ],
   "lootSpawns": [
-    { "id": "loot-1", "type": "wallet", "value": 10, "image": "money01.png", "cell": { "x": 2, "y": 4 } }
+    { "id": "loot-1", "value": 10, "image": "money01.png" }
   ],
   "scoreMilestones": [
     { "score": 20, "text": "Üdv a fedélzetem" },

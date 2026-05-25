@@ -27,7 +27,7 @@ export function getLootAssetKey(imageName: string): string {
   return `${LOOT_ASSET_KEY_PREFIX}${imageName}`;
 }
 
-const LOOT_IMAGE_NAMES = [DEFAULT_LOOT_IMAGE_NAME, 'ferrari01.png', 'helicopter01.png'];
+const LOOT_IMAGE_NAMES = [DEFAULT_LOOT_IMAGE_NAME, 'ferrari01.png', 'helicopter01.png', 'wc01.png'];
 
 const lootAssetRegistry = LOOT_IMAGE_NAMES.map((imageName) => ({
   imageName,

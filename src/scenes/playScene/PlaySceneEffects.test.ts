@@ -18,7 +18,7 @@ describe('PlaySceneEffects helpers', () => {
 
     const loot = spawnDroppedLoot({
       add: add as never,
-      template: { id: 'loot-1', type: 'wallet', value: 20, image: 'money01.png' },
+      template: { id: 'loot-1', value: 20, image: 'money01.png' },
       droppedLootCount: 2,
       enemyPosition: { x: 300, y: 180 },
       lootSize: { width: 60, height: 40 },
@@ -26,7 +26,7 @@ describe('PlaySceneEffects helpers', () => {
     });
 
     expect(add.image).toHaveBeenCalledWith(300, 184, 'loot:money01.png');
-    expect(loot).toMatchObject({ id: 'loot-1-2', type: 'wallet', value: 20, createdAt: 1250 });
+    expect(loot).toMatchObject({ id: 'loot-1-2', value: 20, createdAt: 1250 });
   });
 
   it('creates deposit popups with the expected position and tween target', () => {

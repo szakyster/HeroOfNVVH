@@ -51,8 +51,8 @@ describe('PlaySceneLoot helpers', () => {
 
   it('processes timed inventory deposits and score updates', () => {
     const inventory: InventoryItem[] = [
-      { type: 'wallet', value: 10 },
-      { type: 'bag', value: 50 },
+      { value: 10 },
+      { value: 50 },
     ];
 
     expect(
@@ -94,7 +94,7 @@ describe('PlaySceneLoot helpers', () => {
         score: 40,
       }),
     ).toEqual({
-      inventory: [{ type: 'bag', value: 50 }],
+      inventory: [{ value: 50 }],
       nextLootDepositAt: 1800,
       score: 50,
       depositedValue: 10,
@@ -102,7 +102,7 @@ describe('PlaySceneLoot helpers', () => {
 
     expect(
       processInventoryDeposit({
-        inventory: [{ type: 'bag', value: 50 }],
+        inventory: [{ value: 50 }],
         now: 1800,
         nextLootDepositAt: 1800,
         lootDepositIntervalMs: 400,
