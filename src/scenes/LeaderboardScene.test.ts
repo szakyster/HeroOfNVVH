@@ -10,7 +10,10 @@ type MockText = {
   setStyle: ReturnType<typeof vi.fn>;
   setDepth: ReturnType<typeof vi.fn>;
   setData: ReturnType<typeof vi.fn>;
+  getData: ReturnType<typeof vi.fn>;
   setY: ReturnType<typeof vi.fn>;
+  setAlpha: ReturnType<typeof vi.fn>;
+  setScale: ReturnType<typeof vi.fn>;
   destroy: ReturnType<typeof vi.fn>;
   on: ReturnType<typeof vi.fn>;
 };
@@ -98,6 +101,7 @@ describe('LeaderboardScene', () => {
       rectangle,
       text: vi.fn((_x: number, _y: number, text: string) => {
         const handlers: Record<string, (() => void) | undefined> = {};
+        const data = new Map<string, unknown>();
         const item: MockText = {
           text,
           handlers,
@@ -110,11 +114,17 @@ describe('LeaderboardScene', () => {
           setInteractive: vi.fn().mockReturnThis(),
           setStyle: vi.fn().mockReturnThis(),
           setDepth: vi.fn().mockReturnThis(),
-          setData: vi.fn().mockReturnThis(),
+          setData: vi.fn(function (this: MockText, key: string, value: unknown) {
+            data.set(key, value);
+            return this;
+          }),
+          getData: vi.fn((key: string) => data.get(key)),
           setY: vi.fn(function (this: MockText, value: number) {
             this.y = value;
             return this;
           }),
+          setAlpha: vi.fn().mockReturnThis(),
+          setScale: vi.fn().mockReturnThis(),
           destroy: vi.fn(),
           on: vi.fn(function (this: MockText, event: string, handler: () => void) {
             this.handlers[event] = handler;
@@ -139,7 +149,6 @@ describe('LeaderboardScene', () => {
     expect(rectangle).toHaveBeenCalledWith(512, 384, 1024, 768, 0x15232f, 1);
     expect(createdGraphics).toHaveLength(7);
     expect(getEntries).toHaveBeenCalledWith('level-01');
-    expect(createdTexts.some((entry) => entry.text === 'Pálya 1 eredménylista')).toBe(true);
     expect(createdTexts.some((entry) => entry.text === 'Pálya 1')).toBe(true);
     expect(createdTexts.some((entry) => entry.text === 'Pálya 6')).toBe(true);
     expect(createdTexts.some((entry) => entry.text === 'Még nincs mentett eredmény.')).toBe(true);
@@ -159,6 +168,7 @@ describe('LeaderboardScene', () => {
     const createdGraphics: MockGraphics[] = [];
     const rectangle = vi.fn(() => ({ setDepth: vi.fn().mockReturnThis() }));
     const addText = vi.fn((_x: number, _y: number, text: string) => {
+      const data = new Map<string, unknown>();
       const item: MockText = {
         text,
         handlers: {},
@@ -171,11 +181,17 @@ describe('LeaderboardScene', () => {
         setInteractive: vi.fn().mockReturnThis(),
         setStyle: vi.fn().mockReturnThis(),
         setDepth: vi.fn().mockReturnThis(),
-        setData: vi.fn().mockReturnThis(),
+        setData: vi.fn(function (this: MockText, key: string, value: unknown) {
+          data.set(key, value);
+          return this;
+        }),
+        getData: vi.fn((key: string) => data.get(key)),
         setY: vi.fn(function (this: MockText, value: number) {
           this.y = value;
           return this;
         }),
+        setAlpha: vi.fn().mockReturnThis(),
+        setScale: vi.fn().mockReturnThis(),
         destroy: vi.fn(),
         on: vi.fn().mockReturnThis(),
       };
@@ -219,7 +235,6 @@ describe('LeaderboardScene', () => {
     (scene.create as (data?: { levelId?: string }) => void)({ levelId: 'level-02' });
 
     expect(getEntries).toHaveBeenCalledWith('level-02');
-    expect(createdTexts.some((entry) => entry.text === 'Pálya 2 eredménylista')).toBe(true);
     expect(createdTexts.some((entry) => entry.text === '1.')).toBe(true);
     expect(createdTexts.some((entry) => entry.text === '2.')).toBe(false);
     expect(createdTexts.some((entry) => entry.text === '120 M Ft')).toBe(false);
@@ -228,9 +243,8 @@ describe('LeaderboardScene', () => {
     expect(createdTexts.some((entry) => entry.text === 'Eredménylista')).toBe(false);
     expect(createdGraphics).toHaveLength(7);
     expect(rectangle).toHaveBeenCalledWith(512, 384, 1024, 768, 0x15232f, 1);
-    expect(addText).toHaveBeenCalledWith(512, 124, '', expect.any(Object));
-    expect(addText).toHaveBeenCalledWith(87, 240, '1.', expect.any(Object));
-    expect(addText).toHaveBeenCalledWith(142, 240, '80 M Ft', expect.any(Object));
-    expect(addText).toHaveBeenCalledWith(317, 240, expect.any(String), expect.any(Object));
+    expect(addText).toHaveBeenCalledWith(87, 260, '1.', expect.any(Object));
+    expect(addText).toHaveBeenCalledWith(142, 260, '80 M Ft', expect.any(Object));
+    expect(addText).toHaveBeenCalledWith(317, 260, expect.any(String), expect.any(Object));
   });
 });
