@@ -189,13 +189,13 @@
       "id": 32,
       "name": "Final Level Content Authoring",
       "description": "Create the final authored pálya set with production-ready JSON content, targetScore values, obstacle layouts, spawn and goal placement, loot positions, and per-level enemy composition so the multi-level progression has complete playable content. Reference: JatekLeiras.md sections 2.4-2.5, 4, and 14, Tech.md section 5, Decisions.md D-006 to D-008 and D-022, and Architecture.md section 6",
-      "status": "in progress"
+      "status": "closed"
     },
     {
       "id": 33,
       "name": "Release Preparation & Publishing",
       "description": "Prepare and publish the next release by validating release readiness, updating versioned release notes and metadata, confirming deployment/release artifacts, and completing the GitHub release workflow for the playable build. Reference: Tech.md section 13.2, docs/PlayableBetaRelease.md, README.md, and CHANGELOG.md",
-      "status": "open"
+      "status": "in progress"
     },
     {
       "id": 34,
