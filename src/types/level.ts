@@ -3,6 +3,11 @@ export type GridCell = {
   y: number;
 };
 
+export const FIXED_LEVEL_GRID = {
+  width: 7,
+  height: 6,
+} as const;
+
 export const ENEMY_TYPE_IDS = ['enemy01', 'enemy02', 'enemy03', 'enemy04'] as const;
 
 export type EnemyTypeId = (typeof ENEMY_TYPE_IDS)[number];
@@ -19,9 +24,7 @@ export type GoalZone = {
 
 export type LootSpawn = {
   id: string;
-  type: string;
-  value: 10 | 20 | 50;
-  cell: GridCell;
+  value: number;
   image?: string;
 };
 
@@ -55,10 +58,7 @@ export type LevelData = {
   targetScore: number;
   icon: string;
   enemyTypes: EnemyTypeId[];
-  grid: {
-    width: number;
-    height: number;
-  };
+  grid: typeof FIXED_LEVEL_GRID;
   obstacles: ObstacleDefinition[];
   spawnZones: SpawnZone[];
   goalZones: GoalZone[];

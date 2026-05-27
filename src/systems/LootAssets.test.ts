@@ -26,6 +26,11 @@ describe('LootAssets', () => {
         key: SHARED_LOOT_ASSET_KEY,
         url: '/assets/loots/money01.png',
       },
+      {
+        imageName: 'wc01.png',
+        key: 'loot:wc01.png',
+        url: '/assets/loots/wc01.png',
+      },
     ]);
   });
 
@@ -35,6 +40,7 @@ describe('LootAssets', () => {
     expect(hasLootAsset('ferrari01.png')).toBe(true);
     expect(hasLootAsset('helicopter01.png')).toBe(true);
     expect(hasLootAsset('money01.png')).toBe(true);
+    expect(hasLootAsset('wc01.png')).toBe(true);
     expect(hasLootAsset('missing.png')).toBe(false);
     expect(getLootAssetKey('money01.png')).toBe('loot:money01.png');
   });

@@ -403,6 +403,7 @@ export class PlayScene extends Phaser.Scene {
         this.spawnPlayer(level);
         this.startEnemyWave(level);
         this.refreshLevelInfo();
+        this.showInitialScoreMilestones();
       })
       .catch((error: unknown) => {
         this.levelInfoText?.setText('Palyabetoltes hiba');
@@ -1014,7 +1015,6 @@ export class PlayScene extends Phaser.Scene {
 
     const loot: ActiveLoot = {
       id: `${template.id}-${this.droppedLootCount}`,
-      type: template.type,
       value: template.value,
       body,
       shadow,
@@ -1104,7 +1104,7 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private pickUpLoot(loot: ActiveLoot): void {
-    this.inventory.push({ type: loot.type, value: loot.value });
+    this.inventory.push({ value: loot.value });
     this.audioSystem?.playSfx(AUDIO_KEYS.PICKUP);
     this.showInventoryPickupAnimation(loot.body.x, loot.body.y, this.inventory.length - 1);
     this.destroyLoot(loot, false);
@@ -1177,6 +1177,12 @@ export class PlayScene extends Phaser.Scene {
     }
   }
 
+  // Show any milestone that should already be active at the scene's starting score.
+  private showInitialScoreMilestones(): void {
+    const currentScore = this.registry.get('score') ?? 0;
+    this.showScoreMilestones(-1, currentScore);
+  }
+
   private showScoreMilestonePopup(text: string): void {
     if (text.trim().length === 0) {
       return;
@@ -1188,7 +1194,7 @@ export class PlayScene extends Phaser.Scene {
     const popup = this.add
       .text(width / 2, height * 0.48, text, {
         fontFamily: SCORE_MILESTONE_POPUP_FONT_FAMILY,
-        fontSize: '58px',
+        fontSize: '40px',
         color: '#f4e6a2',
         fontStyle: 'bold',
         stroke: '#000000',

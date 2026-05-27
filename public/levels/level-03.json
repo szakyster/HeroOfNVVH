@@ -1,23 +1,24 @@
 {
-  "id": "level-02",
-  "name": "Az első kihívás",
-  "targetScore": 900,
-  "icon": "level-02.png",
-  "enemyTypes": ["enemy01"],
+  "id": "level-03",
+  "name": "Fokozódó nyomás",
+  "targetScore": 1000,
+  "icon": "level-03.png",
+  "enemyTypes": ["enemy01", "enemy03"],
   "obstacles": [
-    { "x": 2, "y": 1, "image": "residental01.png" },
-    { "x": 4, "y": 1, "image": "residental01.png" },
-    { "x": 3, "y": 2, "image": "tree01.png" },
-    { "x": 1, "y": 3, "image": "office01.png" },
+    { "x": 3, "y": 1, "image": "tree01.png" },
+    { "x": 2, "y": 2, "image": "residental01.png" },
+    { "x": 3, "y": 2, "image": "residental02.png" },
+    { "x": 5, "y": 2, "image": "office01.png" },
+    { "x": 6, "y": 2, "image": "tree01.png" },
     { "x": 5, "y": 3, "image": "car01.png" },
-    { "x": 0, "y": 5, "image": "tree01.png" }
+    { "x": 2, "y": 5, "image": "residental01.png" }
   ],
   "spawnZones": [
     {
       "id": "hatvanpuszta-main",
       "cells": [
-        { "x": 0, "y": 0 },
-        { "x": 1, "y": 0 }
+        { "x": 4, "y": 0 },
+        { "x": 6, "y": 0 }
       ]
     }
   ],
@@ -25,14 +26,13 @@
     {
       "id": "repter-main",
       "cells": [
-        { "x": 6, "y": 5 },
-        { "x": 5, "y": 5 }
+        { "x": 6, "y": 5 }
       ]
     }
   ],
   "sanctuaryZone": [
-    { "x": 2, "y": 5 },
-    { "x": 3, "y": 5 }
+    { "x": 0, "y": 5 },
+    { "x": 1, "y": 5}
   ],
   "hrsImages": [
     {
@@ -41,8 +41,8 @@
       "zoneId": "hatvanpuszta-main",
       "image": "hatvanpuszta01.png",
       "side": "left",
-      "offsetX": 80,
-      "offsetY": 20,
+      "offsetX": 0,
+      "offsetY": -20,
       "scale": 0.8
     },
     {
@@ -60,18 +60,20 @@
       "zoneType": "sanctuary",
       "image": "nvvh01.png",
       "side": "bottom",
-      "offsetY": -80,
+      "offsetY": -140,
+      "offsetX": -160,
       "scale": 0.75
     }
   ],
   "lootSpawns": [
     { "id": "loot-1", "value": 10, "image": "money01.png" },
     { "id": "loot-2", "value": 20, "image": "ferrari01.png" },
-    { "id": "loot-3", "value": 50, "image": "helicopter01.png" }
+    { "id": "loot-3", "value": 40, "image": "ferrari01.png" },
+    { "id": "loot-4", "value": 60, "image": "wc01.png" }
   ],
   "scoreMilestones": [
-    { "score": 100, "text": "Most megmutathatja, mit tanult\naz akadémián!" },
-    { "score": 100, "text": "Andika! Megtaláltak!" },
-    { "score": 1000, "text": "Az első visszaszerzett\n MILLIÁRD" }
+    { "score": 500, "text": "Már figyelnek ránk." },
+    { "score": 1000, "text": "Szorul a hurok,\nde jön a vagyon." },
+    { "score": 1150, "text": "A nyomás nő, az iram marad." }
   ]
 }

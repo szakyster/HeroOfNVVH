@@ -196,6 +196,12 @@
       "name": "Release Preparation & Publishing",
       "description": "Prepare and publish the next release by validating release readiness, updating versioned release notes and metadata, confirming deployment/release artifacts, and completing the GitHub release workflow for the playable build. Reference: Tech.md section 13.2, docs/PlayableBetaRelease.md, README.md, and CHANGELOG.md",
       "status": "open"
+    },
+    {
+      "id": 34,
+      "name": "Obstacle Image Optimization",
+      "description": "Optimize the obstacle image assets for faster loading and smaller build output while preserving in-game readability and the established visual direction. Review obstacle file sizes, formats, and export settings, then update the affected assets and any required loading references. Reference: Vizualitas.md sections 4-7 and Tech.md section 6",
+      "status": "open"
     }
   ]
 }

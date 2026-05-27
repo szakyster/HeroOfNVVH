@@ -157,7 +157,8 @@ describe('GameOverScene', () => {
       targetScore: 100,
     });
 
-    expect(saveEntry).toHaveBeenCalledWith({
+    expect(saveEntry).toHaveBeenCalledTimes(1);
+    expect(saveEntry.mock.calls[0]?.at(-1)).toEqual({
       score: 120,
       createdAt: '2026-05-09T12:00:00.000Z',
     });
@@ -181,7 +182,7 @@ describe('GameOverScene', () => {
 
     expect(sceneManager.start).toHaveBeenCalledWith('PlayScene', { levelId: 'level-01' });
     expect(sceneManager.start).toHaveBeenCalledWith('LevelSelectScene');
-    expect(sceneManager.start).toHaveBeenCalledWith('LeaderboardScene');
+    expect(sceneManager.start).toHaveBeenCalledWith('LeaderboardScene', { levelId: 'level-01' });
     expect(mockAudioSystem.playMusic).toHaveBeenCalledWith('music-menu', true);
     expect(sceneManager.start).toHaveBeenCalledWith('MenuScene');
     expect(sceneManager.start).toHaveBeenCalledTimes(7);

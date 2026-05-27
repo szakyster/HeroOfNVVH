@@ -8,6 +8,10 @@ export type LevelCatalogEntry = {
 const ORDERED_LEVELS: LevelCatalogEntry[] = [
   { id: 'level-01', path: `${PUBLIC_BASE_URL}levels/level-01.json` },
   { id: 'level-02', path: `${PUBLIC_BASE_URL}levels/level-02.json` },
+  { id: 'level-03', path: `${PUBLIC_BASE_URL}levels/level-03.json` },
+  { id: 'level-04', path: `${PUBLIC_BASE_URL}levels/level-04.json` },
+  { id: 'level-05', path: `${PUBLIC_BASE_URL}levels/level-05.json` },
+  { id: 'level-06', path: `${PUBLIC_BASE_URL}levels/level-06.json` },
 ];
 
 const levelCatalogById = new Map(ORDERED_LEVELS.map((entry) => [entry.id, entry]));
@@ -20,6 +24,11 @@ export function getOrderedLevelCatalog(): LevelCatalogEntry[] {
 export function getFirstLevelId(): string {
   // The first level acts as the safe fallback for fresh or invalid progress state.
   return ORDERED_LEVELS[0]?.id ?? 'level-01';
+}
+
+export function getAllLevelIds(): string[] {
+  // Progress and debug flows can reuse the authored level order without duplicating ids.
+  return ORDERED_LEVELS.map((entry) => entry.id);
 }
 
 export function getLevelPath(levelId: string): string | undefined {

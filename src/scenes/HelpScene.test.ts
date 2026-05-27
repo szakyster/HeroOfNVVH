@@ -103,6 +103,7 @@ describe('HelpScene', () => {
     expect(createdTexts.some((entry) => entry.text === 'Segítség')).toBe(false);
     expect(createdTexts.some((entry) => entry.text.includes('Szerezd vissza a Nemzeti Vagyont'))).toBe(true);
     expect(createdTexts.some((entry) => entry.text.includes('SPACE: játék indítás | ESC/M: főmenü'))).toBe(true);
+    expect(createdTexts.some((entry) => entry.text === 'Kapcsolat: szakyster.honvvh@gmail.com')).toBe(true);
 
     backButton?.handlers.pointerdown?.();
     startButton?.handlers.pointerdown?.();

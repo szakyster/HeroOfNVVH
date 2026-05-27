@@ -1,7 +1,7 @@
 const LEVEL_ICON_ASSET_KEY_PREFIX = 'level-icon:';
 const ALLOWED_IMAGE_EXTENSION_PATTERN = /\.(png|jpe?g|webp)$/i;
-const LEVEL_ICON_IMAGE_NAMES = ['enemy01.png', 'enemy02.png'];
 const PUBLIC_BASE_URL = import.meta.env.BASE_URL ?? '/';
+const LEVEL_ICON_IMAGE_NAMES = ['level-01.png', 'level-02.png', 'level-03.png', 'level-04.png', 'level-05.png', 'level-06.png'];
 
 export type LevelIconAssetEntry = {
   imageName: string;
@@ -27,10 +27,10 @@ export function getLevelIconAssetKey(imageName: string): string {
   return `${LEVEL_ICON_ASSET_KEY_PREFIX}${imageName}`;
 }
 
-const levelIconAssetRegistry = LEVEL_ICON_IMAGE_NAMES.map((imageName) => ({
+const levelIconAssetRegistry: LevelIconAssetEntry[] = LEVEL_ICON_IMAGE_NAMES.map((imageName) => ({
   imageName,
   key: getLevelIconAssetKey(imageName),
-  url: `${PUBLIC_BASE_URL}assets/sprites/${imageName}`,
+  url: `${PUBLIC_BASE_URL}levels/${imageName}`,
 })).sort((left, right) => left.imageName.localeCompare(right.imageName));
 
 const levelIconAssetRegistryByName = new Map(levelIconAssetRegistry.map((entry) => [entry.imageName, entry]));

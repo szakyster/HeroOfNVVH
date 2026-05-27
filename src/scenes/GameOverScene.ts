@@ -42,7 +42,7 @@ export class GameOverScene extends Phaser.Scene {
     const levelId = data.levelId ?? this.progressStorage.getState().lastPlayedLevelId;
     const targetScore = data.targetScore ?? Number.MAX_SAFE_INTEGER;
     const audioSystem = getAudioSystem(this);
-    const savedEntry = score > 0 ? this.saveScore(score) : null;
+    const savedEntry = score > 0 ? this.saveScore(levelId, score) : null;
     const textAnchor = {
       x: 260,
       y: 280,
@@ -189,15 +189,15 @@ export class GameOverScene extends Phaser.Scene {
     });
 
     this.input.keyboard?.once('keydown-L', () => {
-      this.scene.start(SCENE_KEYS.LEADERBOARD);
+      this.scene.start(SCENE_KEYS.LEADERBOARD, { levelId });
     });
 
     this.input.keyboard?.once('keydown-M', openMenu);
   }
 
-  private saveScore(score: number): { rank: number } | null {
+  private saveScore(levelId: string, score: number): { rank: number } | null {
     const createdAt = new Date().toISOString();
-    const entries = this.leaderboardStorage.saveEntry({ score, createdAt });
+    const entries = this.leaderboardStorage.saveEntry(levelId, { score, createdAt });
     const rank = entries.findIndex((entry) => entry.score === score && entry.createdAt === createdAt);
 
     if (rank === -1) {

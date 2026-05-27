@@ -87,7 +87,7 @@ describe('PlayScene runtime reset', () => {
     scene.sfxToggleIcon = { setTint: () => undefined, clearTint: () => undefined, setAlpha: () => undefined };
     scene.activeEnemies = [{ defeated: false }];
     scene.activeLoots = [{ id: 'loot-1' }];
-    scene.inventory = [{ type: 'bag', value: 50 }];
+    scene.inventory = [{ value: 50 }];
     scene.droppedLootCount = 3;
     scene.nextLootDepositAt = 1200;
     scene.lastInventoryErrorAt = 400;
@@ -170,7 +170,7 @@ describe('PlayScene runtime reset', () => {
     scene.escapedValueBaseX = 430;
     scene.escapedValueBaseY = 63;
     scene.waveValueText = waveValueText;
-    scene.inventory = [{ type: 'wallet', value: 10 }, { type: 'phone', value: 20 }];
+    scene.inventory = [{ value: 10 }, { value: 20 }];
     scene.waveNumber = 4;
     scene.currentLevel = { targetScore: 100 };
     scene.tweens = { add: vi.fn() };
@@ -262,7 +262,7 @@ describe('PlayScene runtime reset', () => {
     scene.enemyInfoText = enemyInfoText;
     scene.currentLevel = { name: 'Teszt pálya' };
     scene.activeLoots = [{ id: 'loot-1' }];
-    scene.inventory = [{ type: 'bag', value: 50 }];
+    scene.inventory = [{ value: 50 }];
     scene.activeEnemies = [{ defeated: false }];
     scene.spawnedEnemies = 2;
     scene.waveNumber = 2;
@@ -290,7 +290,7 @@ describe('PlayScene runtime reset', () => {
       clearTint: vi.fn(),
     }));
 
-    scene.inventory = [{ type: 'wallet', value: 10 }, { type: 'bag', value: 50 }, { type: 'phone', value: 20 }];
+    scene.inventory = [{ value: 10 }, { value: 50 }, { value: 20 }];
 
     scene.registry = { get: vi.fn((key: string) => (key === 'score' || key === 'escapedEnemies' ? 0 : undefined)) };
     scene.scoreValueText = { setText: vi.fn() };
@@ -325,7 +325,7 @@ describe('PlayScene runtime reset', () => {
     const scene = new PlayScene() as unknown as Record<string, unknown>;
 
     scene.currentLevel = {
-      lootSpawns: [{ id: 'loot-1', type: 'wallet', value: 20, image: 'money01.png', cell: { x: 2, y: 4 } }],
+      lootSpawns: [{ id: 'loot-1', value: 20, image: 'money01.png' }],
     };
     scene.add = add;
     scene.time = { now: 1250 };
@@ -353,7 +353,7 @@ describe('PlayScene runtime reset', () => {
     const scene = new PlayScene() as unknown as Record<string, unknown>;
 
     scene.currentLevel = {
-      lootSpawns: [{ id: 'loot-1', type: 'wallet', value: 10, cell: { x: 2, y: 4 } }],
+      lootSpawns: [{ id: 'loot-1', value: 10 }],
     };
     scene.add = {
       ellipse: vi.fn(() => ({ setDepth: vi.fn().mockReturnThis() })),
@@ -474,7 +474,7 @@ describe('PlayScene runtime reset', () => {
     expect(popupStyle).toEqual(
       expect.objectContaining({
         fontFamily: 'Bungee, Verdana, sans-serif',
-        fontSize: '58px',
+        fontSize: '40px',
         color: '#f4e6a2',
       }),
     );
@@ -617,13 +617,12 @@ describe('PlayScene runtime reset', () => {
     scene.add = { image: vi.fn(() => pickupIcon) };
     scene.tweens = { add: tweensAdd };
 
-    (scene.pickUpLoot as (loot: { body: { x: number; y: number }; type: string; value: number }) => void)({
+    (scene.pickUpLoot as (loot: { body: { x: number; y: number }; value: number }) => void)({
       body: { x: 320, y: 200 },
-      type: 'wallet',
       value: 20,
     });
 
-    expect(scene.inventory).toEqual([{ type: 'wallet', value: 20 }]);
+    expect(scene.inventory).toEqual([{ value: 20 }]);
     expect(playSfx).toHaveBeenCalledWith('sfx-pickup');
     expect((scene.add as { image: ReturnType<typeof vi.fn> }).image).toHaveBeenCalledWith(320, 200, 'ui:bag01.png');
     expect(setDisplaySize).toHaveBeenCalledWith(28, 28);
@@ -640,7 +639,7 @@ describe('PlayScene runtime reset', () => {
       }),
     );
     expect(destroyLoot).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'wallet', value: 20 }),
+      expect.objectContaining({ value: 20 }),
       false,
     );
     expect(refreshLevelInfo).toHaveBeenCalledTimes(1);
@@ -659,7 +658,7 @@ describe('PlayScene runtime reset', () => {
     scene.showDepositValuePopup = showDepositValuePopup;
     scene.showScoreMilestonePopup = showScoreMilestonePopup;
     scene.currentLevel = { scoreMilestones: [{ score: 100, text: 'elso visszaszerzett milliard' }] };
-    scene.inventory = [{ type: 'wallet', value: 10 }, { type: 'bag', value: 50 }];
+    scene.inventory = [{ value: 10 }, { value: 50 }];
     scene.nextLootDepositAt = null;
     scene.registry = {
       get: vi.fn((key: string) => registryState[key as keyof typeof registryState]),
@@ -710,6 +709,25 @@ describe('PlayScene runtime reset', () => {
     expect(showScoreMilestonePopup).toHaveBeenNthCalledWith(1, 'elso visszaszerzett milliard');
     expect(showScoreMilestonePopup).toHaveBeenNthCalledWith(2, 'masodik merfoldko');
     expect(showScoreMilestonePopup).toHaveBeenCalledTimes(2);
+  });
+
+  it('shows zero-score milestone immediately at scene start', () => {
+    const scene = new PlayScene() as unknown as Record<string, unknown>;
+    const showScoreMilestonePopup = vi.fn();
+
+    scene.currentLevel = {
+      scoreMilestones: [
+        { score: 0, text: 'udv a fedelzeten' },
+        { score: 100, text: 'elso visszaszerzett milliard' },
+      ],
+    };
+    scene.showScoreMilestonePopup = showScoreMilestonePopup;
+    scene.registry = { get: vi.fn(() => 0) };
+
+    (scene.showInitialScoreMilestones as () => void)();
+
+    expect(showScoreMilestonePopup).toHaveBeenCalledWith('udv a fedelzeten');
+    expect(showScoreMilestonePopup).toHaveBeenCalledTimes(1);
   });
 
   it('triggers game over once and starts the game over scene after music fade', () => {

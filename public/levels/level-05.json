@@ -1,0 +1,85 @@
+{
+  "id": "level-05",
+  "name": "Légihíd blokád",
+  "targetScore": 1300,
+  "icon": "level-05.png",
+  "enemyTypes": ["enemy01", "enemy02", "enemy03", "enemy04"],
+  "obstacles": [
+    { "x": 0, "y": 2, "image": "residental01.png" },
+    { "x": 1, "y": 2, "image": "residental02.png" },
+    { "x": 0, "y": 4, "image": "car01.png" },
+
+    { "x": 2, "y": 0, "image": "residental02.png" },
+
+
+    { "x": 4, "y": 1, "image": "tree01.png" },
+    { "x": 4, "y": 2, "image": "tree02.png" },
+    { "x": 4, "y": 3, "image": "tree03.png" },
+    { "x": 4, "y": 4, "image": "tree02.png" },
+
+    { "x": 5, "y": 1, "image": "tree03.png" },
+    { "x": 5, "y": 3, "image": "tree01.png" }
+  ],
+  "spawnZones": [
+    {
+      "id": "hatvanpuszta-main",
+      "cells": [
+        { "x": 0, "y": 0 },
+        { "x": 0, "y": 1 }
+      ]
+    }
+  ],
+  "goalZones": [
+    {
+      "id": "repter-main",
+      "cells": [
+        { "x": 5, "y": 2 }
+      ]
+    }
+  ],
+  "sanctuaryZone": [
+    { "x": 0, "y": 5 },
+    { "x": 1, "y": 5 }
+  ],
+  "hrsImages": [
+    {
+      "id": "hrs-hatvanpuszta",
+      "zoneType": "spawn",
+      "zoneId": "hatvanpuszta-main",
+      "image": "hatvanpuszta01.png",
+      "side": "left",
+      "offsetX": 80,
+      "offsetY": 20,
+      "scale": 0.8
+    },
+    {
+      "id": "hrs-repter",
+      "zoneType": "goal",
+      "zoneId": "repter-main",
+      "image": "repter01.png",
+      "side": "right",
+      "offsetX": -150,
+      "offsetY": 25,
+      "scale": 0.75
+    },
+    {
+      "id": "hrs-sanctuary",
+      "zoneType": "sanctuary",
+      "image": "nvvh01.png",
+      "side": "bottom",
+      "offsetX": -150,
+      "offsetY": -150,
+      "scale": 0.75
+    }
+  ],
+  "lootSpawns": [
+    { "id": "loot-1", "value": 10, "image": "money01.png" },
+    { "id": "loot-2", "value": 20, "image": "ferrari01.png" },
+    { "id": "loot-4", "value": 40, "image": "ferrari01.png" },
+    { "id": "loot-5", "value": 50, "image": "helicopter01.png" }
+  ],
+  "scoreMilestones": [
+    { "score": 1000, "text": "A blokád repedezik." },
+    { "score": 3000, "text": "Fél kézzel már visszahúzzuk az egészet." }
+  ]
+}

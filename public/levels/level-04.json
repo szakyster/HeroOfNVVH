@@ -1,0 +1,81 @@
+{
+  "id": "level-04",
+  "name": "Szűk keresztmetszet",
+  "targetScore": 1200,
+  "icon": "level-04.png",
+  "enemyTypes": ["enemy01", "enemy02", "enemy03", "enemy04"],
+  "obstacles": [
+    { "x": 4, "y": 0, "image": "office01.png" },
+    { "x": 3, "y": 1, "image": "tree01.png" },
+    { "x": 1, "y": 1, "image": "car01.png" },
+    { "x": 4, "y": 1, "image": "car01.png" },
+    { "x": 6, "y": 1, "image": "residental01.png" },
+    { "x": 3, "y": 2, "image": "tree01.png" },
+    { "x": 3, "y": 3, "image": "office01.png" },
+    { "x": 6, "y": 5, "image": "car01.png" },
+    { "x": 0, "y": 4, "image": "residental02.png" }
+  ],
+  "spawnZones": [
+    {
+      "id": "hatvanpuszta-main",
+      "cells": [
+        { "x": 0, "y": 2 },
+        { "x": 0, "y": 3 }
+      ]
+    }
+  ],
+  "goalZones": [
+    {
+      "id": "repter-main",
+      "cells": [
+        { "x": 6, "y": 3 }
+      ]
+    }
+  ],
+  "sanctuaryZone": [
+    { "x": 0, "y": 5 },
+    { "x": 1, "y": 5 }
+  ],
+  "hrsImages": [
+    {
+      "id": "hrs-hatvanpuszta",
+      "zoneType": "spawn",
+      "zoneId": "hatvanpuszta-main",
+      "image": "hatvanpuszta01.png",
+      "side": "left",
+      "offsetX": 80,
+      "offsetY": -60,
+      "scale": 0.8
+    },
+    {
+      "id": "hrs-repter",
+      "zoneType": "goal",
+      "zoneId": "repter-main",
+      "image": "repter01.png",
+      "side": "right",
+      "offsetX": -150,
+      "offsetY": 25,
+      "scale": 0.75
+    },
+    {
+      "id": "hrs-sanctuary",
+      "zoneType": "sanctuary",
+      "image": "nvvh01.png",
+      "side": "bottom",
+      "offsetY": -100,
+      "scale": 0.75
+    }
+  ],
+  "lootSpawns": [
+    { "id": "loot-1", "value": 10, "image": "money01.png" },
+    { "id": "loot-2", "value": 20, "image": "ferrari01.png" },
+    { "id": "loot-3", "value": 60, "image": "helicopter01.png" },
+    { "id": "loot-4", "value": 20, "image": "ferrari01.png" },
+    { "id": "loot-5", "value": 10, "image": "money01.png" }
+  ],
+  "scoreMilestones": [
+    { "score": 800, "text": "Már mindenki az utunkat állja." },
+    { "score": 1200, "text": "Ez a korházaktól hiányzik." },
+    { "score": 1500, "text": "Még egy nagy kör, és meglesz." }
+  ]
+}

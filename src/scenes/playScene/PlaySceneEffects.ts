@@ -3,7 +3,6 @@ import { getDepositPopupColor, type ActiveLoot, type LootValue } from './PlaySce
 
 type LootTemplate = {
   id: string;
-  type: string;
   value: LootValue;
   image?: string;
 };
@@ -83,7 +82,6 @@ export function spawnDroppedLoot({
 
   return {
     id: `${template.id}-${droppedLootCount}`,
-    type: template.type,
     value: template.value,
     body: body as ActiveLoot['body'],
     shadow: shadow as ActiveLoot['shadow'],

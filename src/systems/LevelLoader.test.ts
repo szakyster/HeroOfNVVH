@@ -11,7 +11,6 @@ describe('LevelLoader', () => {
       targetScore: 250,
       icon: 'enemy01.png',
       enemyTypes: ['enemy01', 'enemy02'],
-      grid: { width: 7, height: 6 },
       obstacles: [{ x: 1, y: 1, image: 'residental01.png' }],
       spawnZones: [{ id: 'spawn-1', cells: [{ x: 0, y: 0 }] }],
       goalZones: [{ id: 'goal-1', cells: [{ x: 6, y: 5 }] }],
@@ -21,8 +20,11 @@ describe('LevelLoader', () => {
         { id: 'hrs-goal', zoneType: 'goal', zoneId: 'goal-1', image: 'repter01.png', side: 'right' },
         { id: 'hrs-sanctuary', zoneType: 'sanctuary', image: 'nvvh01.png', side: 'bottom' },
       ],
-      lootSpawns: [{ id: 'loot-1', type: 'wallet', value: 20, image: 'money01.png', cell: { x: 2, y: 4 } }],
-      scoreMilestones: [{ score: 1000, text: 'elso visszaszerzett milliard' }],
+      lootSpawns: [{ id: 'loot-1', value: 20, image: 'money01.png' }],
+      scoreMilestones: [
+        { score: 0, text: 'udv a fedelzeten' },
+        { score: 1000, text: 'elso visszaszerzett milliard' },
+      ],
     });
 
     expect(parsed.id).toBe('level-test');
@@ -33,10 +35,12 @@ describe('LevelLoader', () => {
     expect(parsed.spawnZones[0].id).toBe('spawn-1');
     expect(parsed.obstacles[0].image).toBe('residental01.png');
     expect(parsed.hrsImages).toHaveLength(3);
-    expect(parsed.lootSpawns[0].cell.x).toBe(2);
     expect(parsed.lootSpawns[0].value).toBe(20);
     expect(parsed.lootSpawns[0].image).toBe('money01.png');
-    expect(parsed.scoreMilestones).toEqual([{ score: 1000, text: 'elso visszaszerzett milliard' }]);
+    expect(parsed.scoreMilestones).toEqual([
+      { score: 0, text: 'udv a fedelzeten' },
+      { score: 1000, text: 'elso visszaszerzett milliard' },
+    ]);
   });
 
   it('throws when a score milestone is malformed', () => {
@@ -47,16 +51,15 @@ describe('LevelLoader', () => {
         targetScore: 100,
         icon: 'enemy01.png',
         enemyTypes: ['enemy01'],
-        grid: { width: 7, height: 6 },
         obstacles: [],
         spawnZones: [{ id: 'spawn-1', cells: [{ x: 0, y: 0 }] }],
         goalZones: [{ id: 'goal-1', cells: [{ x: 6, y: 5 }] }],
         sanctuaryZone: [{ x: 3, y: 5 }],
         hrsImages: [],
-        lootSpawns: [{ id: 'loot-1', type: 'wallet', value: 20, cell: { x: 2, y: 4 } }],
-        scoreMilestones: [{ score: 0, text: '' }],
+        lootSpawns: [{ id: 'loot-1', value: 20 }],
+        scoreMilestones: [{ score: -1, text: '' }],
       }),
-    ).toThrow(/scoreMilestones\[0\]\.score must be a positive integer/i);
+    ).toThrow(/scoreMilestones\[0\]\.score must be a non-negative integer/i);
   });
 
   it('throws when targetScore, icon, or enemy metadata is malformed', () => {
@@ -67,13 +70,12 @@ describe('LevelLoader', () => {
         targetScore: 0,
         icon: 'enemy01.png',
         enemyTypes: ['enemy01'],
-        grid: { width: 7, height: 6 },
         obstacles: [],
         spawnZones: [{ id: 'spawn-1', cells: [{ x: 0, y: 0 }] }],
         goalZones: [{ id: 'goal-1', cells: [{ x: 6, y: 5 }] }],
         sanctuaryZone: [{ x: 3, y: 5 }],
         hrsImages: [],
-        lootSpawns: [{ id: 'loot-1', type: 'wallet', value: 20, cell: { x: 2, y: 4 } }],
+        lootSpawns: [{ id: 'loot-1', value: 20 }],
       }),
     ).toThrow(/targetScore must be a positive integer/i);
 
@@ -84,13 +86,12 @@ describe('LevelLoader', () => {
         targetScore: 100,
         icon: 'nested/enemy01.png',
         enemyTypes: ['enemy01'],
-        grid: { width: 7, height: 6 },
         obstacles: [],
         spawnZones: [{ id: 'spawn-1', cells: [{ x: 0, y: 0 }] }],
         goalZones: [{ id: 'goal-1', cells: [{ x: 6, y: 5 }] }],
         sanctuaryZone: [{ x: 3, y: 5 }],
         hrsImages: [],
-        lootSpawns: [{ id: 'loot-1', type: 'wallet', value: 20, cell: { x: 2, y: 4 } }],
+        lootSpawns: [{ id: 'loot-1', value: 20 }],
       }),
     ).toThrow(/icon must be a direct image filename/i);
 
@@ -101,13 +102,12 @@ describe('LevelLoader', () => {
         targetScore: 100,
         icon: 'enemy01.png',
         enemyTypes: ['enemy99'],
-        grid: { width: 7, height: 6 },
         obstacles: [],
         spawnZones: [{ id: 'spawn-1', cells: [{ x: 0, y: 0 }] }],
         goalZones: [{ id: 'goal-1', cells: [{ x: 6, y: 5 }] }],
         sanctuaryZone: [{ x: 3, y: 5 }],
         hrsImages: [],
-        lootSpawns: [{ id: 'loot-1', type: 'wallet', value: 20, cell: { x: 2, y: 4 } }],
+        lootSpawns: [{ id: 'loot-1', value: 20 }],
       }),
     ).toThrow(/enemyTypes\[0\] must be one of/i);
 
@@ -118,13 +118,12 @@ describe('LevelLoader', () => {
         targetScore: 100,
         icon: 'enemy01.png',
         enemyTypes: ['enemy01', 'enemy01'],
-        grid: { width: 7, height: 6 },
         obstacles: [],
         spawnZones: [{ id: 'spawn-1', cells: [{ x: 0, y: 0 }] }],
         goalZones: [{ id: 'goal-1', cells: [{ x: 6, y: 5 }] }],
         sanctuaryZone: [{ x: 3, y: 5 }],
         hrsImages: [],
-        lootSpawns: [{ id: 'loot-1', type: 'wallet', value: 20, cell: { x: 2, y: 4 } }],
+        lootSpawns: [{ id: 'loot-1', value: 20 }],
       }),
     ).toThrow(/enemyTypes must not contain duplicates/i);
   });
@@ -137,18 +136,17 @@ describe('LevelLoader', () => {
         targetScore: 100,
         icon: 'enemy01.png',
         enemyTypes: ['enemy01'],
-        grid: { width: 7, height: 6 },
         obstacles: [{ x: 9, y: 1, image: 'residental01.png' }],
         spawnZones: [{ id: 'spawn-1', cells: [{ x: 0, y: 0 }] }],
         goalZones: [{ id: 'goal-1', cells: [{ x: 6, y: 5 }] }],
         sanctuaryZone: [{ x: 3, y: 5 }],
         hrsImages: [],
-        lootSpawns: [{ id: 'loot-1', type: 'wallet', value: 20, cell: { x: 2, y: 4 } }],
+        lootSpawns: [{ id: 'loot-1', value: 20 }],
       }),
     ).toThrow(/validation error/i);
   });
 
-  it('throws when loot value is not one of the allowed denominations', () => {
+  it('throws when loot value is not a positive integer', () => {
     expect(() =>
       loader.parse({
         id: 'bad-level',
@@ -156,15 +154,30 @@ describe('LevelLoader', () => {
         targetScore: 100,
         icon: 'enemy01.png',
         enemyTypes: ['enemy01'],
-        grid: { width: 7, height: 6 },
         obstacles: [],
         spawnZones: [{ id: 'spawn-1', cells: [{ x: 0, y: 0 }] }],
         goalZones: [{ id: 'goal-1', cells: [{ x: 6, y: 5 }] }],
         sanctuaryZone: [{ x: 3, y: 5 }],
         hrsImages: [],
-        lootSpawns: [{ id: 'loot-1', type: 'wallet', value: 30, cell: { x: 2, y: 4 } }],
+        lootSpawns: [{ id: 'loot-1', value: 0 }],
       }),
-    ).toThrow(/validation error/i);
+    ).toThrow(/lootSpawns\[0\]\.value must be a positive integer/i);
+
+    expect(() =>
+      loader.parse({
+        id: 'bad-level',
+        name: 'Bad Level',
+        targetScore: 100,
+        icon: 'enemy01.png',
+        enemyTypes: ['enemy01'],
+        obstacles: [],
+        spawnZones: [{ id: 'spawn-1', cells: [{ x: 0, y: 0 }] }],
+        goalZones: [{ id: 'goal-1', cells: [{ x: 6, y: 5 }] }],
+        sanctuaryZone: [{ x: 3, y: 5 }],
+        hrsImages: [],
+        lootSpawns: [{ id: 'loot-1', value: 12.5 }],
+      }),
+    ).toThrow(/lootSpawns\[0\]\.value must be a positive integer/i);
   });
 
   it('throws when loot image points outside the loots root or does not exist', () => {
@@ -175,13 +188,12 @@ describe('LevelLoader', () => {
         targetScore: 100,
         icon: 'enemy01.png',
         enemyTypes: ['enemy01'],
-        grid: { width: 7, height: 6 },
         obstacles: [],
         spawnZones: [{ id: 'spawn-1', cells: [{ x: 0, y: 0 }] }],
         goalZones: [{ id: 'goal-1', cells: [{ x: 6, y: 5 }] }],
         sanctuaryZone: [{ x: 3, y: 5 }],
         hrsImages: [],
-        lootSpawns: [{ id: 'loot-1', type: 'wallet', value: 20, image: 'nested/money01.png', cell: { x: 2, y: 4 } }],
+        lootSpawns: [{ id: 'loot-1', value: 20, image: 'nested/money01.png' }],
       }),
     ).toThrow(/lootSpawns\[0\]\.image must be a direct filename from the loots folder/i);
 
@@ -192,13 +204,12 @@ describe('LevelLoader', () => {
         targetScore: 100,
         icon: 'enemy01.png',
         enemyTypes: ['enemy01'],
-        grid: { width: 7, height: 6 },
         obstacles: [],
         spawnZones: [{ id: 'spawn-1', cells: [{ x: 0, y: 0 }] }],
         goalZones: [{ id: 'goal-1', cells: [{ x: 6, y: 5 }] }],
         sanctuaryZone: [{ x: 3, y: 5 }],
         hrsImages: [],
-        lootSpawns: [{ id: 'loot-1', type: 'wallet', value: 20, image: 'missing.png', cell: { x: 2, y: 4 } }],
+        lootSpawns: [{ id: 'loot-1', value: 20, image: 'missing.png' }],
       }),
     ).toThrow(/lootSpawns\[0\]\.image must reference an existing file in the loots folder root/i);
   });
@@ -211,13 +222,12 @@ describe('LevelLoader', () => {
         targetScore: 100,
         icon: 'enemy01.png',
         enemyTypes: ['enemy01'],
-        grid: { width: 7, height: 6 },
         obstacles: [{ x: 1, y: 1, image: 'nested/residental01.png' }],
         spawnZones: [{ id: 'spawn-1', cells: [{ x: 0, y: 0 }] }],
         goalZones: [{ id: 'goal-1', cells: [{ x: 6, y: 5 }] }],
         sanctuaryZone: [{ x: 3, y: 5 }],
         hrsImages: [],
-        lootSpawns: [{ id: 'loot-1', type: 'wallet', value: 20, cell: { x: 2, y: 4 } }],
+        lootSpawns: [{ id: 'loot-1', value: 20 }],
       }),
     ).toThrow(/obstacles\[0\]\.image/i);
   });
@@ -230,13 +240,12 @@ describe('LevelLoader', () => {
         targetScore: 100,
         icon: 'enemy01.png',
         enemyTypes: ['enemy01'],
-        grid: { width: 7, height: 6 },
         obstacles: [{ x: 1, y: 1, image: 'missing.png' }],
         spawnZones: [{ id: 'spawn-1', cells: [{ x: 0, y: 0 }] }],
         goalZones: [{ id: 'goal-1', cells: [{ x: 6, y: 5 }] }],
         sanctuaryZone: [{ x: 3, y: 5 }],
         hrsImages: [],
-        lootSpawns: [{ id: 'loot-1', type: 'wallet', value: 20, cell: { x: 2, y: 4 } }],
+        lootSpawns: [{ id: 'loot-1', value: 20 }],
       }),
     ).toThrow(/existing file in the obstacles folder root/i);
   });
@@ -249,7 +258,6 @@ describe('LevelLoader', () => {
         targetScore: 100,
         icon: 'enemy01.png',
         enemyTypes: ['enemy01'],
-        grid: { width: 7, height: 6 },
         obstacles: [],
         spawnZones: [{ id: 'spawn-1', cells: [{ x: 0, y: 0 }] }],
         goalZones: [{ id: 'goal-1', cells: [{ x: 6, y: 5 }] }],
@@ -258,7 +266,7 @@ describe('LevelLoader', () => {
           { id: 'hrs-a', zoneType: 'spawn', zoneId: 'spawn-1', image: 'hatvanpuszta01.png', side: 'left' },
           { id: 'hrs-b', zoneType: 'spawn', zoneId: 'spawn-1', image: 'repter01.png', side: 'right' },
         ],
-        lootSpawns: [{ id: 'loot-1', type: 'wallet', value: 20, cell: { x: 2, y: 4 } }],
+        lootSpawns: [{ id: 'loot-1', value: 20 }],
       }),
     ).toThrow(/duplicates an existing HRS zone image assignment/i);
 
@@ -269,7 +277,6 @@ describe('LevelLoader', () => {
         targetScore: 100,
         icon: 'enemy01.png',
         enemyTypes: ['enemy01'],
-        grid: { width: 7, height: 6 },
         obstacles: [],
         spawnZones: [{ id: 'spawn-1', cells: [{ x: 0, y: 0 }] }],
         goalZones: [{ id: 'goal-1', cells: [{ x: 6, y: 5 }] }],
@@ -277,7 +284,7 @@ describe('LevelLoader', () => {
         hrsImages: [
           { id: 'hrs-a', zoneType: 'goal', zoneId: 'missing-goal', image: 'repter01.png', side: 'right' },
         ],
-        lootSpawns: [{ id: 'loot-1', type: 'wallet', value: 20, cell: { x: 2, y: 4 } }],
+        lootSpawns: [{ id: 'loot-1', value: 20 }],
       }),
     ).toThrow(/existing goal zone/i);
   });

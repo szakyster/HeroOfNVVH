@@ -1,13 +1,9 @@
 {
   "id": "level-01",
   "name": "Bemelegítés",
-  "targetScore": 400,
-  "icon": "enemy01.png",
-  "enemyTypes": ["enemy01", "enemy02"],
-  "grid": {
-    "width": 7,
-    "height": 6
-  },
+  "targetScore": 300,
+  "icon": "level-01.png",
+  "enemyTypes": ["enemy01"],
   "obstacles": [
     { "x": 2, "y": 1, "image": "residental01.png" },
     { "x": 4, "y": 1, "image": "residental01.png" },
@@ -67,9 +63,15 @@
     }
   ],
   "lootSpawns": [
-    { "id": "loot-1", "type": "wallet", "value": 10, "image": "money01.png", "cell": { "x": 2, "y": 4 } }
+    { "id": "loot-1", "value": 10, "image": "money01.png" }
   ],
   "scoreMilestones": [
-
+    { "score": 0, "text": "Üdv a fedélzetem" },
+    { "score": 30, "text": "Nem csak a vagyont kell visszaszerezni\na tolvajokat nem hagyni meglógni!" },
+    { "score": 100, "text": "Nem juthatnak el a reptérre" },
+    { "score": 360, "text": "Mostmár mehet terepre" },
+    { "score": 500, "text": "Büszkék vagyunk önre!" },
+    { "score": 1000, "text": "A Hónap dolgozója" },
+    { "score": 1500, "text": "Ideje továbblépni!" }
   ]
 }

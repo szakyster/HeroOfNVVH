@@ -101,7 +101,7 @@ beforeEach(() => {
   getAvailableHrsAssets.mockReturnValue([{ key: 'hrs:spawn', url: 'assets/hrs/spawn.png' }]);
   getAvailableLootAssets.mockReturnValue([{ key: 'loot:money', url: 'assets/loots/money.png' }]);
   getAvailableUiAssets.mockReturnValue([{ key: 'ui:music', url: 'assets/ui/music.png' }]);
-  getAvailableLevelIconAssets.mockReturnValue([{ key: 'level-icon:enemy01.png', url: 'assets/sprites/enemy01/icon.png' }]);
+  getAvailableLevelIconAssets.mockReturnValue([{ key: 'level-icon:level-01.png', url: 'levels/level-01.png' }]);
 });
 
 describe('BootScene', () => {
@@ -162,7 +162,7 @@ describe('BootScene', () => {
     expect(scene.load.image).toHaveBeenCalledWith('hrs:spawn', ['assets/hrs/spawn.png']);
     expect(scene.load.image).toHaveBeenCalledWith('loot:money', ['assets/loots/money.png']);
     expect(scene.load.image).toHaveBeenCalledWith('ui:music', ['assets/ui/music.png']);
-    expect(scene.load.image).toHaveBeenCalledWith('level-icon:enemy01.png', ['assets/sprites/enemy01/icon.png']);
+    expect(scene.load.image).toHaveBeenCalledWith('level-icon:level-01.png', ['levels/level-01.png']);
     expect(scene.load.audio).toHaveBeenCalledWith('music-menu', ['assets/audio/Preparation of hunting.mp3']);
     expect(createdTexts.some((entry) => entry.text === 'Heroes of NVVH')).toBe(true);
     expect(createdTexts.some((entry) => entry.text === 'Betöltés 100%')).toBe(true);

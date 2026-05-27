@@ -1,0 +1,86 @@
+{
+  "id": "level-06",
+  "name": "Végső visszaszerzés",
+  "targetScore": 1800,
+  "icon": "level-06.png",
+  "enemyTypes": ["enemy01", "enemy02", "enemy03", "enemy04"],
+  "obstacles": [
+    { "x": 0, "y": 1, "image": "residental01.png" },
+    { "x": 1, "y": 1, "image": "residental02.png" },
+    { "x": 2, "y": 1, "image": "residental01.png" },
+    { "x": 3, "y": 1, "image": "residental01.png" },
+
+    { "x": 3, "y": 3, "image": "residental03.png" },
+    { "x": 4, "y": 3, "image": "residental02.png" },
+    { "x": 5, "y": 3, "image": "residental02.png" },
+    { "x": 6, "y": 3, "image": "office01.png" },
+
+    { "x": 1, "y": 4, "image": "car01.png" }
+
+  ],
+  "spawnZones": [
+    {
+      "id": "hatvanpuszta-main",
+      "cells": [
+        { "x": 4, "y": 0 },
+        { "x": 5, "y": 0 }
+      ]
+    }
+  ],
+  "goalZones": [
+    {
+      "id": "repter-main",
+      "cells": [
+        { "x": 4, "y": 5 }
+      ]
+    }
+  ],
+  "sanctuaryZone": [
+    { "x": 0, "y": 5 },
+    { "x": 1, "y": 5 }
+  ],
+  "hrsImages": [
+    {
+      "id": "hrs-hatvanpuszta",
+      "zoneType": "spawn",
+      "zoneId": "hatvanpuszta-main",
+      "image": "hatvanpuszta01.png",
+      "side": "left",
+      "offsetX": 320,
+      "offsetY": 20,
+      "scale": 0.8
+    },
+    {
+      "id": "hrs-repter",
+      "zoneType": "goal",
+      "zoneId": "repter-main",
+      "image": "repter01.png",
+      "side": "right",
+      "offsetX": -150,
+      "offsetY": 40,
+      "scale": 0.75
+    },
+    {
+      "id": "hrs-sanctuary",
+      "zoneType": "sanctuary",
+      "image": "nvvh01.png",
+      "side": "bottom",
+      "offsetY": -70,
+      "scale": 0.75
+    }
+  ],
+  "lootSpawns": [
+    { "id": "loot-1", "value": 50, "image": "helicopter01.png" },
+    { "id": "loot-2", "value": 40, "image": "money01.png" },
+    { "id": "loot-3", "value": 20, "image": "ferrari01.png" },
+    { "id": "loot-4", "value": 20, "image": "wc01.png" },
+    { "id": "loot-5", "value": 10, "image": "money01.png" },
+    { "id": "loot-6", "value": 70, "image": "helicopter01.png" },
+    { "id": "loot-7", "value": 20, "image": "ferrari01.png" }
+  ],
+  "scoreMilestones": [
+    { "score": 1200, "text": "Most indul az igazi harc." },
+    { "score": 3600, "text": "A végső kör már a miénk lehet." },
+    { "score": 6400, "text": "Már csak egy hajszál választ el." }
+  ]
+}
