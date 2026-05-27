@@ -1,7 +1,7 @@
 {
   "id": "level-03",
   "name": "Fokozódó nyomás",
-  "targetScore": 1200,
+  "targetScore": 1000,
   "icon": "level-03.png",
   "enemyTypes": ["enemy01", "enemy03"],
   "obstacles": [

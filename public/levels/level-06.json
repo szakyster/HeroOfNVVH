@@ -1,7 +1,7 @@
 {
   "id": "level-06",
   "name": "Végső visszaszerzés",
-  "targetScore": 2800,
+  "targetScore": 1800,
   "icon": "level-06.png",
   "enemyTypes": ["enemy01", "enemy02", "enemy03", "enemy04"],
   "obstacles": [
@@ -73,7 +73,7 @@
     { "id": "loot-1", "value": 50, "image": "helicopter01.png" },
     { "id": "loot-2", "value": 40, "image": "money01.png" },
     { "id": "loot-3", "value": 20, "image": "ferrari01.png" },
-    { "id": "loot-4", "value": 20, "image": "ferrari01.png" },
+    { "id": "loot-4", "value": 20, "image": "wc01.png" },
     { "id": "loot-5", "value": 10, "image": "money01.png" },
     { "id": "loot-6", "value": 70, "image": "helicopter01.png" },
     { "id": "loot-7", "value": 20, "image": "ferrari01.png" }

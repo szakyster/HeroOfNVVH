@@ -1,7 +1,7 @@
 {
   "id": "level-02",
   "name": "Az első kihívás",
-  "targetScore": 1200,
+  "targetScore": 900,
   "icon": "level-02.png",
   "enemyTypes": ["enemy01"],
   "obstacles": [
@@ -70,7 +70,8 @@
     { "id": "loot-3", "value": 50, "image": "helicopter01.png" }
   ],
   "scoreMilestones": [
-    { "score": 100, "text": "Andika! Megtaláltak" },
+    { "score": 100, "text": "Most megmutathatja, mit tanult\naz akadémián!" },
+    { "score": 100, "text": "Andika! Megtaláltak!" },
     { "score": 1000, "text": "Az első visszaszerzett\n MILLIÁRD" }
   ]
 }

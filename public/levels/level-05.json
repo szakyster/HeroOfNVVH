@@ -1,7 +1,7 @@
 {
   "id": "level-05",
   "name": "Légihíd blokád",
-  "targetScore": 1400,
+  "targetScore": 1300,
   "icon": "level-05.png",
   "enemyTypes": ["enemy01", "enemy02", "enemy03", "enemy04"],
   "obstacles": [
@@ -75,10 +75,8 @@
   "lootSpawns": [
     { "id": "loot-1", "value": 10, "image": "money01.png" },
     { "id": "loot-2", "value": 20, "image": "ferrari01.png" },
-    { "id": "loot-3", "value": 10, "image": "money01.png" },
-    { "id": "loot-4", "value": 20, "image": "ferrari01.png" },
-    { "id": "loot-5", "value": 50, "image": "helicopter01.png" },
-    { "id": "loot-6", "value": 10, "image": "money01.png" }
+    { "id": "loot-4", "value": 40, "image": "ferrari01.png" },
+    { "id": "loot-5", "value": 50, "image": "helicopter01.png" }
   ],
   "scoreMilestones": [
     { "score": 1000, "text": "A blokád repedezik." },

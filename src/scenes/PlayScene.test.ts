@@ -474,7 +474,7 @@ describe('PlayScene runtime reset', () => {
     expect(popupStyle).toEqual(
       expect.objectContaining({
         fontFamily: 'Bungee, Verdana, sans-serif',
-        fontSize: '58px',
+        fontSize: '40px',
         color: '#f4e6a2',
       }),
     );

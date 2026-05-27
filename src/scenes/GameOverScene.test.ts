@@ -157,7 +157,8 @@ describe('GameOverScene', () => {
       targetScore: 100,
     });
 
-    expect(saveEntry).toHaveBeenCalledWith({
+    expect(saveEntry).toHaveBeenCalledTimes(1);
+    expect(saveEntry.mock.calls[0]?.at(-1)).toEqual({
       score: 120,
       createdAt: '2026-05-09T12:00:00.000Z',
     });

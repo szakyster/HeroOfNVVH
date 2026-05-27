@@ -1,7 +1,7 @@
 {
   "id": "level-04",
   "name": "Szűk keresztmetszet",
-  "targetScore": 1600,
+  "targetScore": 1200,
   "icon": "level-04.png",
   "enemyTypes": ["enemy01", "enemy02", "enemy03", "enemy04"],
   "obstacles": [
@@ -68,7 +68,7 @@
   "lootSpawns": [
     { "id": "loot-1", "value": 10, "image": "money01.png" },
     { "id": "loot-2", "value": 20, "image": "ferrari01.png" },
-    { "id": "loot-3", "value": 50, "image": "helicopter01.png" },
+    { "id": "loot-3", "value": 60, "image": "helicopter01.png" },
     { "id": "loot-4", "value": 20, "image": "ferrari01.png" },
     { "id": "loot-5", "value": 10, "image": "money01.png" }
   ],

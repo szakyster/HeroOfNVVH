@@ -1194,7 +1194,7 @@ export class PlayScene extends Phaser.Scene {
     const popup = this.add
       .text(width / 2, height * 0.48, text, {
         fontFamily: SCORE_MILESTONE_POPUP_FONT_FAMILY,
-        fontSize: '58px',
+        fontSize: '40px',
         color: '#f4e6a2',
         fontStyle: 'bold',
         stroke: '#000000',
