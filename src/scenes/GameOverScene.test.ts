@@ -182,7 +182,7 @@ describe('GameOverScene', () => {
 
     expect(sceneManager.start).toHaveBeenCalledWith('PlayScene', { levelId: 'level-01' });
     expect(sceneManager.start).toHaveBeenCalledWith('LevelSelectScene');
-    expect(sceneManager.start).toHaveBeenCalledWith('LeaderboardScene');
+    expect(sceneManager.start).toHaveBeenCalledWith('LeaderboardScene', { levelId: 'level-01' });
     expect(mockAudioSystem.playMusic).toHaveBeenCalledWith('music-menu', true);
     expect(sceneManager.start).toHaveBeenCalledWith('MenuScene');
     expect(sceneManager.start).toHaveBeenCalledTimes(7);
