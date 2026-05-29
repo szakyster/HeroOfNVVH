@@ -1,6 +1,6 @@
-# Playable Beta Release Draft
+# Production Release Draft
 
-Ez a dokumentum a következő játszható béta pre-release technikai előkészítését foglalja össze.
+Ez a dokumentum az első produktív kiadás technikai előkészítését és kiadási anyagát foglalja össze.
 
 ## Verification Snapshot
 
@@ -9,19 +9,19 @@ Ellenőrzött parancsok:
 ```bash
 npm run build
 npm run test:run
-npx vitest --run --coverage
+npm run test:coverage -- --run
 ```
 
 Eredmény:
 - build sikeres
-- teljes tesztcsomag sikeres: 28/28 tesztfájl, 158/158 teszt
+- teljes tesztcsomag sikeres: 34/34 tesztfájl, 178/178 teszt
 - a releváns fájlok coverage-e 25% felett van
 
 Kiemelt coverage értékek:
-- `src/scenes/PlayScene.ts`: 57.36%
-- `src/scenes/playScene/PlaySceneHud.ts`: 45.83%
-- `src/scenes/MenuScene.ts`: 97.72%
-- `src/scenes/LeaderboardScene.ts`: 96.55%
+- `src/scenes/PlayScene.ts`: 57.65%
+- `src/scenes/playScene/PlaySceneHud.ts`: 47.43%
+- `src/scenes/MenuScene.ts`: 97.82%
+- `src/scenes/LeaderboardScene.ts`: 91.42%
 - `src/scenes/GameOverScene.ts`: 96.42%
 - `src/systems/UiButtons.ts`: 100%
 
@@ -30,37 +30,38 @@ Kiemelt coverage értékek:
 Javasolt tag:
 
 ```text
-v0.1.0-beta.1
+v0.1.0
 ```
 
 Megjegyzés:
-- a `package.json` verzió frissítve lett `0.1.0-beta.1` értékre
+- a `package.json` verzió frissítve lett `0.1.0` értékre
 - a kiadási tagot érdemes ehhez igazítani
 
 ## Suggested Annotated Tag Message
 
 ```text
-Heroes of NVVH playable beta 1
+Heroes of NVVH 0.1.0
 
-First playable beta release candidate with unified UI styling, improved scene navigation,
-escaped enemy alarm feedback, and current GitHub Pages release preparation.
+First production release with six authored levels, score-based progression,
+scene flow polish, local leaderboard persistence, and GitHub Pages deployment.
 ```
 
 ## GitHub Release Title Draft
 
 ```text
-Heroes of NVVH v0.1.0-beta.1 - Playable Beta
+Heroes of NVVH v0.1.0
 ```
 
 ## GitHub Release Body Draft
 
 ```md
-## Heroes of NVVH - Playable Beta
+## Heroes of NVVH v0.1.0
 
-Ez a build az első játszható béta pre-release a Heroes of NVVH projekthez.
+Ez a build a Heroes of NVVH első produktív kiadása.
 
 ### Mi van benne?
 - végigjátszható alap gameplay loop menüvel, HUD-dal, game over flow-val és leaderboarddal
+- hat, szerkesztett pálya kis ikonokkal és célpontszám-alapú feloldással
 - egységesített, erősebb vizuális karakterű UI gombok és scene UI polish
 - escaped enemy warning audio feedback
 - gyorsbillentyűs navigáció a fő scene-ek között
@@ -68,7 +69,7 @@ Ez a build az első játszható béta pre-release a Heroes of NVVH projekthez.
 - GitHub Pages-re előkészített statikus build
 
 ### Fontos tudnivalók
-- ez még béta kiadás, nem végleges release
+- ez az első produktív kiadás, további tartalmi és technikai finomításokkal a következő iterációkban
 - balansz, vizuális finomhangolás és bundle-optimalizálás még várható
 - a release továbbra is ismert nagy bundle warninggal épül, ez jelenleg nem blokkoló
 
@@ -88,10 +89,10 @@ Frissítve:
 
 Mit fednek le most:
 - aktuális publikus állapot
-- következő célkiadás: játszható béta
+- produktív kiadási verzió és státusz
 - deploy trigger pontosítása
 - release draft helye
-- várható béta kiemelések és fő kockázatok
+- kiadási kiemelések és fő kockázatok
 
 ## Config And Asset Audit
 
@@ -125,5 +126,5 @@ Release előtti teendők:
 
 Nem blokkoló, de nyomon követendő:
 - nagy bundle warning a production build során
-- a PlayScene továbbra is nagy, 1399 soros fájl, bár még a 1500-as repo küszöb alatt van
+- a PlayScene továbbra is nagy, 1443 soros fájl, bár még a 1500-as repo küszöb alatt van
 - fallback hibaszöveg lokalizációja és megjelenése még nyersebb, mint a többi UI elem

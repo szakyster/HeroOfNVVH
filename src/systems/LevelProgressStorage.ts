@@ -1,8 +1,4 @@
-import { getAllLevelIds } from './LevelCatalog';
-
 export const LEVEL_PROGRESS_STORAGE_KEY = 'heroNVVH_levelProgress';
-
-const FORCE_UNLOCK_ALL_LEVELS = true;
 
 export type LevelProgressState = {
   unlockedLevelIds: string[];
@@ -90,10 +86,8 @@ export class LevelProgressStorage {
 }
 
 function createDefaultLevelProgressState(firstLevelId: string): LevelProgressState {
-  const unlockedLevelIds = FORCE_UNLOCK_ALL_LEVELS ? getAllLevelIds() : [firstLevelId];
-
   return {
-    unlockedLevelIds,
+    unlockedLevelIds: [firstLevelId],
     completedLevelIds: [],
     lastPlayedLevelId: firstLevelId,
   };
@@ -119,9 +113,7 @@ function normalizeLevelProgressState(value: unknown, firstLevelId: string): Leve
   }
 
   const candidate = value as Partial<LevelProgressState>;
-  const unlockedLevelIds = FORCE_UNLOCK_ALL_LEVELS
-    ? getAllLevelIds()
-    : sanitizeLevelIdList(candidate.unlockedLevelIds, firstLevelId);
+  const unlockedLevelIds = sanitizeLevelIdList(candidate.unlockedLevelIds, firstLevelId);
   const completedLevelIds = sanitizeLevelIdList(candidate.completedLevelIds).filter((levelId) => unlockedLevelIds.includes(levelId));
   const lastPlayedLevelId =
     typeof candidate.lastPlayedLevelId === 'string' && unlockedLevelIds.includes(candidate.lastPlayedLevelId)

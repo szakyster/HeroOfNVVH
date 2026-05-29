@@ -4,15 +4,16 @@
 
 Kiadás utáni változások a következő iterációhoz.
 
-## v0.1.0-beta.1
+## v0.1.0
 
-Tervezett játszható béta kiadás előkészítése.
+Első produktív kiadás.
 
-### Várható kiemelések
+### Kiemelések
 - egységesebb, játékhoz illeszkedő gomb- és UI-megjelenés
 - finomított menü, leaderboard és game over navigáció gyorsbillentyűkkel
 - escaped enemy warning riasztáshang
-- további vizuális feedback és polish a jelenetekben
+- hat pályás, célpontszám-alapú pályafolyamat és pályaválasztó
+- végigjátszható gameplay loop LocalStorage alapú eredménylistával
 
 ### Ismert release kockázatok
 - a production build továbbra is nagy bundle warningot jelez
