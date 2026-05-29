@@ -1,6 +1,6 @@
 # Production Release Draft
 
-Ez a dokumentum az első produktív kiadás technikai előkészítését és kiadási anyagát foglalja össze.
+Ez a dokumentum a következő produktív minor kiadás technikai előkészítését és kiadási anyagát foglalja össze.
 
 ## Verification Snapshot
 
@@ -30,46 +30,42 @@ Kiemelt coverage értékek:
 Javasolt tag:
 
 ```text
-v0.1.0
+v0.2.0
 ```
 
 Megjegyzés:
-- a `package.json` verzió frissítve lett `0.1.0` értékre
+- a `package.json` verzió frissítve lett `0.2.0` értékre
 - a kiadási tagot érdemes ehhez igazítani
 
 ## Suggested Annotated Tag Message
 
 ```text
-Heroes of NVVH 0.1.0
+Heroes of NVVH 0.2.0
 
-First production release with six authored levels, score-based progression,
-scene flow polish, local leaderboard persistence, and GitHub Pages deployment.
+Minor production release with corrected score milestone copy,
+stable gameplay behavior, and unchanged deployment flow.
 ```
 
 ## GitHub Release Title Draft
 
 ```text
-Heroes of NVVH v0.1.0
+Heroes of NVVH v0.2.0
 ```
 
 ## GitHub Release Body Draft
 
 ```md
-## Heroes of NVVH v0.1.0
+## Heroes of NVVH v0.2.0
 
-Ez a build a Heroes of NVVH első produktív kiadása.
+Ez a build a Heroes of NVVH első produktív minor kiadása.
 
 ### Mi van benne?
-- végigjátszható alap gameplay loop menüvel, HUD-dal, game over flow-val és leaderboarddal
-- hat, szerkesztett pálya kis ikonokkal és célpontszám-alapú feloldással
-- egységesített, erősebb vizuális karakterű UI gombok és scene UI polish
-- escaped enemy warning audio feedback
-- gyorsbillentyűs navigáció a fő scene-ek között
-- helyi eredménylista LocalStorage alapon
-- GitHub Pages-re előkészített statikus build
+- javított score milestone-szövegek a pályaadatokban
+- kisebb helyesírási és megfogalmazási korrekciók a játék közbeni milestone popupokhoz
+- változatlan gameplay loop, pályafolyamat és release/deploy folyamat
 
 ### Fontos tudnivalók
-- ez az első produktív kiadás, további tartalmi és technikai finomításokkal a következő iterációkban
+- ez egy minor frissítés az első produktív kiadásra építve
 - balansz, vizuális finomhangolás és bundle-optimalizálás még várható
 - a release továbbra is ismert nagy bundle warninggal épül, ez jelenleg nem blokkoló
 

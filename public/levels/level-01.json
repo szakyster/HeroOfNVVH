@@ -66,12 +66,12 @@
     { "id": "loot-1", "value": 10, "image": "money01.png" }
   ],
   "scoreMilestones": [
-    { "score": 0, "text": "Üdv a fedélzetem" },
-    { "score": 30, "text": "Nem csak a vagyont kell visszaszerezni\na tolvajokat nem hagyni meglógni!" },
+    { "score": 0, "text": "Üdv a fedélzeten" },
+    { "score": 30, "text": "Ne hagyd, hogy a tolvajok meglógjanak!" },
     { "score": 100, "text": "Nem juthatnak el a reptérre" },
-    { "score": 360, "text": "Mostmár mehet terepre" },
+    { "score": 360, "text": "Most már mehet terepre" },
     { "score": 500, "text": "Büszkék vagyunk önre!" },
-    { "score": 1000, "text": "A Hónap dolgozója" },
+    { "score": 1000, "text": "A hónap dolgozója" },
     { "score": 1500, "text": "Ideje továbblépni!" }
   ]
 }

@@ -4,6 +4,20 @@
 
 Kiadás utáni változások a következő iterációhoz.
 
+## v0.2.0
+
+Minor kiadás milestone-szöveg és helyesírási javításokkal.
+
+### Kiemelések
+- javított pálya milestone-szövegek a korábbi helyesírási hibák és pontatlan megfogalmazások helyén
+- a pályaadatok tartalmilag változatlanok maradtak, gameplay-logika módosítás nélkül
+- a produktív kiadási ág és dokumentáció verziója `0.2.0`-ra emelve
+
+### Ismert release kockázatok
+- a production build továbbra is nagy bundle warningot jelez
+- a PlayScene és néhány helper modul coverage-e közepes, de a minimális release küszöb fölött van
+- hibaágban továbbra is van egyszerű fallback szöveg: `Palyabetoltes hiba`
+
 ## v0.1.0
 
 Első produktív kiadás.
