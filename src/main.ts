@@ -6,6 +6,7 @@ import { LeaderboardScene } from './scenes/LeaderboardScene';
 import { LevelSelectScene } from './scenes/LevelSelectScene';
 import { MenuScene } from './scenes/MenuScene';
 import { PlayScene } from './scenes/PlayScene';
+import { isMobileClient, renderMobileWarning } from './mobileGate';
 
 // Game configuration - Reference: D-001 (Phaser 3), D-002 (TypeScript), D-003 (Vite)
 const config: Phaser.Types.Core.GameConfig = {
@@ -31,8 +32,16 @@ const config: Phaser.Types.Core.GameConfig = {
   scene: [BootScene, MenuScene, HelpScene, LevelSelectScene, PlayScene, GameOverScene, LeaderboardScene],
 };
 
-// Initialize the Phaser game
-const game = new Phaser.Game(config);
+const gameContainer = document.getElementById('game');
+let game: Phaser.Game | null = null;
 
-console.log('Heroes of NVVH - Game initialized');
+if (gameContainer && isMobileClient(window)) {
+  renderMobileWarning(gameContainer);
+} else {
+  // Initialize the Phaser game
+  game = new Phaser.Game(config);
+
+  console.log('Heroes of NVVH - Game initialized');
+}
+
 export default game;
