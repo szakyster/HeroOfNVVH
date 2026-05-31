@@ -47,7 +47,7 @@ export class HelpScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     this.add
-      .text(width - 24, height - 20, 'Kapcsolat: szakyster.honvvh@gmail.com', {
+      .text(width - 24, height - 20, 'Kapcsolat: szakyster+honvvh@gmail.com', {
         fontFamily: 'Verdana',
         fontSize: '14px',
         color: '#f4f1de',
